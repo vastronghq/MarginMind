@@ -4,7 +4,7 @@
  * @Software     : VScode
  * @Author       : hqwang
  * @Date         : 2026-03-22 13:43:18
- * @LastEditTime : 2026-03-22 15:17:03
+ * @LastEditTime : 2026-03-22 18:34:28
  * @Description  :
  */
 import { getLocaleID } from "../utils/locale";
@@ -78,9 +78,15 @@ function registerReaderSelectionListener() {
   Zotero.Reader.registerEventListener(
     "renderTextSelectionPopup",
     (event) => {
-      const text = event?.params?.annotation?.text?.trim();
+      const annot = event?.params?.annotation;
+      const text = annot.text?.trim();
+      const page = annot.position.pageIndex + 1;
+
+      // Zotero.getMainWindow().alert(
+      //   "插件级划词抓取成功：\n" + annot.position.rects,
+      // );
       if (!text) return;
-      updateSelectedText(text);
+      updateSelectedText(`page ${page}, ${text}`);
     },
     READER_SELECTION_LISTENER_ID,
   );

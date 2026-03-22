@@ -196,130 +196,110 @@ export function ItemPaneSection({
   }
 
   return (
-    <section className="cline-shell w-full min-w-0">
-      {/* <header className="shrink-0 border-b border-white/8 px-3 py-3">
-        <div className="cline-panel flex min-w-0 items-start gap-3 px-3 py-3">
-          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-[linear-gradient(180deg,#3b82f6,#1d4ed8)] text-[13px] font-semibold text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.18)]">
+    <section className="cline-shell flex h-full flex-col overflow-hidden text-white">
+      {/* Header: 合并了原有的两个 header 层 */}
+      <header className="shrink-0 border-b border-white/8 p-3">
+        <div className="flex items-center gap-3">
+          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-blue-600 text-[13px] font-semibold shadow-inner">
             C
           </div>
-          <div className="min-w-0 flex-1">
-            <div className="flex flex-wrap items-center gap-2">
-              <div className="truncate text-[13px] font-semibold text-[var(--fill-primary)]">
-                Cline-style Research Agent
-              </div>
-              <span className="cline-badge">Claude 3.5 Sonnet</span>
+          <div className="min-w-0">
+            <div className="flex items-center gap-2">
+              <span className="truncate text-[13px] font-semibold text-blue-400">
+                Cline Research
+              </span>
+              <span className="cline-badge text-[10px]">Claude 3.5</span>
             </div>
-            <div className="mt-1 truncate text-[12px] text-white/55">
-              {itemData.title}
-            </div>
-            <div className="mt-2 flex flex-wrap gap-1.5">
-              <span className="cline-tool-pill">Read</span>
-              <span className="cline-tool-pill">Plan</span>
-              <span className="cline-tool-pill">Write Notes</span>
-              {showSelectedText ? (
-                <span className="cline-tool-pill">Reader Sync</span>
-              ) : null}
-            </div>
+            <div className="text-[11px] text-white/50">{itemData.title}</div>
           </div>
-        </div>
-      </header> */}
-
-      <header className="flex min-h-0 flex-1 flex-col">
-        <div className="shrink-0 border-b border-white/8 px-3 py-3">
-          fasdfsafsdddddddddddddddddd
         </div>
       </header>
 
-      <main className="flex min-h-0 flex-1 flex-col">
-        <div className="shrink-0 px-3 pt-3">
-          <div className="cline-panel flex flex-wrap items-center gap-2 px-3 py-2.5 text-[11px] text-white/65">
-            <span className="font-medium text-white/80">Context</span>
-            <span>{itemData.creators}</span>
-            <span className="text-white/25">/</span>
-            <span>{itemData.year}</span>
-            <span className="text-white/25">/</span>
-            <span className="truncate">{itemData.keyText}</span>
-          </div>
+      {/* Main: 滚动区域 */}
+      <main className="flex min-h-0 flex-1 flex-col overflow-y-auto cline-scrollbar p-3 space-y-3">
+        {/* Context Bar */}
+        <div className="cline-panel flex flex-wrap gap-2 px-3 py-2 text-[11px] text-white/60">
+          <span className="font-medium text-white/80">Context:</span>
+          <span>{itemData.creators}</span>
+          <span className="opacity-20">/</span>
+          <span>{itemData.year}</span>
+          <span className="truncate opacity-80 italic">{itemData.keyText}</span>
         </div>
 
-        <div className="cline-scrollbar min-h-0 flex-1 space-y-3 overflow-y-auto px-3 py-3">
-          <div className="cline-panel px-3 py-3 text-[12px] leading-6 text-white/65">
-            <div className="mb-1 text-[10px] font-semibold uppercase tracking-[0.12em] text-white/35">
-              System Prompt
-            </div>
-            Abstract context is preloaded. The assistant should stay grounded in
-            the paper and the active reader selection.
+        {/* System Prompt */}
+        <div className="cline-panel p-3 text-[12px] leading-relaxed text-white/60">
+          <div className="mb-1 text-[10px] font-bold uppercase tracking-widest text-white/30">
+            System
           </div>
-
-          {messages.map((message) => (
-            <MessageBubble key={message.id} message={message} />
-          ))}
+          Abstract context preloaded. Grounded in paper and selection.
         </div>
+
+        {/* Messages */}
+        {messages.map((m) => (
+          <MessageBubble key={m.id} message={m} />
+        ))}
       </main>
 
-      <footer className="flex min-h-0 flex-1 flex-col">
-        <div className="shrink-0 border-t border-white/8 px-3 py-3">
-          {queuedSelection ? (
-            <div className="cline-panel mb-3 px-3 py-3">
-              <div className="mb-2 flex flex-wrap items-start justify-between gap-2">
-                <div>
-                  <div className="text-[10px] font-semibold uppercase tracking-[0.12em] text-white/40">
-                    Reader Selection
-                  </div>
-                  <div className="text-[12px] text-white/60">
-                    Live synced from Zotero Reader
-                  </div>
-                </div>
-                <button
-                  className="rounded-lg border border-[var(--accent-blue)]/25 bg-[color-mix(in_srgb,var(--accent-blue)_16%,transparent)] px-2.5 py-1.5 text-[11px] font-medium text-[var(--fill-primary)] transition hover:bg-[color-mix(in_srgb,var(--accent-blue)_24%,transparent)]"
-                  onClick={useSelection}
-                  type="button"
-                >
-                  Insert Into Prompt
-                </button>
-              </div>
-              <div className="max-h-24 overflow-y-auto whitespace-pre-wrap break-words rounded-lg border border-white/8 bg-black/10 px-3 py-2 text-[12px] leading-5 text-white/78">
-                {queuedSelection}
-              </div>
-            </div>
-          ) : null}
-
-          <div className="mb-2 flex flex-wrap gap-2">
-            {quickActions.map((action) => (
+      {/* Footer: 输入区域 */}
+      <footer className="shrink-0 border-t border-white/8 p-3">
+        {/* Selection Preview - 仅在有内容时渲染 */}
+        {queuedSelection && (
+          <div className="cline-panel mb-3 p-3">
+            <div className="mb-2 flex items-center justify-between">
+              <span className="text-[10px] font-bold uppercase tracking-widest text-white/40">
+                Reader Selection
+              </span>
               <button
-                key={action}
-                className="cline-badge transition hover:bg-white/10 hover:text-white"
-                onClick={() => send(action)}
-                type="button"
+                onClick={useSelection}
+                className="cline-tool-pill hover:bg-blue-500/20 text-blue-400"
               >
-                {action}
+                Insert Into Prompt
               </button>
-            ))}
+            </div>
+            <div className="max-h-20 overflow-y-auto rounded-lg bg-black/20 p-2 text-[12px] text-white/70">
+              {queuedSelection}
+            </div>
           </div>
+        )}
 
-          <div className="cline-panel px-3 py-3">
-            <textarea
-              className="cline-composer cline-scrollbar"
-              onChange={(event) => setDraft(event.target.value)}
-              placeholder="Ask about the paper, the current section, or use the reader selection as evidence..."
-              value={draft}
-            />
-            <div className="mt-3 flex flex-wrap items-center justify-between gap-3">
-              <div className="flex min-w-0 flex-wrap items-center gap-2 text-[11px] text-white/45">
-                <span className="cline-tool-pill">Paper loaded</span>
-                {queuedSelection ? (
-                  <span className="cline-tool-pill">Selection ready</span>
-                ) : null}
-              </div>
-              <button
-                className="rounded-xl bg-[linear-gradient(180deg,#3b82f6,#1d4ed8)] px-3.5 py-2 text-[12px] font-semibold text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.18)] transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-40"
-                disabled={!draft.trim()}
-                onClick={() => send(draft)}
-                type="button"
-              >
-                Send Message
-              </button>
+        {/* Quick Actions */}
+        <div className="mb-3 flex flex-wrap gap-2">
+          {quickActions.map((action) => (
+            <button
+              key={action}
+              onClick={() => send(action)}
+              className="cline-badge hover:bg-white/10"
+            >
+              {action}
+            </button>
+          ))}
+        </div>
+
+        {/* Composer */}
+        <div className="cline-panel p-3">
+          <textarea
+            className="cline-composer w-full bg-transparent outline-none resize-none text-[13px]"
+            rows={3}
+            onChange={(e) => setDraft(e.target.value)}
+            placeholder="Ask about the paper..."
+            value={draft}
+          />
+          <div className="mt-2 flex items-center justify-between border-t border-white/5 pt-2">
+            <div className="flex gap-2 text-[10px]">
+              <span className="cline-tool-pill opacity-50">Paper Loaded</span>
+              {queuedSelection && (
+                <span className="cline-tool-pill text-blue-400">
+                  Selection Ready
+                </span>
+              )}
             </div>
+            <button
+              disabled={!draft.trim()}
+              onClick={() => send(draft)}
+              className="rounded-lg bg-blue-600 px-4 py-1.5 text-[12px] font-bold shadow-lg transition hover:brightness-110 disabled:opacity-30"
+            >
+              Send Message
+            </button>
           </div>
         </div>
       </footer>

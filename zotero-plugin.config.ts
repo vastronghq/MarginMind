@@ -36,6 +36,15 @@ export default defineConfig({
         target: "firefox115",
         outfile: `.scaffold/build/addon/content/scripts/${pkg.config.addonRef}.js`,
       },
+      {
+        entryPoints: ["src/react/itemPane/runtime.tsx"],
+        bundle: true,
+        jsx: "automatic",
+        platform: "browser",
+        format: "iife",
+        target: "firefox115",
+        outfile: ".scaffold/build/addon/content/scripts/itemPane.js",
+      },
     ],
   },
 

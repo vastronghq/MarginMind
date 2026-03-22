@@ -138,20 +138,23 @@ export class UIExampleFactory {
 
   @example
   static registerRightClickMenuItem() {
+    const toolkitMenu = (ztoolkit as any).Menu;
     const menuIcon = `chrome://${addon.data.config.addonRef}/content/icons/favicon@0.5x.png`;
     // item menuitem with icon
-    ztoolkit.Menu.register("item", {
+    toolkitMenu.register("item", {
       tag: "menuitem",
       id: "zotero-itemmenu-addontemplate-test",
       label: getString("menuitem-label"),
-      commandListener: (ev) => addon.hooks.onDialogEvents("dialogExample"),
+      commandListener: (_ev: Event) =>
+        addon.hooks.onDialogEvents("dialogExample"),
       icon: menuIcon,
     });
   }
 
   @example
   static registerRightClickMenuPopup(win: Window) {
-    ztoolkit.Menu.register(
+    const toolkitMenu = (ztoolkit as any).Menu;
+    toolkitMenu.register(
       "item",
       {
         tag: "menu",
@@ -173,11 +176,12 @@ export class UIExampleFactory {
 
   @example
   static registerWindowMenuWithSeparator() {
-    ztoolkit.Menu.register("menuFile", {
+    const toolkitMenu = (ztoolkit as any).Menu;
+    toolkitMenu.register("menuFile", {
       tag: "menuseparator",
     });
     // menu->File menuitem
-    ztoolkit.Menu.register("menuFile", {
+    toolkitMenu.register("menuFile", {
       tag: "menuitem",
       label: getString("menuitem-filemenulabel"),
       oncommand: "alert('Hello World! File Menuitem.')",

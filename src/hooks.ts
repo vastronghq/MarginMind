@@ -1,9 +1,6 @@
 import {
   BasicExampleFactory,
-  HelperExampleFactory,
   KeyExampleFactory,
-  PromptExampleFactory,
-  UIExampleFactory,
 } from "./modules/examples";
 import {
   registerItemPaneSection,
@@ -29,12 +26,6 @@ async function onStartup() {
   BasicExampleFactory.registerNotifier();
 
   KeyExampleFactory.registerShortcuts();
-
-  await UIExampleFactory.registerExtraColumn();
-
-  await UIExampleFactory.registerExtraColumnWithCustomCell();
-
-  UIExampleFactory.registerItemPaneCustomInfoRow();
 
   // UIExampleFactory.registerItemPaneSection();
 
@@ -78,29 +69,7 @@ async function onMainWindowLoad(win: _ZoteroTypes.MainWindow): Promise<void> {
   //   text: `[30%] ${getString("startup-begin")}`,
   // });
 
-  UIExampleFactory.registerStyleSheet(win);
-
-  UIExampleFactory.registerRightClickMenuItem();
-
-  UIExampleFactory.registerRightClickMenuPopup(win);
-
-  UIExampleFactory.registerWindowMenuWithSeparator();
-
-  PromptExampleFactory.registerNormalCommandExample();
-
-  PromptExampleFactory.registerAnonymousCommandExample(win);
-
-  PromptExampleFactory.registerConditionalCommandExample();
-
-  await Zotero.Promise.delay(1000);
-
-  // popupWin.changeLine({
-  //   progress: 100,
-  //   text: `[100%] ${getString("startup-finish")}`,
-  // });
-  // popupWin.startCloseTimer(5000);
-
-  addon.hooks.onDialogEvents("dialogExample");
+  await Zotero.Promise.delay(100);
 }
 
 async function onMainWindowUnload(win: Window): Promise<void> {
@@ -172,21 +141,6 @@ function onShortcuts(type: string) {
 
 function onDialogEvents(type: string) {
   switch (type) {
-    case "dialogExample":
-      HelperExampleFactory.dialogExample();
-      break;
-    case "clipboardExample":
-      HelperExampleFactory.clipboardExample();
-      break;
-    case "filePickerExample":
-      HelperExampleFactory.filePickerExample();
-      break;
-    case "progressWindowExample":
-      HelperExampleFactory.progressWindowExample();
-      break;
-    case "vtableExample":
-      HelperExampleFactory.vtableExample();
-      break;
     default:
       break;
   }

@@ -1,22 +1,46 @@
-/*
- * Copyright (c) 2026 by hqwang, All Rights Reserved.
- *
- * @Software     : VScode
- * @Author       : hqwang
- * @Date         : 2026-03-22 13:43:18
- * @LastEditTime : 2026-03-22 18:34:28
- * @Description  :
- */
 import { getLocaleID } from "../utils/locale";
 
 const READER_SELECTION_LISTENER_ID = "insituai-reader-selection";
-const readerPaneBodies = new Set<any>();
+const ITEM_PANE_MOUNT_ID = "insituai-item-pane-root";
+const READER_PANE_MOUNT_ID = "insituai-reader-item-pane-root";
+const ITEM_PANE_RUNTIME_URL = `${rootURI}content/scripts/itemPane.js`;
+
+type SerializedItemPaneData = {
+  title: string;
+  creators: string;
+  year: string;
+  abstractPreview: string;
+  keyText: string;
+};
+
+type ItemPaneWindow = Window & {
+  __insituaiRenderItemPane?: (args: {
+    container: Element;
+    data: SerializedItemPaneData | null;
+    showSelectedText: boolean;
+    selectedText: string;
+  }) => void;
+  __insituaiItemPaneRuntimeLoaded?: boolean;
+};
+
+const readerBodies = new Set<HTMLDivElement>();
 let latestSelectedText = "";
+
+const readerSelectionHandler: _ZoteroTypes.Reader.EventHandler<"renderTextSelectionPopup"> =
+  (event) => {
+    const annotation = event.params.annotation;
+    const text = annotation.text?.trim();
+    const page = annotation.position.pageIndex + 1;
+
+    if (!text) return;
+    updateSelectedText(`page ${page}, ${text}`);
+  };
 
 function registerItemPaneSection() {
   Zotero.ItemPaneManager.registerSection({
     paneID: "insituai-item-pane",
     pluginID: addon.data.config.addonID,
+    bodyXHTML: `<html:div id="${ITEM_PANE_MOUNT_ID}" />`,
     header: {
       l10nID: getLocaleID("item-pane-head-text"),
       icon: "chrome://zotero/skin/16/universal/info.svg",
@@ -29,7 +53,11 @@ function registerItemPaneSection() {
       setEnabled(tabType === "library");
       return true;
     },
-    onRender: ({ body, item }) => renderItemPane(body, item),
+    onRender: ({ body, item }) =>
+      renderItemPane(body, item, {
+        mountId: ITEM_PANE_MOUNT_ID,
+        showSelectedText: false,
+      }),
   });
 }
 
@@ -37,6 +65,7 @@ function registerReaderItemPaneSection() {
   Zotero.ItemPaneManager.registerSection({
     paneID: "insituai-reader-item-pane",
     pluginID: addon.data.config.addonID,
+    bodyXHTML: `<html:div id="${READER_PANE_MOUNT_ID}" />`,
     header: {
       l10nID: getLocaleID("item-pane-head-text"),
       icon: "chrome://zotero/skin/16/universal/info.svg",
@@ -50,10 +79,12 @@ function registerReaderItemPaneSection() {
       return true;
     },
     onRender: ({ body, item }) => {
-      readerPaneBodies.add(body);
-      renderItemPane(body, item, { showSelectedText: true });
+      readerBodies.add(body);
+      renderItemPane(body, item, {
+        mountId: READER_PANE_MOUNT_ID,
+        showSelectedText: true,
+      });
     },
-
     sectionButtons: [
       {
         type: "test",
@@ -71,23 +102,13 @@ function registerReaderSelectionListener() {
   try {
     Zotero.Reader.unregisterEventListener(
       "renderTextSelectionPopup",
-      READER_SELECTION_LISTENER_ID,
+      readerSelectionHandler,
     );
-  } catch (e) {}
+  } catch (_error) {}
 
   Zotero.Reader.registerEventListener(
     "renderTextSelectionPopup",
-    (event) => {
-      const annot = event?.params?.annotation;
-      const text = annot.text?.trim();
-      const page = annot.position.pageIndex + 1;
-
-      // Zotero.getMainWindow().alert(
-      //   "插件级划词抓取成功：\n" + annot.position.rects,
-      // );
-      if (!text) return;
-      updateSelectedText(`page ${page}, ${text}`);
-    },
+    readerSelectionHandler,
     READER_SELECTION_LISTENER_ID,
   );
 }
@@ -96,48 +117,76 @@ function unregisterReaderSelectionListener() {
   try {
     Zotero.Reader.unregisterEventListener(
       "renderTextSelectionPopup",
-      READER_SELECTION_LISTENER_ID,
+      readerSelectionHandler,
     );
-  } catch (e) {}
+  } catch (_error) {}
 }
 
 function updateSelectedText(text: string) {
   latestSelectedText = text;
 
-  for (const body of [...readerPaneBodies]) {
-    const doc = body?.ownerDocument;
-    if (!body?.isConnected || !doc) {
-      readerPaneBodies.delete(body);
+  for (const body of [...readerBodies]) {
+    if (!body.isConnected) {
+      readerBodies.delete(body);
       continue;
     }
 
-    const node = body.querySelector("[data-insituai-selected-text]");
-    if (node) {
-      node.textContent = latestSelectedText;
-    }
+    const item = getBodyItem(body);
+    renderItemPane(body, item, {
+      mountId: READER_PANE_MOUNT_ID,
+      showSelectedText: true,
+    });
   }
 }
 
 function renderItemPane(
-  body: any,
-  item: any,
-  options: { showSelectedText?: boolean } = {},
+  body: HTMLDivElement,
+  item: Zotero.Item | undefined,
+  options: { mountId: string; showSelectedText: boolean },
 ) {
-  body.replaceChildren();
   const doc = body.ownerDocument;
+  const win = doc?.defaultView as ItemPaneWindow | null;
+  if (!win) {
+    throw new Error("Item pane window is unavailable");
+  }
 
-  if (!doc) return;
-  if (!item) {
-    body.appendChild(makeLine(doc, "No item selected", "Select an item"));
+  ensureItemPaneRuntime(win);
+
+  const container = body.querySelector(`#${options.mountId}`);
+  if (!container) {
+    throw new Error(`Item pane mount node not found: ${options.mountId}`);
+  }
+
+  if (!win.__insituaiRenderItemPane) {
+    throw new Error("Item pane runtime failed to initialize");
+  }
+
+  win.__insituaiRenderItemPane({
+    container,
+    data: item ? serializeItem(item) : null,
+    showSelectedText: options.showSelectedText,
+    selectedText: latestSelectedText,
+  });
+}
+
+function ensureItemPaneRuntime(win: ItemPaneWindow) {
+  if (win.__insituaiItemPaneRuntimeLoaded && win.__insituaiRenderItemPane) {
     return;
   }
 
+  Services.scriptloader.loadSubScript(ITEM_PANE_RUNTIME_URL, win);
+  win.__insituaiItemPaneRuntimeLoaded = true;
+}
+
+function getBodyItem(body: HTMLDivElement) {
+  const section = body.closest("item-pane-custom-section") as
+    | (_ZoteroTypes.ItemPaneCustomSection & { _item?: Zotero.Item })
+    | null;
+  return section?._item;
+}
+
+function serializeItem(item: Zotero.Item): SerializedItemPaneData {
   const title = String(item.getField("title") || "(Untitled)");
-  const creators = item
-    .getCreators()
-    .map((creator: any) => creator)
-    .filter(Boolean)
-    .join(", ");
   const date = String(item.getField("date") || "");
   const year = date.match(/\d{4}/)?.[0] || "Unknown";
   const abstractText = String(item.getField("abstractNote") || "")
@@ -148,62 +197,27 @@ function renderItemPane(
       ? `${abstractText.slice(0, 180)}...`
       : abstractText || "No abstract";
 
-  body.appendChild(makeLine(doc, "Title", title));
-  body.appendChild(makeLine(doc, "Creators", creators || "Unknown"));
-  body.appendChild(makeLine(doc, "Year", year));
-  body.appendChild(makeLine(doc, "Abstract", abstractPreview));
-  body.appendChild(makeLine(doc, "Key", `${item.key} (ID: ${item.id ?? "-"})`));
-
-  if (options.showSelectedText) {
-    body.appendChild(
-      makeLine(
-        doc,
-        "Selected Text",
-        latestSelectedText || "No selection captured yet",
-        { selectedText: true },
-      ),
-    );
-  }
+  return {
+    title,
+    creators: formatCreators(item),
+    year,
+    abstractPreview,
+    keyText: `${item.key} (ID: ${item.id ?? "-"})`,
+  };
 }
 
-function makeLine(
-  doc: Document,
-  label: string,
-  value: string,
-  options: { selectedText?: boolean } = {},
-) {
-  const wrap = ztoolkit.UI.createElement(doc, "div", {
-    namespace: "html",
-    styles: {
-      marginBottom: "8px",
-      lineHeight: "1.4",
-    },
-  });
+function formatCreators(item: Zotero.Item) {
+  const creators = item
+    .getCreators()
+    .map(
+      (creator: { name?: string; lastName?: string; firstName?: string }) => {
+        if (creator.name) return creator.name;
+        return [creator.lastName, creator.firstName].filter(Boolean).join(", ");
+      },
+    )
+    .filter(Boolean);
 
-  const labelNode = ztoolkit.UI.createElement(doc, "div", {
-    namespace: "html",
-    styles: {
-      fontWeight: "600",
-      marginBottom: "2px",
-    },
-    properties: { textContent: label },
-  });
-
-  const valueNode = ztoolkit.UI.createElement(doc, "div", {
-    namespace: "html",
-    styles: {
-      color: "var(--fill-primary)",
-      wordBreak: "break-word",
-    },
-    properties: { textContent: value },
-  });
-
-  if (options.selectedText) {
-    valueNode.setAttribute("data-insituai-selected-text", "true");
-  }
-
-  wrap.append(labelNode, valueNode);
-  return wrap;
+  return creators.length ? creators.join("; ") : "Unknown";
 }
 
 export {

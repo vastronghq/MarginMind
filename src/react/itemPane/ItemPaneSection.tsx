@@ -92,8 +92,7 @@ const styles: Record<string, React.CSSProperties> = {
     borderRadius: "10px",
     background:
       "linear-gradient(135deg, color-mix(in srgb, var(--accent-blue) 12%, transparent), color-mix(in srgb, var(--material-sidepane) 85%, transparent))",
-    border:
-      "1px solid color-mix(in srgb, var(--accent-blue) 18%, transparent)",
+    border: "1px solid color-mix(in srgb, var(--accent-blue) 18%, transparent)",
   },
   kicker: {
     fontSize: "11px",

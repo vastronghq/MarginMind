@@ -1,27 +1,10 @@
 import { getLocaleID } from "../utils/locale";
+import type { InSituAIReactWindow, ItemPaneData } from "../react/bridge";
 
 const READER_SELECTION_LISTENER_ID = "insituai-reader-selection";
 const ITEM_PANE_MOUNT_ID = "insituai-item-pane-root";
 const READER_PANE_MOUNT_ID = "insituai-reader-item-pane-root";
-const ITEM_PANE_RUNTIME_URL = `${rootURI}content/scripts/itemPane.js`;
-
-type SerializedItemPaneData = {
-  title: string;
-  creators: string;
-  year: string;
-  abstractPreview: string;
-  keyText: string;
-};
-
-type ItemPaneWindow = Window & {
-  __insituaiRenderItemPane?: (args: {
-    container: Element;
-    data: SerializedItemPaneData | null;
-    showSelectedText: boolean;
-    selectedText: string;
-  }) => void;
-  __insituaiItemPaneRuntimeLoaded?: boolean;
-};
+const REACT_WINDOW_SCRIPT_URL = `${rootURI}content/scripts/ui.js`;
 
 const readerBodies = new Set<HTMLDivElement>();
 let latestSelectedText = "";
@@ -131,8 +114,7 @@ function updateSelectedText(text: string) {
       continue;
     }
 
-    const item = getBodyItem(body);
-    renderItemPane(body, item, {
+    renderItemPane(body, getBodyItem(body), {
       mountId: READER_PANE_MOUNT_ID,
       showSelectedText: true,
     });
@@ -144,24 +126,23 @@ function renderItemPane(
   item: Zotero.Item | undefined,
   options: { mountId: string; showSelectedText: boolean },
 ) {
-  const doc = body.ownerDocument;
-  const win = doc?.defaultView as ItemPaneWindow | null;
+  const win = body.ownerDocument?.defaultView as InSituAIReactWindow | null;
   if (!win) {
     throw new Error("Item pane window is unavailable");
   }
 
-  ensureItemPaneRuntime(win);
+  ensureReactBridge(win);
 
   const container = body.querySelector(`#${options.mountId}`);
   if (!container) {
     throw new Error(`Item pane mount node not found: ${options.mountId}`);
   }
 
-  if (!win.__insituaiRenderItemPane) {
-    throw new Error("Item pane runtime failed to initialize");
+  if (!win.__insituaiReact) {
+    throw new Error("React bridge failed to initialize");
   }
 
-  win.__insituaiRenderItemPane({
+  win.__insituaiReact.renderItemPane({
     container,
     data: item ? serializeItem(item) : null,
     showSelectedText: options.showSelectedText,
@@ -169,13 +150,18 @@ function renderItemPane(
   });
 }
 
-function ensureItemPaneRuntime(win: ItemPaneWindow) {
-  if (win.__insituaiItemPaneRuntimeLoaded && win.__insituaiRenderItemPane) {
+function ensureReactBridge(win: InSituAIReactWindow) {
+  const shouldForceReload = addon.data.env === "development";
+  if (!shouldForceReload && win.__insituaiReactLoaded && win.__insituaiReact) {
     return;
   }
 
-  Services.scriptloader.loadSubScript(ITEM_PANE_RUNTIME_URL, win);
-  win.__insituaiItemPaneRuntimeLoaded = true;
+  const scriptURL = shouldForceReload
+    ? `${REACT_WINDOW_SCRIPT_URL}?t=${Date.now()}`
+    : REACT_WINDOW_SCRIPT_URL;
+
+  Services.scriptloader.loadSubScript(scriptURL, win);
+  win.__insituaiReactLoaded = true;
 }
 
 function getBodyItem(body: HTMLDivElement) {
@@ -185,7 +171,7 @@ function getBodyItem(body: HTMLDivElement) {
   return section?._item;
 }
 
-function serializeItem(item: Zotero.Item): SerializedItemPaneData {
+function serializeItem(item: Zotero.Item): ItemPaneData {
   const title = String(item.getField("title") || "(Untitled)");
   const date = String(item.getField("date") || "");
   const year = date.match(/\d{4}/)?.[0] || "Unknown";

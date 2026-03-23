@@ -107,6 +107,24 @@ export function ItemPaneSection({
   const [queuedSelection, setQueuedSelection] = useState("");
   const selectionSignatureRef = useRef("");
   const itemSignature = data?.keyText ?? "";
+  const sectionRef = useRef(null);
+  const [isLocked, setIsLocked] = useState(true);
+
+  useEffect(() => {
+    const el = sectionRef.current;
+    if (!el) return;
+
+    const handleWheel = (e) => {
+      if (isLocked) {
+        e.preventDefault();
+      }
+    };
+
+    // 必须手动添加监听，因为 React 的 onWheel 默认是 passive: true，无法 preventDefault
+    el.addEventListener("wheel", handleWheel, { passive: false });
+
+    return () => el.removeEventListener("wheel", handleWheel);
+  }, [isLocked]); // 当 isLocked 改变时重新绑定或判断
 
   useEffect(() => {
     if (!data) {
@@ -196,7 +214,10 @@ export function ItemPaneSection({
   }
 
   return (
-    <aside className="cline-shell flex max-h-[80vh] flex-col overflow-hidden text-white">
+    <aside
+      ref={sectionRef}
+      className="cline-shell flex max-h-[80vh] flex-col overflow-hidden text-white"
+    >
       {/* Header */}
       <header className="flex shrink-0 items-center gap-3 border-b border-white/8 p-3">
         <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-blue-600 text-[13px] font-semibold shadow-inner">

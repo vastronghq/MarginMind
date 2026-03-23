@@ -108,7 +108,7 @@ export function ItemPaneSection({
   const selectionSignatureRef = useRef("");
   const itemSignature = data?.keyText ?? "";
   const sectionRef = useRef(null);
-  const [isLocked, setIsLocked] = useState(true);
+  const messageRef = useRef(null);
 
   useEffect(() => {
     const aside = sectionRef.current;
@@ -143,6 +143,20 @@ export function ItemPaneSection({
     aside.addEventListener("wheel", handleWheel, { passive: false });
     return () => aside.removeEventListener("wheel", handleWheel);
   }, []); // 确保依赖项正确
+
+  useEffect(() => {
+    const messageContainer = messageRef.current;
+    if (messageContainer) {
+      // 方案 A: 瞬间跳到底部
+      // messageContainer.scrollTop = scrollContainer.scrollHeight;
+
+      // 方案 B: 平滑滚动到底部 (体验更好)
+      messageContainer.scrollTo({
+        top: messageContainer.scrollHeight,
+        behavior: "smooth",
+      });
+    }
+  }, [messages]); // 核心：监听 messages 数组的变化
 
   useEffect(() => {
     if (!data) {
@@ -255,6 +269,7 @@ export function ItemPaneSection({
       {/* Main: 滚动区域 */}
       <main
         data-can-scroll="true"
+        ref={messageRef}
         className="cline-scrollbar flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto p-3"
       >
         {/* Context Bar */}

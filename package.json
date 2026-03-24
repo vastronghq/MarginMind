@@ -42,7 +42,8 @@
     "chai": "^6.2.1",
     "eslint": "^9.39.2",
     "mocha": "^11.7.5",
-    "prettier": "^3.7.4",
+    "prettier": "^3.8.1",
+    "prettier-plugin-tailwindcss": "^0.7.2",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
     "tailwindcss": "^3.4.17",
@@ -51,6 +52,9 @@
     "zotero-types": "^4.1.0-beta.4"
   },
   "prettier": {
+    "plugins": [
+      "prettier-plugin-tailwindcss"
+    ],
     "printWidth": 80,
     "tabWidth": 2,
     "endOfLine": "lf",

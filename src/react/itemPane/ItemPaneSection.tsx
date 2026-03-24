@@ -49,8 +49,9 @@ function createInitialMessages(
     {
       id: "assistant-greeting",
       role: "assistant",
-      text: makeAssistantGreeting(data),
-      meta: "Context ready",
+      // text: makeAssistantGreeting(data),
+      text: "Hello! I'm your AI assistant. How can I help you today?",
+      meta: "Greeting",
     },
   ];
 }
@@ -197,14 +198,32 @@ export function ItemPaneSection({
 
   const quickActions = useMemo(
     () => [
-      "Summarize the paper",
-      "Extract the main claim",
-      "Critique the argument",
-      "Turn selection into notes",
-      "Insert selection into prompt",
+      {
+        id: "summarize",
+        label: "Summarize the paper",
+        // 情况 A：调用 send 并传入特定字符串
+        onClick: () => send("Summarize the main points of this paper."),
+      },
+      {
+        id: "critique",
+        label: "Critique the paper",
+        // 情况 B：调用另一个函数并传参
+        onClick: () => send("Critique the methodology."),
+      },
+      {
+        id: "to-notes",
+        label: "Turn selection into notes",
+        onClick: () => send("Turn selection into notes."),
+      },
+      {
+        id: "insert",
+        label: "Insert into prompt",
+        // 情况 D：直接转发引用（如果不需参数）
+        onClick: useSelection,
+      },
     ],
-    [],
-  );
+    [send, useSelection],
+  ); // 必须包含依赖，否则函数内部拿到的数据是旧的
 
   if (!data) {
     return <EmptyPane />;
@@ -251,10 +270,10 @@ export function ItemPaneSection({
   return (
     <aside
       ref={asideRef}
-      className="flex h-full max-h-[80vh] min-h-0 min-w-0 flex-col overflow-hidden bg-[var(--material-sidepane)] text-[var(--fill-primary)]"
+      className="flex max-h-[80vh] min-h-0 w-full flex-col overflow-hidden bg-[var(--material-sidepane)] text-[var(--fill-primary)]"
     >
       {/* Header */}
-      <header className="border-white/8 flex shrink-0 items-center gap-3 border-b p-3">
+      {/* <section className="flex shrink-0 items-center gap-3 p-3">
         <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-blue-600 text-[13px] font-semibold shadow-inner">
           C
         </div>
@@ -263,47 +282,40 @@ export function ItemPaneSection({
             <span className="truncate text-[13px] font-semibold text-blue-400">
               Cline Research
             </span>
-            <span className="inline-flex items-center gap-1 rounded-full border border-white/10 px-2.5 py-1 text-[10px] font-medium text-white/70">
-              Claude 4.5
-            </span>
           </div>
           <div className="text-[11px] text-white/50">{itemData.title}</div>
         </div>
-      </header>
+      </section> */}
 
-      {/* Main: 滚动区域 */}
-      <main
-        data-can-scroll="true"
-        ref={messageRef}
-        className="scrollbar-width: thin; scrollbar-color: color-mix(in_srgb,var(--fill-primary)_22%,transparent) transparent flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto p-3"
-      >
+      <section className="flex shrink-0 grow-0 flex-col justify-center gap-3 p-3">
         {/* Context Bar */}
-        <div className="flex flex-wrap gap-2 rounded-lg border border-white/10 bg-black/10 px-3 py-2 text-[11px] text-white/60">
-          <span className="font-medium text-white/80">Context:</span>
-          <span>{itemData.creators}</span>
-          <span className="opacity-20">/</span>
-          <span>{itemData.year}</span>
-          <span className="truncate italic opacity-80">{itemData.keyText}</span>
-        </div>
-
-        {/* System Prompt */}
         <div className="rounded-lg border border-white/10 bg-black/10 p-3 text-[12px] leading-relaxed text-white/60">
           <div className="mb-1 text-[10px] font-bold uppercase tracking-widest text-white/30">
-            System
+            Context:
           </div>
-          Abstract context preloaded. Grounded in paper and selection.
+          <div className="text-md">
+            {itemData.title} / {itemData.creators} / {itemData.year} /{" "}
+            {itemData.keyText}
+          </div>
         </div>
+      </section>
 
+      {/* Main: 滚动区域 */}
+      <section
+        data-can-scroll="true"
+        ref={messageRef}
+        className="flex max-h-[40vh] min-h-0 flex-1 flex-col gap-3 overflow-hidden overflow-y-auto p-3"
+      >
         {/* Messages */}
         {messages.map((m) => (
           <MessageBubble key={m.id} message={m} />
         ))}
-      </main>
+      </section>
 
       {/* Footer: 与 Header/Main 保持一致的 Padding 和边框风格 */}
-      <footer className="border-white/8 flex shrink-0 flex-col gap-3 border-t p-3">
+      <section className="border-white/8 flex shrink-0 grow-0 flex-col gap-3 border-t p-3">
         {/* Selection Preview */}
-        {queuedSelection && (
+        {/* {queuedSelection && (
           <div className="rounded-lg border border-white/10 bg-black/10 p-3">
             <div className="mb-2 flex items-center justify-between">
               <span className="text-[10px] font-bold uppercase tracking-widest text-white/40">
@@ -323,7 +335,7 @@ export function ItemPaneSection({
               {queuedSelection}
             </div>
           </div>
-        )}
+        )} */}
 
         {/* Quick Actions & Composer Container */}
         <div className="flex flex-col gap-3">
@@ -331,11 +343,11 @@ export function ItemPaneSection({
             <div className="flex flex-wrap gap-2">
               {quickActions.map((action) => (
                 <button
-                  key={action}
-                  onClick={() => send(action)}
+                  key={action.id}
+                  onClick={action.onClick}
                   className="inline-flex items-center gap-1 rounded-full border border-white/10 px-2.5 py-1 text-[11px] font-medium text-white/70 hover:bg-white/10"
                 >
-                  {action}
+                  {action.label}
                 </button>
               ))}
             </div>
@@ -355,6 +367,9 @@ export function ItemPaneSection({
                 <span className="inline-flex items-center rounded-md border border-white/10 px-2 py-1 text-[11px] font-medium text-white/65 opacity-50">
                   Paper Loaded
                 </span>
+                <span className="inline-flex items-center rounded-md border border-white/10 px-2 py-1 text-[11px] font-medium text-blue-400 text-white/65">
+                  stepfun/step-3.5-flash:free
+                </span>
                 {queuedSelection && (
                   <span className="inline-flex items-center rounded-md border border-white/10 px-2 py-1 text-[11px] font-medium text-blue-400 text-white/65">
                     Selection Ready
@@ -371,7 +386,7 @@ export function ItemPaneSection({
             </div>
           </div>
         </div>
-      </footer>
+      </section>
     </aside>
   );
 }

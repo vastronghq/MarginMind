@@ -12,15 +12,16 @@ const REACT_ASSET_VERSION =
 const readerBodies = new Set<HTMLDivElement>();
 let latestSelectedText = "";
 
-const readerSelectionHandler: _ZoteroTypes.Reader.EventHandler<"renderTextSelectionPopup"> =
-  (event) => {
-    const annotation = event.params.annotation;
-    const text = annotation.text?.trim();
-    const page = annotation.position.pageIndex + 1;
+const readerSelectionHandler: _ZoteroTypes.Reader.EventHandler<
+  "renderTextSelectionPopup"
+> = (event) => {
+  const annotation = event.params.annotation;
+  const text = annotation.text?.trim();
+  const page = annotation.position.pageIndex + 1;
 
-    if (!text) return;
-    updateSelectedText(`page ${page}, ${text}`);
-  };
+  if (!text) return;
+  updateSelectedText(`page ${page}, ${text}`);
+};
 
 function registerItemPaneSection() {
   Zotero.ItemPaneManager.registerSection({
@@ -164,7 +165,10 @@ function ensureReactBridge(win: InSituAIReactWindow) {
 
   const suffix = __env__ === "development" ? `?t=${REACT_ASSET_VERSION}` : "";
   win.__insituaiReactStyleURL = `${REACT_STYLE_URL}${suffix}`;
-  Services.scriptloader.loadSubScript(`${REACT_WINDOW_SCRIPT_URL}${suffix}`, win);
+  Services.scriptloader.loadSubScript(
+    `${REACT_WINDOW_SCRIPT_URL}${suffix}`,
+    win,
+  );
   win.__insituaiReactLoaded = true;
   win.__insituaiReactAssetVersion = REACT_ASSET_VERSION;
 }

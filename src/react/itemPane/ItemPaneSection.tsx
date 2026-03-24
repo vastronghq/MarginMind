@@ -251,20 +251,18 @@ export function ItemPaneSection({
   return (
     <aside
       ref={asideRef}
+      className="w-full"
       // className="flex h-full max-h-[80vh] min-h-0 min-w-0 flex-col overflow-hidden bg-[var(--material-sidepane)] text-[var(--fill-primary)]"
     >
       {/* Header */}
-      <header className="border-white/8 flex shrink-0 items-center gap-3 border-b p-3">
-        <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-blue-600 text-[13px] font-semibold shadow-inner">
+      <header className="flex shrink-0 items-center gap-3 p-3">
+        {/* <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-blue-600 text-[13px] font-semibold shadow-inner">
           C
-        </div>
+        </div> */}
         <div className="min-w-0">
           <div className="flex items-center gap-2">
             <span className="truncate text-[13px] font-semibold text-blue-400">
               Cline Research
-            </span>
-            <span className="flex items-center gap-1 rounded-full border border-white/10 px-2.5 py-1 text-[10px] font-medium text-white/70">
-              Claude 4.5
             </span>
           </div>
           <div className="text-[11px] text-white/50">{itemData.title}</div>
@@ -275,7 +273,7 @@ export function ItemPaneSection({
       <main
         data-can-scroll="true"
         ref={messageRef}
-        className="flex max-h-[50vh] min-h-0 flex-1 flex-col gap-3 overflow-hidden overflow-y-auto p-3"
+        className="flex max-h-[40vh] min-h-0 flex-1 flex-col gap-3 overflow-hidden overflow-y-auto p-3"
       >
         {/* Context Bar */}
         <div className="flex flex-wrap gap-2 rounded-lg border border-white/10 bg-black/10 px-3 py-2 text-[11px] text-white/60">

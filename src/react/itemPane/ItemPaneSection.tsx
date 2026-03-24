@@ -251,7 +251,7 @@ export function ItemPaneSection({
   return (
     <aside
       ref={asideRef}
-      className="flex h-full max-h-[80vh] min-h-0 min-w-0 flex-col overflow-hidden bg-[var(--material-sidepane)] text-[var(--fill-primary)] text-white"
+      className="flex h-full max-h-[80vh] min-h-0 min-w-0 flex-col overflow-hidden bg-[var(--material-sidepane)] text-[var(--fill-primary)]"
     >
       {/* Header */}
       <header className="border-white/8 flex shrink-0 items-center gap-3 border-b p-3">

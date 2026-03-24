@@ -355,6 +355,9 @@ export function ItemPaneSection({
                 <span className="inline-flex items-center rounded-md border border-white/10 px-2 py-1 text-[11px] font-medium text-white/65 opacity-50">
                   Paper Loaded
                 </span>
+                <span className="inline-flex items-center rounded-md border border-white/10 px-2 py-1 text-[11px] font-medium text-blue-400 text-white/65">
+                  stepfun/step-3.5-flash:free
+                </span>
                 {queuedSelection && (
                   <span className="inline-flex items-center rounded-md border border-white/10 px-2 py-1 text-[11px] font-medium text-blue-400 text-white/65">
                     Selection Ready

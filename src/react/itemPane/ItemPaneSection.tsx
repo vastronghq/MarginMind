@@ -64,7 +64,7 @@ function MessageBubble({ message }: { message: ChatMessage }) {
       className={`flex ${isAssistant || isSystem ? "justify-start" : "justify-end"}`}
     >
       <div
-        className={`max-w-[92%] min-w-0 rounded-2xl border px-3.5 py-3 ${
+        className={`min-w-0 max-w-[92%] rounded-2xl border px-3.5 py-3 ${
           isSystem
             ? "border-[var(--accent-blue)]/20 bg-[color-mix(in_srgb,var(--accent-blue)_10%,transparent)] text-[12px] text-white/75"
             : isAssistant
@@ -88,7 +88,7 @@ function MessageBubble({ message }: { message: ChatMessage }) {
 
 function EmptyPane() {
   return (
-    <div className="cline-shell w-full min-w-0 rounded-xl border border-white/10 px-4 py-5 text-[var(--fill-primary)]">
+    <div className="flex h-full min-h-0 w-full min-w-0 flex-col overflow-hidden rounded-xl border border-white/10 bg-[var(--material-sidepane)] px-4 py-5 text-[var(--fill-primary)]">
       <div className="text-[15px] font-semibold">No item selected</div>
       <div className="mt-1 text-[13px] text-white/55">
         Select an item to open the assistant workspace.
@@ -251,10 +251,10 @@ export function ItemPaneSection({
   return (
     <aside
       ref={asideRef}
-      className="cline-shell flex max-h-[80vh] flex-col overflow-hidden text-white"
+      className="flex h-full max-h-[80vh] min-h-0 min-w-0 flex-col overflow-hidden bg-[var(--material-sidepane)] text-[var(--fill-primary)] text-white"
     >
       {/* Header */}
-      <header className="flex shrink-0 items-center gap-3 border-b border-white/8 p-3">
+      <header className="border-white/8 flex shrink-0 items-center gap-3 border-b p-3">
         <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-blue-600 text-[13px] font-semibold shadow-inner">
           C
         </div>
@@ -263,7 +263,9 @@ export function ItemPaneSection({
             <span className="truncate text-[13px] font-semibold text-blue-400">
               Cline Research
             </span>
-            <span className="cline-badge text-[10px]">Claude 3.5</span>
+            <span className="inline-flex items-center gap-1 rounded-full border border-white/10 px-2.5 py-1 text-[10px] font-medium text-white/70">
+              Claude 4.5
+            </span>
           </div>
           <div className="text-[11px] text-white/50">{itemData.title}</div>
         </div>
@@ -273,10 +275,10 @@ export function ItemPaneSection({
       <main
         data-can-scroll="true"
         ref={messageRef}
-        className="cline-scrollbar flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto p-3"
+        className="scrollbar-width: thin; scrollbar-color: color-mix(in_srgb,var(--fill-primary)_22%,transparent) transparent flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto p-3"
       >
         {/* Context Bar */}
-        <div className="cline-panel flex flex-wrap gap-2 px-3 py-2 text-[11px] text-white/60">
+        <div className="flex flex-wrap gap-2 rounded-lg border border-white/10 bg-black/10 px-3 py-2 text-[11px] text-white/60">
           <span className="font-medium text-white/80">Context:</span>
           <span>{itemData.creators}</span>
           <span className="opacity-20">/</span>
@@ -285,7 +287,7 @@ export function ItemPaneSection({
         </div>
 
         {/* System Prompt */}
-        <div className="cline-panel p-3 text-[12px] leading-relaxed text-white/60">
+        <div className="rounded-lg border border-white/10 bg-black/10 p-3 text-[12px] leading-relaxed text-white/60">
           <div className="mb-1 text-[10px] font-bold uppercase tracking-widest text-white/30">
             System
           </div>
@@ -299,17 +301,17 @@ export function ItemPaneSection({
       </main>
 
       {/* Footer: 与 Header/Main 保持一致的 Padding 和边框风格 */}
-      <footer className="flex shrink-0 flex-col gap-3 border-t border-white/8 p-3">
+      <footer className="border-white/8 flex shrink-0 flex-col gap-3 border-t p-3">
         {/* Selection Preview */}
         {queuedSelection && (
-          <div className="cline-panel p-3">
+          <div className="rounded-lg border border-white/10 bg-black/10 p-3">
             <div className="mb-2 flex items-center justify-between">
               <span className="text-[10px] font-bold uppercase tracking-widest text-white/40">
                 Reader Selection
               </span>
               <button
                 onClick={useSelection}
-                className="cline-tool-pill text-blue-400 hover:bg-blue-500/20"
+                className="inline-flex items-center rounded-md border border-white/10 px-2 py-1 text-[11px] font-medium text-blue-400 text-white/65 hover:bg-blue-500/20"
               >
                 Insert Into Prompt
               </button>
@@ -331,7 +333,7 @@ export function ItemPaneSection({
                 <button
                   key={action}
                   onClick={() => send(action)}
-                  className="cline-badge hover:bg-white/10"
+                  className="inline-flex items-center gap-1 rounded-full border border-white/10 px-2.5 py-1 text-[11px] font-medium text-white/70 hover:bg-white/10"
                 >
                   {action}
                 </button>
@@ -339,10 +341,10 @@ export function ItemPaneSection({
             </div>
           )}
 
-          <div className="cline-panel p-3">
+          <div className="rounded-lg border border-white/10 bg-black/10 p-3">
             <textarea
               data-can-scroll="true"
-              className="cline-composer w-full resize-none bg-transparent text-[13px] outline-none"
+              className="min-h-[84px] w-full resize-none rounded-lg border border-white/10 bg-transparent px-3 py-3 text-[13px] leading-6 text-[var(--fill-primary)] outline-none placeholder:text-white/35 focus:border-[var(--accent-blue)]"
               rows={3}
               onChange={(e) => setDraft(e.target.value)}
               placeholder="Ask about the paper..."
@@ -350,9 +352,11 @@ export function ItemPaneSection({
             />
             <div className="mt-2 flex items-center justify-between border-t border-white/5 pt-2">
               <div className="flex gap-2 text-[10px]">
-                <span className="cline-tool-pill opacity-50">Paper Loaded</span>
+                <span className="inline-flex items-center rounded-md border border-white/10 px-2 py-1 text-[11px] font-medium text-white/65 opacity-50">
+                  Paper Loaded
+                </span>
                 {queuedSelection && (
-                  <span className="cline-tool-pill text-blue-400">
+                  <span className="inline-flex items-center rounded-md border border-white/10 px-2 py-1 text-[11px] font-medium text-blue-400 text-white/65">
                     Selection Ready
                   </span>
                 )}

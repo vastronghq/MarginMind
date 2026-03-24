@@ -1,7 +1,7 @@
 ﻿@tailwind components;
 @tailwind utilities;
 
-@layer components {
+/* @layer components {
   .cline-shell {
     @apply flex h-full min-h-0 min-w-0 flex-col overflow-hidden bg-[var(--material-sidepane)] text-[var(--fill-primary)];
   }
@@ -26,6 +26,4 @@
   .cline-tool-pill {
     @apply inline-flex items-center rounded-md border border-white/10 px-2 py-1 text-[11px] font-medium text-white/65;
   }
-}
-
-
+} */

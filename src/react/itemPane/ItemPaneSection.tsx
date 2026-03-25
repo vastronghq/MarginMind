@@ -14,12 +14,35 @@ type ItemPaneSectionProps = {
   selectedText: string;
 };
 
+type ItemContext = NonNullable<ItemPaneSectionProps["data"]>;
+
 type ChatMessage = {
   id: string;
   role: "assistant" | "user" | "system";
   text: string;
   meta?: string;
 };
+
+type PersistedChatState = {
+  messages: ChatMessage[];
+  draft: string;
+  queuedSelection: string;
+  activeContext: ItemContext | null;
+};
+
+type InSituAIChatWindow = Window & {
+  __insituaiItemPaneChatState?: PersistedChatState;
+};
+
+function getPersistedState(): PersistedChatState | null {
+  const win = globalThis as unknown as InSituAIChatWindow;
+  return win.__insituaiItemPaneChatState ?? null;
+}
+
+function setPersistedState(state: PersistedChatState) {
+  const win = globalThis as unknown as InSituAIChatWindow;
+  win.__insituaiItemPaneChatState = state;
+}
 
 function makeSelectionPrompt(selection: string) {
   return `Use this selection as evidence and explain its role in the paper:\n\n${selection}`;
@@ -83,14 +106,23 @@ export function ItemPaneSection({
   showSelectedText = false,
   selectedText,
 }: ItemPaneSectionProps) {
-  const [messages, setMessages] = useState<ChatMessage[]>([]);
-  const [draft, setDraft] = useState("");
-  const [queuedSelection, setQueuedSelection] = useState("");
+  const persistedState = getPersistedState();
+  const [messages, setMessages] = useState<ChatMessage[]>(
+    persistedState?.messages?.length
+      ? persistedState.messages
+      : createInitialMessages(),
+  );
+  const [draft, setDraft] = useState(persistedState?.draft ?? "");
+  const [queuedSelection, setQueuedSelection] = useState(
+    persistedState?.queuedSelection ?? "",
+  );
+  const [activeContext, setActiveContext] = useState<ItemContext | null>(
+    persistedState?.activeContext ?? data ?? null,
+  );
   const [isSending, setIsSending] = useState(false);
   const [requestError, setRequestError] = useState("");
   const [showJumpToLatest, setShowJumpToLatest] = useState(false);
   const selectionSignatureRef = useRef("");
-  const itemSignature = data?.keyText ?? "";
   const asideRef = useRef<HTMLElement | null>(null);
   const messageRef = useRef<HTMLDivElement | null>(null);
   const autoScrollRef = useRef(true);
@@ -152,27 +184,21 @@ export function ItemPaneSection({
   }, []);
 
   useEffect(() => {
-    if (!data) {
-      setMessages([]);
-      setDraft("");
-      setQueuedSelection("");
-      setIsSending(false);
-      setRequestError("");
-      selectionSignatureRef.current = "";
-      return;
-    }
-
-    setMessages(createInitialMessages());
-    setDraft("");
-    setQueuedSelection(showSelectedText ? selectedText : "");
-    setRequestError("");
-    autoScrollRef.current = true;
-    setShowJumpToLatest(false);
-    selectionSignatureRef.current = showSelectedText ? selectedText : "";
-  }, [itemSignature, data, selectedText, showSelectedText]);
+    if (!data) return;
+    setActiveContext(data);
+  }, [data]);
 
   useEffect(() => {
-    if (!data || !showSelectedText || !selectedText) return;
+    setPersistedState({
+      messages,
+      draft,
+      queuedSelection,
+      activeContext,
+    });
+  }, [messages, draft, queuedSelection, activeContext]);
+
+  useEffect(() => {
+    if (!showSelectedText || !selectedText) return;
     if (selectionSignatureRef.current === selectedText) return;
 
     selectionSignatureRef.current = selectedText;
@@ -189,12 +215,12 @@ export function ItemPaneSection({
       });
       return next;
     });
-  }, [data, selectedText, showSelectedText]);
+  }, [selectedText, showSelectedText]);
 
-  if (!data) {
+  if (!activeContext && messages.length === 0) {
     return <EmptyPane />;
   }
-  const itemData = data;
+  const itemData = activeContext;
 
   const quickActions = [
     {
@@ -223,11 +249,11 @@ export function ItemPaneSection({
   function buildSystemPrompt() {
     const contextPrompt = [
       "Paper context:",
-      `Title: ${itemData.title}`,
-      `Creators: ${itemData.creators}`,
-      `Year: ${itemData.year}`,
-      `Key: ${itemData.keyText}`,
-      `Abstract: ${itemData.abstractPreview}`,
+      itemData ? `Title: ${itemData.title}` : "Title: (none)",
+      itemData ? `Creators: ${itemData.creators}` : "Creators: (none)",
+      itemData ? `Year: ${itemData.year}` : "Year: (none)",
+      itemData ? `Key: ${itemData.keyText}` : "Key: (none)",
+      itemData ? `Abstract: ${itemData.abstractPreview}` : "Abstract: (none)",
       queuedSelection ? `Reader selection: ${queuedSelection}` : "",
     ]
       .filter(Boolean)
@@ -351,8 +377,9 @@ export function ItemPaneSection({
             Context
           </div>
           <div className="text-md">
-            {itemData.title} / {itemData.creators} / {itemData.year} /{" "}
-            {itemData.keyText}
+            {itemData
+              ? `${itemData.title} / ${itemData.creators} / ${itemData.year} / ${itemData.keyText}`
+              : "No active item context"}
           </div>
         </div>
       </section>

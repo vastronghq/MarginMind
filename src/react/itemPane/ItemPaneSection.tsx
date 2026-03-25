@@ -153,7 +153,12 @@ function MessageBubble({
   const isSystem = message.role === "system";
 
   return (
-    <div className={cn("flex", isAssistant || isSystem ? "justify-start" : "justify-end")}>
+    <div
+      className={cn(
+        "flex",
+        isAssistant || isSystem ? "justify-start" : "justify-end",
+      )}
+    >
       <Card
         className={cn(
           "relative min-w-0 max-w-[92%] rounded-2xl border px-3 py-2.5",
@@ -162,7 +167,9 @@ function MessageBubble({
             : isAssistant
               ? "border-white/10 bg-white/5 text-[14px] text-[var(--fill-primary)]"
               : "border-[var(--accent-blue)]/35 bg-[color-mix(in_srgb,var(--accent-blue)_22%,transparent)] text-[14px] text-[var(--fill-primary)]",
-          selectionMode && selected ? "ring-[var(--accent-blue)]/55 ring-2" : "",
+          selectionMode && selected
+            ? "ring-[var(--accent-blue)]/55 ring-2"
+            : "",
         )}
       >
         {selectionMode ? (
@@ -176,7 +183,9 @@ function MessageBubble({
 
         <div className="mb-1 flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-[0.08em] text-white/45">
           <span>{isAssistant ? "InSitu" : isSystem ? "Selection" : "You"}</span>
-          {message.meta ? <span className="text-white/30">{message.meta}</span> : null}
+          {message.meta ? (
+            <span className="text-white/30">{message.meta}</span>
+          ) : null}
         </div>
 
         <MessageContent text={message.text} />
@@ -204,7 +213,9 @@ export function ItemPaneSection({
 }: ItemPaneSectionProps) {
   const seeded = seedState(getPersistedState(), data);
   const [sessions, setSessions] = useState<ChatSession[]>(seeded.sessions);
-  const [activeSessionID, setActiveSessionID] = useState(seeded.activeSessionID);
+  const [activeSessionID, setActiveSessionID] = useState(
+    seeded.activeSessionID,
+  );
   const [activeContext, setActiveContext] = useState<ItemContext | null>(
     seeded.activeContext ?? data ?? null,
   );
@@ -225,7 +236,8 @@ export function ItemPaneSection({
   const currentSettings = loadAISettings();
 
   const activeSession = useMemo(
-    () => sessions.find((session) => session.id === activeSessionID) ?? sessions[0],
+    () =>
+      sessions.find((session) => session.id === activeSessionID) ?? sessions[0],
     [sessions, activeSessionID],
   );
 
@@ -677,7 +689,8 @@ export function ItemPaneSection({
       annotation.libraryID = attachment.libraryID;
       annotation.parentKey = attachment.key;
       annotation.annotationType = selectedAnnotation.type || "highlight";
-      annotation.annotationPageLabel = selectedAnnotation.position.pageIndex + 1;
+      annotation.annotationPageLabel =
+        selectedAnnotation.position.pageIndex + 1;
       annotation.annotationText = selectedAnnotation.text || "";
       annotation.annotationComment = messageComment;
       annotation.annotationColor = selectedAnnotation.color || "#ffd400";
@@ -736,7 +749,7 @@ export function ItemPaneSection({
           <Card className="border-white/10 bg-black/15 p-1.5">
             <CardContent
               data-can-scroll="true"
-              className="flex max-h-[140px] flex-col gap-1 overflow-y-auto p-0 pr-1"
+              className="flex max-h-[240px] flex-col gap-1.5 overflow-y-auto p-0 pr-1"
             >
               {sessions
                 .slice()
@@ -756,22 +769,20 @@ export function ItemPaneSection({
                         setIsHistoryOpen(false);
                       }}
                       className={cn(
-                        "rounded-lg border p-1.5 text-left transition",
+                        "rounded-lg border p-2 text-left transition",
                         isActive
                           ? "border-[var(--accent-blue)]/45 bg-[color-mix(in_srgb,var(--accent-blue)_14%,transparent)]"
                           : "border-white/10 bg-black/20 hover:bg-white/5",
                       )}
                     >
-                      <div className="flex items-start justify-between gap-2">
-                        <div className="min-w-0 flex-1 truncate text-[13px] font-medium leading-5 text-[var(--fill-primary)]">
+                      <div className="flex h-7 items-center gap-2">
+                        <div className="min-w-0 flex-1 truncate pr-1 text-[13px] font-medium leading-4 text-[var(--fill-primary)]">
                           {session.title}
                         </div>
-                        <div className="shrink-0 text-[11px] leading-5 text-white/55">
+                        <div className="shrink-0 whitespace-nowrap text-[12px] font-medium leading-4 text-white/80">
+                          {session.messages.length} messages |{" "}
                           {formatUpdatedAt(session.updatedAt)}
                         </div>
-                      </div>
-                      <div className="text-[11px] leading-4 text-white/45">
-                        {session.messages.length} messages
                       </div>
                     </button>
                   );
@@ -821,7 +832,9 @@ export function ItemPaneSection({
           </div>
         ))}
 
-        {isSending ? <div className="text-sm text-white/55">Thinking...</div> : null}
+        {isSending ? (
+          <div className="text-sm text-white/55">Thinking...</div>
+        ) : null}
 
         {showJumpToLatest ? (
           <Button
@@ -867,20 +880,20 @@ export function ItemPaneSection({
                   size="xs"
                   variant="outline"
                   onClick={clearSelectionMode}
-                    className="h-7 border-white/10 bg-transparent px-2 text-[12px] text-white/80"
-                  >
-                    Cancel
-                  </Button>
+                  className="h-7 border-white/10 bg-transparent px-2 text-[12px] text-white/80"
+                >
+                  Cancel
+                </Button>
                 <Button
                   type="button"
                   size="xs"
                   variant="outline"
                   onClick={saveSelectedMessagesAsAnnotation}
                   disabled={!canSaveToAnnotation}
-                    className="h-7 border-white/10 bg-transparent px-2 text-[12px] text-white/80"
-                    title={
-                      queuedSelection.trim()
-                        ? "Create annotation with selected messages in comment"
+                  className="h-7 border-white/10 bg-transparent px-2 text-[12px] text-white/80"
+                  title={
+                    queuedSelection.trim()
+                      ? "Create annotation with selected messages in comment"
                       : "Select text in reader first"
                   }
                 >
@@ -907,18 +920,30 @@ export function ItemPaneSection({
 
             <div className="flex items-center justify-between gap-2">
               <div className="flex flex-wrap gap-1.5">
-                <Badge variant="outline" className="border-white/10 px-1.5 py-0 text-[12px] text-white/65">
+                <Badge
+                  variant="outline"
+                  className="border-white/10 px-1.5 py-0 text-[12px] text-white/65"
+                >
                   {currentSettings.provider}
                 </Badge>
-                <Badge variant="outline" className="border-white/10 px-1.5 py-0 text-[12px] text-white/65">
+                <Badge
+                  variant="outline"
+                  className="border-white/10 px-1.5 py-0 text-[12px] text-white/65"
+                >
                   {currentSettings.model}
                 </Badge>
                 {queuedSelection ? (
-                  <Badge variant="outline" className="border-white/10 px-1.5 py-0 text-[12px] text-white/65">
+                  <Badge
+                    variant="outline"
+                    className="border-white/10 px-1.5 py-0 text-[12px] text-white/65"
+                  >
                     Selection Ready
                   </Badge>
                 ) : null}
-                <Badge variant="outline" className="border-white/10 px-1.5 py-0 text-[12px] text-white/50">
+                <Badge
+                  variant="outline"
+                  className="border-white/10 px-1.5 py-0 text-[12px] text-white/50"
+                >
                   Markdown-ready
                 </Badge>
               </div>

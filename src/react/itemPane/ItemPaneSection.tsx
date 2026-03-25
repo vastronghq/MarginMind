@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { streamAIReply, type AIChatMessage } from "../../modules/aiService";
 import { loadAISettings } from "../../utils/aiPrefs";
+import { Button } from "@/components/ui/button";
 
 type ItemPaneSectionProps = {
   data: {
@@ -686,6 +687,7 @@ export function ItemPaneSection({
             ) : null}
           </div>
         </div>
+        <Button variant="outline">Secondary</Button>
       </section>
     </aside>
   );

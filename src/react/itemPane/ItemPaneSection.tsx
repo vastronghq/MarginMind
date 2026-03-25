@@ -131,7 +131,10 @@ function formatUpdatedAt(timestamp: number) {
 function MessageContent({ text }: { text: string }) {
   // Markdown render hook point: swap this block with a markdown renderer later.
   return (
-    <div data-render-mode="plain" className="whitespace-pre-wrap break-words leading-6">
+    <div
+      data-render-mode="plain"
+      className="whitespace-pre-wrap break-words text-[14px] leading-6"
+    >
       {text}
     </div>
   );
@@ -153,12 +156,12 @@ function MessageBubble({
     <div className={cn("flex", isAssistant || isSystem ? "justify-start" : "justify-end")}>
       <Card
         className={cn(
-          "relative min-w-0 max-w-[92%] rounded-2xl border px-3.5 py-3",
+          "relative min-w-0 max-w-[92%] rounded-2xl border px-3 py-2.5",
           isSystem
-            ? "border-[var(--accent-blue)]/20 bg-[color-mix(in_srgb,var(--accent-blue)_10%,transparent)] text-[12px] text-white/75"
+            ? "border-[var(--accent-blue)]/20 bg-[color-mix(in_srgb,var(--accent-blue)_10%,transparent)] text-[13px] text-white/75"
             : isAssistant
-              ? "border-white/10 bg-white/5 text-[13px] text-[var(--fill-primary)]"
-              : "border-[var(--accent-blue)]/35 bg-[color-mix(in_srgb,var(--accent-blue)_22%,transparent)] text-[13px] text-[var(--fill-primary)]",
+              ? "border-white/10 bg-white/5 text-[14px] text-[var(--fill-primary)]"
+              : "border-[var(--accent-blue)]/35 bg-[color-mix(in_srgb,var(--accent-blue)_22%,transparent)] text-[14px] text-[var(--fill-primary)]",
           selectionMode && selected ? "ring-[var(--accent-blue)]/55 ring-2" : "",
         )}
       >
@@ -171,7 +174,7 @@ function MessageBubble({
           />
         ) : null}
 
-        <div className="mb-1 flex items-center gap-2 text-[10px] font-semibold uppercase tracking-[0.12em] text-white/45">
+        <div className="mb-1 flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-[0.08em] text-white/45">
           <span>{isAssistant ? "InSitu" : isSystem ? "Selection" : "You"}</span>
           {message.meta ? <span className="text-white/30">{message.meta}</span> : null}
         </div>
@@ -185,8 +188,8 @@ function MessageBubble({
 function EmptyPane() {
   return (
     <Card className="flex h-full min-h-0 w-full min-w-0 flex-col overflow-hidden rounded-xl border-white/10 bg-[var(--material-sidepane)] px-4 py-5 text-[var(--fill-primary)]">
-      <CardTitle className="text-[15px]">No item selected</CardTitle>
-      <CardDescription className="mt-1 text-[13px] text-white/55">
+      <CardTitle className="text-[16px]">No item selected</CardTitle>
+      <CardDescription className="mt-1 text-[14px] text-white/55">
         Select an item to open the assistant workspace.
       </CardDescription>
     </Card>
@@ -708,13 +711,13 @@ export function ItemPaneSection({
       ref={asideRef}
       className="border-width-[0.5px] flex max-h-[80vh] min-h-0 w-full flex-col overflow-hidden border-solid border-[var(--accent-blue)] bg-[var(--material-sidepane)] text-[var(--fill-primary)]"
     >
-      <section className="flex shrink-0 grow-0 flex-col gap-3 p-3">
-        <div className="flex items-center justify-between gap-2">
+      <section className="flex shrink-0 grow-0 flex-col gap-2 p-2.5">
+        <div className="flex items-center justify-between gap-1.5">
           <Button
             size="xs"
             variant="outline"
             onClick={() => setIsHistoryOpen((current) => !current)}
-            className="h-7 border-white/15 bg-black/20 text-[var(--fill-primary)] hover:bg-white/10"
+            className="h-7 border-white/15 bg-black/20 px-2 text-[12px] text-[var(--fill-primary)] hover:bg-white/10"
           >
             {isHistoryOpen ? "Hide history" : "Show history"}
           </Button>
@@ -723,17 +726,17 @@ export function ItemPaneSection({
             variant="outline"
             onClick={createNewSession}
             disabled={isSending}
-            className="h-7 border-white/15 bg-black/20 text-[var(--fill-primary)] hover:bg-white/10"
+            className="h-7 border-white/15 bg-black/20 px-2 text-[12px] text-[var(--fill-primary)] hover:bg-white/10"
           >
             New chat
           </Button>
         </div>
 
         {isHistoryOpen ? (
-          <Card className="border-white/10 bg-black/15 p-2">
+          <Card className="border-white/10 bg-black/15 p-1.5">
             <CardContent
               data-can-scroll="true"
-              className="flex max-h-[120px] flex-col gap-1 overflow-y-auto p-0 pr-1"
+              className="flex max-h-[140px] flex-col gap-1 overflow-y-auto p-0 pr-1"
             >
               {sessions
                 .slice()
@@ -753,17 +756,22 @@ export function ItemPaneSection({
                         setIsHistoryOpen(false);
                       }}
                       className={cn(
-                        "rounded-lg border p-2 text-left transition",
+                        "rounded-lg border p-1.5 text-left transition",
                         isActive
                           ? "border-[var(--accent-blue)]/45 bg-[color-mix(in_srgb,var(--accent-blue)_14%,transparent)]"
                           : "border-white/10 bg-black/20 hover:bg-white/5",
                       )}
                     >
-                      <div className="truncate text-[12px] font-medium text-[var(--fill-primary)]">
-                        {session.title}
+                      <div className="flex items-start justify-between gap-2">
+                        <div className="min-w-0 flex-1 truncate text-[13px] font-medium leading-5 text-[var(--fill-primary)]">
+                          {session.title}
+                        </div>
+                        <div className="shrink-0 text-[11px] leading-5 text-white/55">
+                          {formatUpdatedAt(session.updatedAt)}
+                        </div>
                       </div>
-                      <div className="mt-1 text-[10px] text-white/45">
-                        {session.messages.length} msg | {formatUpdatedAt(session.updatedAt)}
+                      <div className="text-[11px] leading-4 text-white/45">
+                        {session.messages.length} messages
                       </div>
                     </button>
                   );
@@ -773,12 +781,12 @@ export function ItemPaneSection({
         ) : null}
 
         <Card className="border-white/10 bg-black/10 text-white/70">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-[11px] font-bold uppercase tracking-widest text-white/40">
+          <CardHeader className="pb-1.5">
+            <CardTitle className="text-[12px] font-bold uppercase tracking-[0.08em] text-white/40">
               Context
             </CardTitle>
           </CardHeader>
-          <CardContent className="pt-0 text-[12px] leading-relaxed text-white/65">
+          <CardContent className="pt-0 text-[13px] leading-relaxed text-white/65">
             {itemData
               ? `${itemData.title} / ${itemData.creators} / ${itemData.year} / ${itemData.keyText}`
               : "No active item context"}
@@ -789,7 +797,7 @@ export function ItemPaneSection({
       <section
         data-can-scroll="true"
         ref={messageRef}
-        className="relative flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto px-3 pb-3"
+        className="relative flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto px-2.5 pb-2.5"
       >
         {messages.map((message) => (
           <div
@@ -813,7 +821,7 @@ export function ItemPaneSection({
           </div>
         ))}
 
-        {isSending ? <div className="text-xs text-white/55">Thinking...</div> : null}
+        {isSending ? <div className="text-sm text-white/55">Thinking...</div> : null}
 
         {showJumpToLatest ? (
           <Button
@@ -821,14 +829,14 @@ export function ItemPaneSection({
             size="xs"
             variant="outline"
             onClick={jumpToLatest}
-            className="sticky bottom-0 ml-auto rounded-full border-white/15 bg-black/60 text-white/80 backdrop-blur-sm hover:bg-black/75"
+            className="sticky bottom-0 ml-auto rounded-full border-white/15 bg-black/60 px-2.5 text-[12px] text-white/80 backdrop-blur-sm hover:bg-black/75"
           >
             Jump to latest
           </Button>
         ) : null}
       </section>
 
-      <section className="flex shrink-0 grow-0 flex-col gap-3 border-t border-white/10 p-3">
+      <section className="flex shrink-0 grow-0 flex-col gap-2 border-t border-white/10 p-2.5">
         {quickActions.length > 0 ? (
           <div className="flex flex-wrap gap-2">
             {quickActions.map((action) => (
@@ -838,7 +846,7 @@ export function ItemPaneSection({
                 variant="outline"
                 onClick={action.onClick}
                 disabled={isSending || isSelectionMode}
-                className="rounded-full border-white/10 bg-black/10 text-white/75 hover:bg-white/10"
+                className="rounded-full border-white/10 bg-black/10 px-2 text-[12px] text-white/75 hover:bg-white/10"
               >
                 {action.label}
               </Button>
@@ -847,9 +855,9 @@ export function ItemPaneSection({
         ) : null}
 
         {isSelectionMode ? (
-          <Card className="border-white/10 bg-black/20 px-3 py-2">
+          <Card className="border-white/10 bg-black/20 px-2.5 py-1.5">
             <CardContent className="flex items-center justify-between p-0">
-              <div className="text-xs text-white/70">
+              <div className="text-[13px] text-white/70">
                 Selected {selectedMessageIds.length} message
                 {selectedMessageIds.length === 1 ? "" : "s"}
               </div>
@@ -859,20 +867,20 @@ export function ItemPaneSection({
                   size="xs"
                   variant="outline"
                   onClick={clearSelectionMode}
-                  className="border-white/10 bg-transparent text-white/80"
-                >
-                  Cancel
-                </Button>
+                    className="h-7 border-white/10 bg-transparent px-2 text-[12px] text-white/80"
+                  >
+                    Cancel
+                  </Button>
                 <Button
                   type="button"
                   size="xs"
                   variant="outline"
                   onClick={saveSelectedMessagesAsAnnotation}
                   disabled={!canSaveToAnnotation}
-                  className="border-white/10 bg-transparent text-white/80"
-                  title={
-                    queuedSelection.trim()
-                      ? "Create annotation with selected messages in comment"
+                    className="h-7 border-white/10 bg-transparent px-2 text-[12px] text-white/80"
+                    title={
+                      queuedSelection.trim()
+                        ? "Create annotation with selected messages in comment"
                       : "Select text in reader first"
                   }
                 >
@@ -883,7 +891,7 @@ export function ItemPaneSection({
           </Card>
         ) : null}
 
-        <Card className="border-white/10 bg-black/10 p-3">
+        <Card className="border-white/10 bg-black/10 p-2.5">
           <CardContent className="space-y-2 p-0">
             <Textarea
               data-can-scroll="true"
@@ -892,25 +900,25 @@ export function ItemPaneSection({
               value={draft}
               onChange={(event) => updateDraft(event.target.value)}
               disabled={isSending || isSelectionMode}
-              className="min-h-[84px] resize-none border-white/10 bg-transparent text-[13px] leading-6 text-[var(--fill-primary)] placeholder:text-white/35"
+              className="min-h-[76px] resize-none border-white/10 bg-transparent text-[14px] leading-6 text-[var(--fill-primary)] placeholder:text-white/35"
             />
 
             <Separator className="bg-white/5" />
 
-            <div className="flex items-center justify-between gap-3">
-              <div className="flex flex-wrap gap-2">
-                <Badge variant="outline" className="border-white/10 text-white/65">
+            <div className="flex items-center justify-between gap-2">
+              <div className="flex flex-wrap gap-1.5">
+                <Badge variant="outline" className="border-white/10 px-1.5 py-0 text-[12px] text-white/65">
                   {currentSettings.provider}
                 </Badge>
-                <Badge variant="outline" className="border-white/10 text-white/65">
+                <Badge variant="outline" className="border-white/10 px-1.5 py-0 text-[12px] text-white/65">
                   {currentSettings.model}
                 </Badge>
                 {queuedSelection ? (
-                  <Badge variant="outline" className="border-white/10 text-white/65">
+                  <Badge variant="outline" className="border-white/10 px-1.5 py-0 text-[12px] text-white/65">
                     Selection Ready
                   </Badge>
                 ) : null}
-                <Badge variant="outline" className="border-white/10 text-white/50">
+                <Badge variant="outline" className="border-white/10 px-1.5 py-0 text-[12px] text-white/50">
                   Markdown-ready
                 </Badge>
               </div>
@@ -918,14 +926,14 @@ export function ItemPaneSection({
               <Button
                 disabled={!draft.trim() || isSending || isSelectionMode}
                 onClick={() => send(draft)}
-                className="rounded-lg bg-blue-600 px-4 py-1.5 text-[12px] font-bold shadow-lg hover:brightness-110"
+                className="rounded-lg bg-blue-600 px-3 py-1.5 text-[13px] font-semibold shadow-lg hover:brightness-110"
               >
                 {isSending ? "Sending..." : "Send"}
               </Button>
             </div>
 
             {requestError ? (
-              <div className="text-xs text-red-300">{requestError}</div>
+              <div className="text-[13px] text-red-300">{requestError}</div>
             ) : null}
           </CardContent>
         </Card>

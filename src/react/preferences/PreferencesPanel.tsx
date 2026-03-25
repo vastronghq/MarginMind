@@ -120,32 +120,32 @@ export function PreferencesPanel() {
   }
 
   return (
-    <section className="relative min-h-[320px] w-[92%] overflow-hidden rounded-xl border border-[color-mix(in_srgb,var(--accent-blue)_30%,transparent)] bg-[linear-gradient(145deg,color-mix(in_srgb,var(--material-sidepane)_88%,var(--accent-blue)_12%),var(--material-sidepane))] p-5 text-[var(--fill-primary)]">
+    <section className="relative min-h-[320px] w-[92%] overflow-hidden rounded-xl border border-[color-mix(in_srgb,var(--accent-blue)_30%,transparent)] bg-[linear-gradient(145deg,color-mix(in_srgb,var(--material-sidepane)_88%,var(--accent-blue)_12%),var(--material-sidepane))] p-4 text-[var(--fill-primary)]">
       <div className="pointer-events-none absolute -right-20 -top-20 h-56 w-56 rounded-full bg-[color-mix(in_srgb,var(--accent-blue)_20%,transparent)] blur-3xl" />
 
-      <div className="relative flex flex-col gap-5">
-        <header className="space-y-2">
-          <h2 className="text-xl font-semibold tracking-tight">InSituAI Preferences</h2>
-          <p className="text-sm text-white/65">
+      <div className="relative flex flex-col gap-4">
+        <header className="space-y-1.5">
+          <h2 className="text-[22px] font-semibold tracking-tight">InSituAI Preferences</h2>
+          <p className="text-[14px] text-white/65">
             Configure OpenRouter + model routing for Item Pane streaming chat.
           </p>
-          <Badge variant="outline" className="border-white/10 text-white/65">
+          <Badge variant="outline" className="border-white/10 px-1.5 py-0 text-[12px] text-white/65">
             {status === "saved" ? "Saved" : "Auto-save enabled"}
           </Badge>
         </header>
 
         <Card className="border-white/10 bg-black/10 text-[var(--fill-primary)]">
-          <CardHeader className="pb-3">
-            <CardTitle>General</CardTitle>
-            <CardDescription className="text-white/55">
+          <CardHeader className="pb-2.5">
+            <CardTitle className="text-[16px]">General</CardTitle>
+            <CardDescription className="text-[13px] text-white/55">
               Basic plugin controls.
             </CardDescription>
           </CardHeader>
-          <CardContent className="space-y-4">
+          <CardContent className="space-y-3">
             <label className="flex cursor-pointer items-center justify-between gap-4">
               <div className="space-y-0.5">
-                <p className="text-sm font-medium">Enable plugin features</p>
-                <p className="text-xs text-white/55">Global switch for InSituAI.</p>
+                <p className="text-[14px] font-medium">Enable plugin features</p>
+                <p className="text-[13px] text-white/55">Global switch for InSituAI.</p>
               </div>
               <input
                 type="checkbox"
@@ -159,8 +159,8 @@ export function PreferencesPanel() {
 
             <Separator className="bg-white/10" />
 
-            <div className="space-y-2">
-              <label htmlFor="insituai-pref-input" className="block text-sm font-medium">
+            <div className="space-y-1.5">
+              <label htmlFor="insituai-pref-input" className="block text-[14px] font-medium">
                 Default input text
               </label>
               <Input
@@ -177,16 +177,16 @@ export function PreferencesPanel() {
         </Card>
 
         <Card className="border-white/10 bg-black/10 text-[var(--fill-primary)]">
-          <CardHeader className="pb-3">
-            <CardTitle>AI API Configuration</CardTitle>
-            <CardDescription className="text-white/55">
+          <CardHeader className="pb-2.5">
+            <CardTitle className="text-[16px]">AI API Configuration</CardTitle>
+            <CardDescription className="text-[13px] text-white/55">
               These values are used by the item pane assistant.
             </CardDescription>
           </CardHeader>
 
-          <CardContent className="grid gap-3">
+          <CardContent className="grid gap-2.5">
             <label className="space-y-1.5">
-              <span className="block text-xs font-medium uppercase tracking-wide text-white/55">
+              <span className="block text-[12px] font-medium uppercase tracking-wide text-white/55">
                 Provider
               </span>
               <select
@@ -194,7 +194,7 @@ export function PreferencesPanel() {
                 onChange={(event) =>
                   changeProvider(event.target.value as AIProvider)
                 }
-                className="h-8 w-full rounded-md border border-white/15 bg-black/20 px-3 py-1 text-sm text-[var(--fill-primary)] outline-none transition focus:border-[var(--accent-blue)]"
+                className="h-8 w-full rounded-md border border-white/15 bg-black/20 px-2.5 py-1 text-[14px] text-[var(--fill-primary)] outline-none transition focus:border-[var(--accent-blue)]"
               >
                 {AI_PROVIDER_OPTIONS.map((option) => (
                   <option key={option.value} value={option.value}>
@@ -205,7 +205,7 @@ export function PreferencesPanel() {
             </label>
 
             <label className="space-y-1.5">
-              <span className="block text-xs font-medium uppercase tracking-wide text-white/55">
+              <span className="block text-[12px] font-medium uppercase tracking-wide text-white/55">
                 API Key
               </span>
               <Input
@@ -218,7 +218,7 @@ export function PreferencesPanel() {
             </label>
 
             <label className="space-y-1.5">
-              <span className="block text-xs font-medium uppercase tracking-wide text-white/55">
+              <span className="block text-[12px] font-medium uppercase tracking-wide text-white/55">
                 Base URL
               </span>
               <Input
@@ -230,9 +230,9 @@ export function PreferencesPanel() {
               />
             </label>
 
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-2 gap-2.5">
               <label className="space-y-1.5">
-                <span className="block text-xs font-medium uppercase tracking-wide text-white/55">
+                <span className="block text-[12px] font-medium uppercase tracking-wide text-white/55">
                   Model
                 </span>
                 <Input
@@ -245,7 +245,7 @@ export function PreferencesPanel() {
               </label>
 
               <label className="space-y-1.5">
-                <span className="block text-xs font-medium uppercase tracking-wide text-white/55">
+                <span className="block text-[12px] font-medium uppercase tracking-wide text-white/55">
                   Temperature
                 </span>
                 <Input
@@ -266,7 +266,7 @@ export function PreferencesPanel() {
             </div>
 
             <label className="space-y-1.5">
-              <span className="block text-xs font-medium uppercase tracking-wide text-white/55">
+              <span className="block text-[12px] font-medium uppercase tracking-wide text-white/55">
                 Max Tokens
               </span>
               <Input
@@ -286,7 +286,7 @@ export function PreferencesPanel() {
             </label>
 
             <label className="space-y-1.5">
-              <span className="block text-xs font-medium uppercase tracking-wide text-white/55">
+              <span className="block text-[12px] font-medium uppercase tracking-wide text-white/55">
                 System Prompt
               </span>
               <Textarea
@@ -306,11 +306,11 @@ export function PreferencesPanel() {
             type="button"
             variant="outline"
             onClick={resetAllAISettings}
-            className="border-white/15 bg-black/20 text-white/80 hover:bg-white/10"
+            className="h-8 border-white/15 bg-black/20 px-2.5 text-[13px] text-white/80 hover:bg-white/10"
           >
             Reset AI defaults
           </Button>
-          <span className="text-xs text-white/60">
+          <span className="text-[13px] text-white/60">
             {status === "saved" ? "Saved" : "Auto-save enabled"}
           </span>
         </footer>

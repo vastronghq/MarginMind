@@ -11,6 +11,18 @@ import {
   type AIProvider,
   type AISettings,
 } from "../../utils/aiPrefs";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Separator } from "@/components/ui/separator";
+import { Textarea } from "@/components/ui/textarea";
 
 type BaseSettings = {
   enable: boolean;
@@ -112,56 +124,67 @@ export function PreferencesPanel() {
       <div className="pointer-events-none absolute -right-20 -top-20 h-56 w-56 rounded-full bg-[color-mix(in_srgb,var(--accent-blue)_20%,transparent)] blur-3xl" />
 
       <div className="relative flex flex-col gap-5">
-        <header className="space-y-1">
-          <h2 className="text-xl font-semibold tracking-tight">
-            InSituAI Preferences
-          </h2>
+        <header className="space-y-2">
+          <h2 className="text-xl font-semibold tracking-tight">InSituAI Preferences</h2>
           <p className="text-sm text-white/65">
             Configure OpenRouter + model routing for Item Pane streaming chat.
           </p>
+          <Badge variant="outline" className="border-white/10 text-white/65">
+            {status === "saved" ? "Saved" : "Auto-save enabled"}
+          </Badge>
         </header>
 
-        <div className="rounded-lg border border-white/10 bg-black/10 p-4">
-          <label className="flex cursor-pointer items-center justify-between gap-4">
-            <div className="space-y-0.5">
-              <p className="text-sm font-medium">Enable plugin features</p>
-              <p className="text-xs text-white/55">
-                Global switch for InSituAI.
-              </p>
+        <Card className="border-white/10 bg-black/10 text-[var(--fill-primary)]">
+          <CardHeader className="pb-3">
+            <CardTitle>General</CardTitle>
+            <CardDescription className="text-white/55">
+              Basic plugin controls.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <label className="flex cursor-pointer items-center justify-between gap-4">
+              <div className="space-y-0.5">
+                <p className="text-sm font-medium">Enable plugin features</p>
+                <p className="text-xs text-white/55">Global switch for InSituAI.</p>
+              </div>
+              <input
+                type="checkbox"
+                className="h-4 w-4 accent-[var(--accent-blue)]"
+                checked={baseSettings.enable}
+                onChange={(event) =>
+                  updateBaseSetting("enable", event.target.checked)
+                }
+              />
+            </label>
+
+            <Separator className="bg-white/10" />
+
+            <div className="space-y-2">
+              <label htmlFor="insituai-pref-input" className="block text-sm font-medium">
+                Default input text
+              </label>
+              <Input
+                id="insituai-pref-input"
+                type="text"
+                value={baseSettings.input}
+                onChange={(event) =>
+                  updateBaseSetting("input", event.target.value)
+                }
+                className="border-white/15 bg-black/20 text-[var(--fill-primary)]"
+              />
             </div>
-            <input
-              type="checkbox"
-              className="h-4 w-4 accent-[var(--accent-blue)]"
-              checked={baseSettings.enable}
-              onChange={(event) =>
-                updateBaseSetting("enable", event.target.checked)
-              }
-            />
-          </label>
-        </div>
+          </CardContent>
+        </Card>
 
-        <div className="rounded-lg border border-white/10 bg-black/10 p-4">
-          <label
-            htmlFor="insituai-pref-input"
-            className="mb-2 block text-sm font-medium"
-          >
-            Default input text
-          </label>
-          <input
-            id="insituai-pref-input"
-            type="text"
-            value={baseSettings.input}
-            onChange={(event) => updateBaseSetting("input", event.target.value)}
-            className="w-full rounded-md border border-white/15 bg-black/20 px-3 py-2 text-sm outline-none transition focus:border-[var(--accent-blue)]"
-          />
-        </div>
+        <Card className="border-white/10 bg-black/10 text-[var(--fill-primary)]">
+          <CardHeader className="pb-3">
+            <CardTitle>AI API Configuration</CardTitle>
+            <CardDescription className="text-white/55">
+              These values are used by the item pane assistant.
+            </CardDescription>
+          </CardHeader>
 
-        <div className="rounded-lg border border-white/10 bg-black/10 p-4">
-          <h3 className="mb-3 text-sm font-semibold tracking-wide text-white/85">
-            AI API Configuration
-          </h3>
-
-          <div className="grid gap-3">
+          <CardContent className="grid gap-3">
             <label className="space-y-1.5">
               <span className="block text-xs font-medium uppercase tracking-wide text-white/55">
                 Provider
@@ -171,7 +194,7 @@ export function PreferencesPanel() {
                 onChange={(event) =>
                   changeProvider(event.target.value as AIProvider)
                 }
-                className="w-full rounded-md border border-white/15 bg-black/20 px-3 py-2 text-sm outline-none transition focus:border-[var(--accent-blue)]"
+                className="h-8 w-full rounded-md border border-white/15 bg-black/20 px-3 py-1 text-sm text-[var(--fill-primary)] outline-none transition focus:border-[var(--accent-blue)]"
               >
                 {AI_PROVIDER_OPTIONS.map((option) => (
                   <option key={option.value} value={option.value}>
@@ -185,14 +208,12 @@ export function PreferencesPanel() {
               <span className="block text-xs font-medium uppercase tracking-wide text-white/55">
                 API Key
               </span>
-              <input
+              <Input
                 type="password"
                 value={aiSettings.apiKey}
-                onChange={(event) =>
-                  updateAISetting("apiKey", event.target.value)
-                }
+                onChange={(event) => updateAISetting("apiKey", event.target.value)}
                 placeholder="OpenRouter API key"
-                className="w-full rounded-md border border-white/15 bg-black/20 px-3 py-2 text-sm outline-none transition focus:border-[var(--accent-blue)]"
+                className="border-white/15 bg-black/20 text-[var(--fill-primary)]"
               />
             </label>
 
@@ -200,14 +221,12 @@ export function PreferencesPanel() {
               <span className="block text-xs font-medium uppercase tracking-wide text-white/55">
                 Base URL
               </span>
-              <input
+              <Input
                 type="text"
                 value={aiSettings.baseURL}
-                onChange={(event) =>
-                  updateAISetting("baseURL", event.target.value)
-                }
+                onChange={(event) => updateAISetting("baseURL", event.target.value)}
                 placeholder={getDefaultBaseURL(aiSettings.provider)}
-                className="w-full rounded-md border border-white/15 bg-black/20 px-3 py-2 text-sm outline-none transition focus:border-[var(--accent-blue)]"
+                className="border-white/15 bg-black/20 text-[var(--fill-primary)]"
               />
             </label>
 
@@ -216,14 +235,12 @@ export function PreferencesPanel() {
                 <span className="block text-xs font-medium uppercase tracking-wide text-white/55">
                   Model
                 </span>
-                <input
+                <Input
                   type="text"
                   value={aiSettings.model}
-                  onChange={(event) =>
-                    updateAISetting("model", event.target.value)
-                  }
+                  onChange={(event) => updateAISetting("model", event.target.value)}
                   placeholder={getDefaultModel(aiSettings.provider)}
-                  className="w-full rounded-md border border-white/15 bg-black/20 px-3 py-2 text-sm outline-none transition focus:border-[var(--accent-blue)]"
+                  className="border-white/15 bg-black/20 text-[var(--fill-primary)]"
                 />
               </label>
 
@@ -231,7 +248,7 @@ export function PreferencesPanel() {
                 <span className="block text-xs font-medium uppercase tracking-wide text-white/55">
                   Temperature
                 </span>
-                <input
+                <Input
                   type="number"
                   min={0}
                   max={2}
@@ -243,7 +260,7 @@ export function PreferencesPanel() {
                       Number.parseFloat(event.target.value || "0"),
                     )
                   }
-                  className="w-full rounded-md border border-white/15 bg-black/20 px-3 py-2 text-sm outline-none transition focus:border-[var(--accent-blue)]"
+                  className="border-white/15 bg-black/20 text-[var(--fill-primary)]"
                 />
               </label>
             </div>
@@ -252,7 +269,7 @@ export function PreferencesPanel() {
               <span className="block text-xs font-medium uppercase tracking-wide text-white/55">
                 Max Tokens
               </span>
-              <input
+              <Input
                 type="number"
                 min={1}
                 max={8192}
@@ -264,7 +281,7 @@ export function PreferencesPanel() {
                     Number.parseInt(event.target.value || "1", 10),
                   )
                 }
-                className="w-full rounded-md border border-white/15 bg-black/20 px-3 py-2 text-sm outline-none transition focus:border-[var(--accent-blue)]"
+                className="border-white/15 bg-black/20 text-[var(--fill-primary)]"
               />
             </label>
 
@@ -272,26 +289,27 @@ export function PreferencesPanel() {
               <span className="block text-xs font-medium uppercase tracking-wide text-white/55">
                 System Prompt
               </span>
-              <textarea
+              <Textarea
                 rows={4}
                 value={aiSettings.systemPrompt}
                 onChange={(event) =>
                   updateAISetting("systemPrompt", event.target.value)
                 }
-                className="w-full resize-y rounded-md border border-white/15 bg-black/20 px-3 py-2 text-sm outline-none transition focus:border-[var(--accent-blue)]"
+                className="resize-y border-white/15 bg-black/20 text-[var(--fill-primary)]"
               />
             </label>
-          </div>
-        </div>
+          </CardContent>
+        </Card>
 
         <footer className="flex items-center justify-between">
-          <button
+          <Button
             type="button"
+            variant="outline"
             onClick={resetAllAISettings}
-            className="rounded-md border border-white/15 px-3 py-1.5 text-xs font-medium text-white/80 transition hover:bg-white/10"
+            className="border-white/15 bg-black/20 text-white/80 hover:bg-white/10"
           >
             Reset AI defaults
-          </button>
+          </Button>
           <span className="text-xs text-white/60">
             {status === "saved" ? "Saved" : "Auto-save enabled"}
           </span>

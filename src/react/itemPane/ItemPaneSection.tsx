@@ -1,7 +1,18 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { streamAIReply, type AIChatMessage } from "../../modules/aiService";
 import { loadAISettings } from "../../utils/aiPrefs";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Separator } from "@/components/ui/separator";
+import { Textarea } from "@/components/ui/textarea";
+import { cn } from "@/lib/utils";
 
 type ItemPaneSectionProps = {
   data: {
@@ -27,10 +38,18 @@ type ChatMessage = {
   meta?: string;
 };
 
-type PersistedChatState = {
+type ChatSession = {
+  id: string;
+  title: string;
+  updatedAt: number;
   messages: ChatMessage[];
   draft: string;
   queuedSelection: string;
+};
+
+type PersistedChatState = {
+  sessions: ChatSession[];
+  activeSessionID: string;
   activeContext: ItemContext | null;
 };
 
@@ -59,6 +78,65 @@ function createInitialMessages(): ChatMessage[] {
   ];
 }
 
+function createSession(partial?: Partial<ChatSession>): ChatSession {
+  const now = Date.now();
+  return {
+    id: partial?.id ?? `session-${now}`,
+    title: partial?.title ?? "New chat",
+    updatedAt: partial?.updatedAt ?? now,
+    messages: partial?.messages ?? createInitialMessages(),
+    draft: partial?.draft ?? "",
+    queuedSelection: partial?.queuedSelection ?? "",
+  };
+}
+
+function seedState(
+  persisted: PersistedChatState | null,
+  data: ItemContext | null,
+): PersistedChatState {
+  if (persisted?.sessions?.length) {
+    const activeSessionExists = persisted.sessions.some(
+      (session) => session.id === persisted.activeSessionID,
+    );
+    return {
+      sessions: persisted.sessions,
+      activeSessionID: activeSessionExists
+        ? persisted.activeSessionID
+        : persisted.sessions[0].id,
+      activeContext: persisted.activeContext ?? data,
+    };
+  }
+
+  const initialSession = createSession();
+  return {
+    sessions: [initialSession],
+    activeSessionID: initialSession.id,
+    activeContext: data,
+  };
+}
+
+function trimTitle(text: string, max = 42) {
+  const cleaned = text.replace(/\s+/g, " ").trim();
+  if (!cleaned) return "New chat";
+  return cleaned.length > max ? `${cleaned.slice(0, max)}...` : cleaned;
+}
+
+function formatUpdatedAt(timestamp: number) {
+  const date = new Date(timestamp);
+  return `${String(date.getHours()).padStart(2, "0")}:${String(
+    date.getMinutes(),
+  ).padStart(2, "0")}`;
+}
+
+function MessageContent({ text }: { text: string }) {
+  // Markdown render hook point: swap this block with a markdown renderer later.
+  return (
+    <div data-render-mode="plain" className="whitespace-pre-wrap break-words leading-6">
+      {text}
+    </div>
+  );
+}
+
 function MessageBubble({
   message,
   selectionMode,
@@ -72,17 +150,17 @@ function MessageBubble({
   const isSystem = message.role === "system";
 
   return (
-    <div
-      className={`flex ${isAssistant || isSystem ? "justify-start" : "justify-end"}`}
-    >
-      <div
-        className={`relative min-w-0 max-w-[92%] rounded-2xl border px-3.5 py-3 ${
+    <div className={cn("flex", isAssistant || isSystem ? "justify-start" : "justify-end")}>
+      <Card
+        className={cn(
+          "relative min-w-0 max-w-[92%] rounded-2xl border px-3.5 py-3",
           isSystem
             ? "border-[var(--accent-blue)]/20 bg-[color-mix(in_srgb,var(--accent-blue)_10%,transparent)] text-[12px] text-white/75"
             : isAssistant
               ? "border-white/10 bg-white/5 text-[13px] text-[var(--fill-primary)]"
-              : "border-[var(--accent-blue)]/35 bg-[color-mix(in_srgb,var(--accent-blue)_22%,transparent)] text-[13px] text-[var(--fill-primary)]"
-        } ${selectionMode && selected ? "ring-[var(--accent-blue)]/55 ring-2" : ""}`}
+              : "border-[var(--accent-blue)]/35 bg-[color-mix(in_srgb,var(--accent-blue)_22%,transparent)] text-[13px] text-[var(--fill-primary)]",
+          selectionMode && selected ? "ring-[var(--accent-blue)]/55 ring-2" : "",
+        )}
       >
         {selectionMode ? (
           <input
@@ -92,28 +170,26 @@ function MessageBubble({
             className="absolute right-2 top-2 h-4 w-4 accent-[var(--accent-blue)]"
           />
         ) : null}
+
         <div className="mb-1 flex items-center gap-2 text-[10px] font-semibold uppercase tracking-[0.12em] text-white/45">
           <span>{isAssistant ? "InSitu" : isSystem ? "Selection" : "You"}</span>
-          {message.meta ? (
-            <span className="text-white/30">{message.meta}</span>
-          ) : null}
+          {message.meta ? <span className="text-white/30">{message.meta}</span> : null}
         </div>
-        <div className="whitespace-pre-wrap break-words leading-6">
-          {message.text}
-        </div>
-      </div>
+
+        <MessageContent text={message.text} />
+      </Card>
     </div>
   );
 }
 
 function EmptyPane() {
   return (
-    <div className="flex h-full min-h-0 w-full min-w-0 flex-col overflow-hidden rounded-xl border border-white/10 bg-[var(--material-sidepane)] px-4 py-5 text-[var(--fill-primary)]">
-      <div className="text-[15px] font-semibold">No item selected</div>
-      <div className="mt-1 text-[13px] text-white/55">
+    <Card className="flex h-full min-h-0 w-full min-w-0 flex-col overflow-hidden rounded-xl border-white/10 bg-[var(--material-sidepane)] px-4 py-5 text-[var(--fill-primary)]">
+      <CardTitle className="text-[15px]">No item selected</CardTitle>
+      <CardDescription className="mt-1 text-[13px] text-white/55">
         Select an item to open the assistant workspace.
-      </div>
-    </div>
+      </CardDescription>
+    </Card>
   );
 }
 
@@ -123,18 +199,11 @@ export function ItemPaneSection({
   selectedText,
   selectedAnnotation,
 }: ItemPaneSectionProps) {
-  const persistedState = getPersistedState();
-  const [messages, setMessages] = useState<ChatMessage[]>(
-    persistedState?.messages?.length
-      ? persistedState.messages
-      : createInitialMessages(),
-  );
-  const [draft, setDraft] = useState(persistedState?.draft ?? "");
-  const [queuedSelection, setQueuedSelection] = useState(
-    persistedState?.queuedSelection ?? "",
-  );
+  const seeded = seedState(getPersistedState(), data);
+  const [sessions, setSessions] = useState<ChatSession[]>(seeded.sessions);
+  const [activeSessionID, setActiveSessionID] = useState(seeded.activeSessionID);
   const [activeContext, setActiveContext] = useState<ItemContext | null>(
-    persistedState?.activeContext ?? data ?? null,
+    seeded.activeContext ?? data ?? null,
   );
   const [isSending, setIsSending] = useState(false);
   const [requestError, setRequestError] = useState("");
@@ -142,6 +211,8 @@ export function ItemPaneSection({
   const [isSelectionMode, setIsSelectionMode] = useState(false);
   const [selectedMessageIds, setSelectedMessageIds] = useState<string[]>([]);
   const [isSavingAnnotation, setIsSavingAnnotation] = useState(false);
+  const [isHistoryOpen, setIsHistoryOpen] = useState(false);
+
   const selectionSignatureRef = useRef("");
   const asideRef = useRef<HTMLElement | null>(null);
   const messageRef = useRef<HTMLDivElement | null>(null);
@@ -149,6 +220,46 @@ export function ItemPaneSection({
   const longPressTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const errorTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const currentSettings = loadAISettings();
+
+  const activeSession = useMemo(
+    () => sessions.find((session) => session.id === activeSessionID) ?? sessions[0],
+    [sessions, activeSessionID],
+  );
+
+  const messages = activeSession?.messages ?? [];
+  const draft = activeSession?.draft ?? "";
+  const queuedSelection = activeSession?.queuedSelection ?? "";
+
+  function updateSessionByID(
+    sessionID: string,
+    updater: (session: ChatSession) => ChatSession,
+  ) {
+    setSessions((current) =>
+      current.map((session) =>
+        session.id === sessionID
+          ? { ...updater(session), updatedAt: Date.now() }
+          : session,
+      ),
+    );
+  }
+
+  function updateActiveSession(updater: (session: ChatSession) => ChatSession) {
+    if (!activeSession) return;
+    updateSessionByID(activeSession.id, updater);
+  }
+
+  useEffect(() => {
+    if (sessions.length === 0) {
+      const fallback = createSession();
+      setSessions([fallback]);
+      setActiveSessionID(fallback.id);
+      return;
+    }
+
+    if (!sessions.some((session) => session.id === activeSessionID)) {
+      setActiveSessionID(sessions[0].id);
+    }
+  }, [sessions, activeSessionID]);
 
   useEffect(() => {
     return () => {
@@ -220,29 +331,40 @@ export function ItemPaneSection({
 
   useEffect(() => {
     setPersistedState({
-      messages,
-      draft,
-      queuedSelection,
+      sessions,
+      activeSessionID,
       activeContext,
     });
-  }, [messages, draft, queuedSelection, activeContext]);
+  }, [sessions, activeSessionID, activeContext]);
 
   useEffect(() => {
+    if (!activeSession) return;
+
     if (!showSelectedText || !selectedText) {
-      // 清除预览消息
-      setMessages((current) =>
-        current.filter((msg) => msg.id !== "selection-preview"),
-      );
-      setQueuedSelection("");
+      updateActiveSession((session) => {
+        const hasPreview = session.messages.some(
+          (message) => message.id === "selection-preview",
+        );
+        if (!hasPreview && !session.queuedSelection) {
+          return session;
+        }
+        return {
+          ...session,
+          messages: session.messages.filter(
+            (message) => message.id !== "selection-preview",
+          ),
+          queuedSelection: "",
+        };
+      });
       return;
     }
+
     if (selectionSignatureRef.current === selectedText) return;
 
     selectionSignatureRef.current = selectedText;
-    setQueuedSelection(selectedText);
-    setMessages((current) => {
-      const previewIndex = current.findIndex(
-        (msg) => msg.id === "selection-preview",
+    updateActiveSession((session) => {
+      const previewIndex = session.messages.findIndex(
+        (message) => message.id === "selection-preview",
       );
       const previewMessage: ChatMessage = {
         id: "selection-preview",
@@ -250,19 +372,29 @@ export function ItemPaneSection({
         text: selectedText,
         meta: "Selection preview",
       };
+
       if (previewIndex !== -1) {
-        const next = [...current];
-        next[previewIndex] = previewMessage;
-        return next;
-      } else {
-        return [...current, previewMessage];
+        const nextMessages = [...session.messages];
+        nextMessages[previewIndex] = previewMessage;
+        return {
+          ...session,
+          queuedSelection: selectedText,
+          messages: nextMessages,
+        };
       }
+
+      return {
+        ...session,
+        queuedSelection: selectedText,
+        messages: [...session.messages, previewMessage],
+      };
     });
-  }, [selectedText, showSelectedText]);
+  }, [selectedText, showSelectedText, activeSessionID]);
 
   if (!activeContext && messages.length === 0) {
     return <EmptyPane />;
   }
+
   const itemData = activeContext;
 
   const canSaveToAnnotation =
@@ -311,47 +443,52 @@ export function ItemPaneSection({
   }
 
   async function send(prompt: string) {
-    if (isSending) return;
+    if (!activeSession || isSending) return;
+
     const trimmed = prompt.trim();
     if (!trimmed) return;
 
-    // 查找预览消息并构建新的消息列表
-    const previewIndex = messages.findIndex(
-      (msg) => msg.id === "selection-preview",
+    const sessionID = activeSession.id;
+    const previewIndex = activeSession.messages.findIndex(
+      (message) => message.id === "selection-preview",
     );
+
     let updatedMessages: ChatMessage[];
     let finalPrompt = trimmed;
 
     if (previewIndex !== -1) {
-      const previewMessage = messages[previewIndex];
-      // 合并：用户指令在前，选中的文本在后，使用更明确的格式
+      const previewMessage = activeSession.messages[previewIndex];
       finalPrompt = `${trimmed}\n\n[Selected text from paper]\n${previewMessage.text}`;
-      // 替换预览消息为合并后的消息
-      updatedMessages = [...messages];
+      updatedMessages = [...activeSession.messages];
       updatedMessages[previewIndex] = {
         id: `user-${Date.now()}`,
         role: "user",
         text: finalPrompt,
       };
     } else {
-      // 没有预览消息，直接添加用户消息
-      const userMessage: ChatMessage = {
-        id: `user-${Date.now()}`,
-        role: "user",
-        text: finalPrompt,
-      };
-      updatedMessages = [...messages, userMessage];
+      updatedMessages = [
+        ...activeSession.messages,
+        {
+          id: `user-${Date.now()}`,
+          role: "user",
+          text: finalPrompt,
+        },
+      ];
     }
 
-    // 先更新状态
-    setMessages(updatedMessages);
-    setDraft("");
-    setQueuedSelection("");
+    updateSessionByID(sessionID, (session) => ({
+      ...session,
+      title:
+        session.title === "New chat" ? trimTitle(finalPrompt) : session.title,
+      messages: updatedMessages,
+      draft: "",
+      queuedSelection: "",
+    }));
+
     setRequestError("");
     setIsSending(true);
 
     try {
-      // 使用更新后的消息构建 API 请求
       const apiMessages: AIChatMessage[] = [
         {
           role: "system",
@@ -370,16 +507,19 @@ export function ItemPaneSection({
           })),
       ];
 
-      const assistantMessageId = `assistant-${Date.now()}`;
-      setMessages((current) => [
-        ...current,
-        {
-          id: assistantMessageId,
-          role: "assistant",
-          text: "",
-          meta: `${currentSettings.provider} / ${currentSettings.model}`,
-        },
-      ]);
+      const assistantMessageID = `assistant-${Date.now()}`;
+      updateSessionByID(sessionID, (session) => ({
+        ...session,
+        messages: [
+          ...session.messages,
+          {
+            id: assistantMessageID,
+            role: "assistant",
+            text: "",
+            meta: `${currentSettings.provider} / ${currentSettings.model}`,
+          },
+        ],
+      }));
 
       let fullText = "";
       for await (const delta of streamAIReply({
@@ -387,23 +527,25 @@ export function ItemPaneSection({
         messages: apiMessages,
       })) {
         fullText += delta;
-        setMessages((current) =>
-          current.map((message) =>
-            message.id === assistantMessageId
+        updateSessionByID(sessionID, (session) => ({
+          ...session,
+          messages: session.messages.map((message) =>
+            message.id === assistantMessageID
               ? { ...message, text: fullText }
               : message,
           ),
-        );
+        }));
       }
 
       if (!fullText.trim()) {
-        setMessages((current) =>
-          current.map((message) =>
-            message.id === assistantMessageId
+        updateSessionByID(sessionID, (session) => ({
+          ...session,
+          messages: session.messages.map((message) =>
+            message.id === assistantMessageID
               ? { ...message, text: "(empty response)" }
               : message,
           ),
-        );
+        }));
       }
     } catch (error) {
       const errorMessage =
@@ -415,18 +557,29 @@ export function ItemPaneSection({
       errorTimeoutRef.current = setTimeout(() => {
         setRequestError("");
       }, 5000);
-      setMessages((current) => [
-        ...current,
-        {
-          id: `assistant-error-${Date.now()}`,
-          role: "assistant",
-          text: `Request failed: ${errorMessage}`,
-          meta: "Error",
-        },
-      ]);
+
+      updateSessionByID(sessionID, (session) => ({
+        ...session,
+        messages: [
+          ...session.messages,
+          {
+            id: `assistant-error-${Date.now()}`,
+            role: "assistant",
+            text: `Request failed: ${errorMessage}`,
+            meta: "Error",
+          },
+        ],
+      }));
     } finally {
       setIsSending(false);
     }
+  }
+
+  function updateDraft(nextDraft: string) {
+    updateActiveSession((session) => ({
+      ...session,
+      draft: nextDraft,
+    }));
   }
 
   function useSelection() {
@@ -434,7 +587,7 @@ export function ItemPaneSection({
     const nextDraft = draft.trim()
       ? `${draft.trim()}\n\n[Selected text]\n${queuedSelection}`
       : `[Selected text]\n${queuedSelection}`;
-    setDraft(nextDraft);
+    updateDraft(nextDraft);
   }
 
   function jumpToLatest() {
@@ -443,6 +596,16 @@ export function ItemPaneSection({
     autoScrollRef.current = true;
     setShowJumpToLatest(false);
     messageContainer.scrollTop = messageContainer.scrollHeight;
+  }
+
+  function createNewSession() {
+    const nextSession = createSession();
+    setSessions((current) => [nextSession, ...current]);
+    setActiveSessionID(nextSession.id);
+    setIsSelectionMode(false);
+    setSelectedMessageIds([]);
+    setRequestError("");
+    selectionSignatureRef.current = "";
   }
 
   function toggleMessageSelection(messageID: string) {
@@ -499,22 +662,19 @@ export function ItemPaneSection({
         .map((message) => {
           const roleLabel =
             message.role === "assistant"
-              ? "━━━━━━━━━━ 🤖 Assistant ━━━━━━━━━━"
+              ? "Assistant"
               : message.role === "user"
-                ? "━━━━━━━━━━━━ 🙋 User ━━━━━━━━━━━━"
+                ? "User"
                 : "System";
-          return `${roleLabel}\n${message.text}`;
+          return `----- ${roleLabel} -----\n${message.text}`;
         })
         .join("\n\n");
 
-      // Use the correct Zotero API to create annotation
-      // Based on user's working example
       const annotation = new Zotero.Item("annotation") as any;
       annotation.libraryID = attachment.libraryID;
-      annotation.parentKey = attachment.key; // Set parent PDF item key
+      annotation.parentKey = attachment.key;
       annotation.annotationType = selectedAnnotation.type || "highlight";
-      annotation.annotationPageLabel =
-        selectedAnnotation.position.pageIndex + 1; // Page numbers start from 1
+      annotation.annotationPageLabel = selectedAnnotation.position.pageIndex + 1;
       annotation.annotationText = selectedAnnotation.text || "";
       annotation.annotationComment = messageComment;
       annotation.annotationColor = selectedAnnotation.color || "#ffd400";
@@ -527,7 +687,6 @@ export function ItemPaneSection({
         `00000|${Date.now().toString().padStart(6, "0")}|00000`;
 
       await annotation.saveTx();
-
       clearSelectionMode();
     } catch (error) {
       const errorMessage =
@@ -549,23 +708,88 @@ export function ItemPaneSection({
       ref={asideRef}
       className="border-width-[0.5px] flex max-h-[80vh] min-h-0 w-full flex-col overflow-hidden border-solid border-[var(--accent-blue)] bg-[var(--material-sidepane)] text-[var(--fill-primary)]"
     >
-      <section className="flex shrink-0 grow-0 flex-col justify-center gap-3 p-3">
-        <div className="rounded-lg border border-white/10 bg-black/10 p-3 text-[12px] leading-relaxed text-white/60">
-          <div className="mb-1 text-[10px] font-bold uppercase tracking-widest text-white/30">
-            Context
-          </div>
-          <div className="text-md">
+      <section className="flex shrink-0 grow-0 flex-col gap-3 p-3">
+        <div className="flex items-center justify-between gap-2">
+          <Button
+            size="xs"
+            variant="outline"
+            onClick={() => setIsHistoryOpen((current) => !current)}
+            className="h-7 border-white/15 bg-black/20 text-[var(--fill-primary)] hover:bg-white/10"
+          >
+            {isHistoryOpen ? "Hide history" : "Show history"}
+          </Button>
+          <Button
+            size="xs"
+            variant="outline"
+            onClick={createNewSession}
+            disabled={isSending}
+            className="h-7 border-white/15 bg-black/20 text-[var(--fill-primary)] hover:bg-white/10"
+          >
+            New chat
+          </Button>
+        </div>
+
+        {isHistoryOpen ? (
+          <Card className="border-white/10 bg-black/15 p-2">
+            <CardContent
+              data-can-scroll="true"
+              className="flex max-h-[120px] flex-col gap-1 overflow-y-auto p-0 pr-1"
+            >
+              {sessions
+                .slice()
+                .sort((a, b) => b.updatedAt - a.updatedAt)
+                .map((session) => {
+                  const isActive = session.id === activeSessionID;
+                  return (
+                    <button
+                      key={session.id}
+                      type="button"
+                      disabled={isSending}
+                      onClick={() => {
+                        setActiveSessionID(session.id);
+                        setIsSelectionMode(false);
+                        setSelectedMessageIds([]);
+                        setRequestError("");
+                        setIsHistoryOpen(false);
+                      }}
+                      className={cn(
+                        "rounded-lg border p-2 text-left transition",
+                        isActive
+                          ? "border-[var(--accent-blue)]/45 bg-[color-mix(in_srgb,var(--accent-blue)_14%,transparent)]"
+                          : "border-white/10 bg-black/20 hover:bg-white/5",
+                      )}
+                    >
+                      <div className="truncate text-[12px] font-medium text-[var(--fill-primary)]">
+                        {session.title}
+                      </div>
+                      <div className="mt-1 text-[10px] text-white/45">
+                        {session.messages.length} msg | {formatUpdatedAt(session.updatedAt)}
+                      </div>
+                    </button>
+                  );
+                })}
+            </CardContent>
+          </Card>
+        ) : null}
+
+        <Card className="border-white/10 bg-black/10 text-white/70">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-[11px] font-bold uppercase tracking-widest text-white/40">
+              Context
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="pt-0 text-[12px] leading-relaxed text-white/65">
             {itemData
               ? `${itemData.title} / ${itemData.creators} / ${itemData.year} / ${itemData.keyText}`
               : "No active item context"}
-          </div>
-        </div>
+          </CardContent>
+        </Card>
       </section>
 
       <section
         data-can-scroll="true"
         ref={messageRef}
-        className="relative flex max-h-[40vh] min-h-0 flex-1 flex-col gap-3 overflow-hidden overflow-y-auto p-3"
+        className="relative flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto px-3 pb-3"
       >
         {messages.map((message) => (
           <div
@@ -588,106 +812,123 @@ export function ItemPaneSection({
             />
           </div>
         ))}
-        {isSending ? (
-          <div className="text-xs text-white/55">Thinking...</div>
-        ) : null}
+
+        {isSending ? <div className="text-xs text-white/55">Thinking...</div> : null}
+
         {showJumpToLatest ? (
-          <button
+          <Button
             type="button"
+            size="xs"
+            variant="outline"
             onClick={jumpToLatest}
-            className="sticky bottom-0 self-end rounded-full border border-white/15 bg-black/60 px-3 py-1 text-[11px] font-medium text-white/80 backdrop-blur-sm transition hover:bg-black/75"
+            className="sticky bottom-0 ml-auto rounded-full border-white/15 bg-black/60 text-white/80 backdrop-blur-sm hover:bg-black/75"
           >
             Jump to latest
-          </button>
+          </Button>
         ) : null}
       </section>
 
-      <section className="border-white/8 flex shrink-0 grow-0 flex-col gap-3 border-t p-3">
-        <div className="flex flex-col gap-3">
-          {quickActions.length > 0 ? (
-            <div className="flex flex-wrap gap-2">
-              {quickActions.map((action) => (
-                <button
-                  key={action.id}
-                  onClick={action.onClick}
-                  disabled={isSending || isSelectionMode}
-                  className="inline-flex items-center gap-1 rounded-full border border-white/10 px-2.5 py-1 text-[11px] font-medium text-white/70 hover:bg-white/10 disabled:opacity-40"
-                >
-                  {action.label}
-                </button>
-              ))}
-            </div>
-          ) : null}
+      <section className="flex shrink-0 grow-0 flex-col gap-3 border-t border-white/10 p-3">
+        {quickActions.length > 0 ? (
+          <div className="flex flex-wrap gap-2">
+            {quickActions.map((action) => (
+              <Button
+                key={action.id}
+                size="xs"
+                variant="outline"
+                onClick={action.onClick}
+                disabled={isSending || isSelectionMode}
+                className="rounded-full border-white/10 bg-black/10 text-white/75 hover:bg-white/10"
+              >
+                {action.label}
+              </Button>
+            ))}
+          </div>
+        ) : null}
 
-          {isSelectionMode ? (
-            <div className="flex items-center justify-between rounded-lg border border-white/10 bg-black/20 px-3 py-2">
+        {isSelectionMode ? (
+          <Card className="border-white/10 bg-black/20 px-3 py-2">
+            <CardContent className="flex items-center justify-between p-0">
               <div className="text-xs text-white/70">
                 Selected {selectedMessageIds.length} message
                 {selectedMessageIds.length === 1 ? "" : "s"}
               </div>
               <div className="flex items-center gap-2">
-                <button
+                <Button
                   type="button"
+                  size="xs"
+                  variant="outline"
                   onClick={clearSelectionMode}
-                  className="rounded-md border border-white/10 px-2 py-1 text-[11px] text-white/80"
+                  className="border-white/10 bg-transparent text-white/80"
                 >
                   Cancel
-                </button>
-                <button
+                </Button>
+                <Button
                   type="button"
+                  size="xs"
+                  variant="outline"
                   onClick={saveSelectedMessagesAsAnnotation}
                   disabled={!canSaveToAnnotation}
+                  className="border-white/10 bg-transparent text-white/80"
                   title={
                     queuedSelection.trim()
                       ? "Create annotation with selected messages in comment"
                       : "Select text in reader first"
                   }
-                  className="rounded-md border border-white/10 px-2 py-1 text-[11px] text-white/80 disabled:opacity-40"
                 >
                   {isSavingAnnotation ? "Saving..." : "Save to annotation"}
-                </button>
+                </Button>
               </div>
-            </div>
-          ) : null}
+            </CardContent>
+          </Card>
+        ) : null}
 
-          <div className="rounded-lg border border-white/10 bg-black/10 p-3">
-            <textarea
+        <Card className="border-white/10 bg-black/10 p-3">
+          <CardContent className="space-y-2 p-0">
+            <Textarea
               data-can-scroll="true"
-              className="min-h-[84px] w-full resize-none rounded-lg border border-white/10 bg-transparent px-3 py-3 text-[13px] leading-6 text-[var(--fill-primary)] outline-none placeholder:text-white/35 focus:border-[var(--accent-blue)]"
               rows={3}
-              onChange={(event) => setDraft(event.target.value)}
               placeholder="Ask about the paper..."
               value={draft}
+              onChange={(event) => updateDraft(event.target.value)}
               disabled={isSending || isSelectionMode}
+              className="min-h-[84px] resize-none border-white/10 bg-transparent text-[13px] leading-6 text-[var(--fill-primary)] placeholder:text-white/35"
             />
-            <div className="mt-2 flex items-center justify-between border-t border-white/5 pt-2">
-              <div className="flex flex-wrap gap-2 text-[10px]">
-                <span className="inline-flex items-center rounded-md border border-white/10 px-2 py-1 text-[11px] font-medium text-white/65">
+
+            <Separator className="bg-white/5" />
+
+            <div className="flex items-center justify-between gap-3">
+              <div className="flex flex-wrap gap-2">
+                <Badge variant="outline" className="border-white/10 text-white/65">
                   {currentSettings.provider}
-                </span>
-                <span className="inline-flex items-center rounded-md border border-white/10 px-2 py-1 text-[11px] font-medium text-white/65">
+                </Badge>
+                <Badge variant="outline" className="border-white/10 text-white/65">
                   {currentSettings.model}
-                </span>
+                </Badge>
                 {queuedSelection ? (
-                  <span className="inline-flex items-center rounded-md border border-white/10 px-2 py-1 text-[11px] font-medium text-white/65">
+                  <Badge variant="outline" className="border-white/10 text-white/65">
                     Selection Ready
-                  </span>
+                  </Badge>
                 ) : null}
+                <Badge variant="outline" className="border-white/10 text-white/50">
+                  Markdown-ready
+                </Badge>
               </div>
-              <button
+
+              <Button
                 disabled={!draft.trim() || isSending || isSelectionMode}
                 onClick={() => send(draft)}
-                className="rounded-lg bg-blue-600 px-4 py-1.5 text-[12px] font-bold shadow-lg transition hover:brightness-110 disabled:opacity-30"
+                className="rounded-lg bg-blue-600 px-4 py-1.5 text-[12px] font-bold shadow-lg hover:brightness-110"
               >
                 {isSending ? "Sending..." : "Send"}
-              </button>
+              </Button>
             </div>
+
             {requestError ? (
-              <div className="mt-2 text-xs text-red-300">{requestError}</div>
+              <div className="text-xs text-red-300">{requestError}</div>
             ) : null}
-          </div>
-        </div>
-        <Button variant="outline">Secondary</Button>
+          </CardContent>
+        </Card>
       </section>
     </aside>
   );

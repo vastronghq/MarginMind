@@ -87,20 +87,28 @@ function createSession(partial?: Partial<ChatSession>): ChatSession {
 }
 
 function getPersisted(): PersistedState | null {
-  return (globalThis as unknown as InSituAIChatWindow).__insituaiItemPaneChatState ?? null;
+  return (
+    (globalThis as unknown as InSituAIChatWindow).__insituaiItemPaneChatState ??
+    null
+  );
 }
 
 function setPersisted(state: PersistedState) {
-  (globalThis as unknown as InSituAIChatWindow).__insituaiItemPaneChatState = state;
+  (globalThis as unknown as InSituAIChatWindow).__insituaiItemPaneChatState =
+    state;
 }
 
 function seedState(data: ItemPaneData | null): PersistedState {
   const saved = getPersisted();
   if (saved?.sessions?.length) {
-    const activeExists = saved.sessions.some((s) => s.id === saved.activeSessionID);
+    const activeExists = saved.sessions.some(
+      (s) => s.id === saved.activeSessionID,
+    );
     return {
       sessions: saved.sessions,
-      activeSessionID: activeExists ? saved.activeSessionID : saved.sessions[0].id,
+      activeSessionID: activeExists
+        ? saved.activeSessionID
+        : saved.sessions[0].id,
       activeContext: saved.activeContext ?? data,
     };
   }
@@ -145,12 +153,16 @@ function MessageBubble({
   const isAssistantSide = message.role !== "user";
 
   return (
-    <div className={cn("flex", isAssistantSide ? "justify-start" : "justify-end")}>
+    <div
+      className={cn("flex", isAssistantSide ? "justify-start" : "justify-end")}
+    >
       <Card
         className={cn(
           "relative max-w-[92%] rounded-2xl border px-3 py-2.5",
           bubbleClass(message.role),
-          selectionMode && selected ? "ring-[var(--accent-blue)]/55 ring-2" : "",
+          selectionMode && selected
+            ? "ring-[var(--accent-blue)]/55 ring-2"
+            : "",
         )}
       >
         {selectionMode ? (
@@ -163,11 +175,22 @@ function MessageBubble({
         ) : null}
 
         <div className="mb-1 flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-[0.08em] text-white/45">
-          <span>{message.role === "assistant" ? "InSitu" : message.role === "system" ? "Selection" : "You"}</span>
-          {message.meta ? <span className="text-white/30">{message.meta}</span> : null}
+          <span>
+            {message.role === "assistant"
+              ? "InSitu"
+              : message.role === "system"
+                ? "Selection"
+                : "You"}
+          </span>
+          {message.meta ? (
+            <span className="text-white/30">{message.meta}</span>
+          ) : null}
         </div>
 
-        <div data-render-mode="plain" className="whitespace-pre-wrap break-words text-[14px] leading-6">
+        <div
+          data-render-mode="plain"
+          className="whitespace-pre-wrap break-words text-[14px] leading-6"
+        >
           {message.text}
         </div>
       </Card>
@@ -195,7 +218,9 @@ export function ItemPaneSection({
   const seeded = useMemo(() => seedState(data), []);
 
   const [sessions, setSessions] = useState<ChatSession[]>(seeded.sessions);
-  const [activeSessionID, setActiveSessionID] = useState(seeded.activeSessionID);
+  const [activeSessionID, setActiveSessionID] = useState(
+    seeded.activeSessionID,
+  );
   const [activeContext, setActiveContext] = useState<ItemPaneData | null>(
     seeded.activeContext ?? data ?? null,
   );
@@ -234,7 +259,10 @@ export function ItemPaneSection({
     selectedIDs.length > 0 &&
     !isSavingAnnotation;
 
-  function patchSession(sessionID: string, mutate: (session: ChatSession) => ChatSession) {
+  function patchSession(
+    sessionID: string,
+    mutate: (session: ChatSession) => ChatSession,
+  ) {
     setSessions((current) =>
       current.map((session) =>
         session.id === sessionID
@@ -280,7 +308,10 @@ export function ItemPaneSection({
     if (previewIndex === -1) {
       return {
         text: trimmed,
-        messages: [...baseMessages, { id: nowID("user"), role: "user" as const, text: trimmed }],
+        messages: [
+          ...baseMessages,
+          { id: nowID("user"), role: "user" as const, text: trimmed },
+        ],
       };
     }
 
@@ -302,7 +333,10 @@ export function ItemPaneSection({
 
     patchSession(sessionID, (session) => ({
       ...session,
-      title: session.title === "New chat" ? trimTitle(normalized.text) : session.title,
+      title:
+        session.title === "New chat"
+          ? trimTitle(normalized.text)
+          : session.title,
       messages: userAndHistory,
       draft: "",
       queuedSelection: "",
@@ -329,14 +363,18 @@ export function ItemPaneSection({
       const apiMessages: AIChatMessage[] = [
         { role: "system", content: buildSystemPrompt(activeContext) },
         ...userAndHistory
-          .filter((m): m is ChatMessage & { role: "user" | "assistant" } =>
-            m.role === "user" || m.role === "assistant",
+          .filter(
+            (m): m is ChatMessage & { role: "user" | "assistant" } =>
+              m.role === "user" || m.role === "assistant",
           )
           .map((m) => ({ role: m.role, content: m.text })),
       ];
 
       let full = "";
-      for await (const delta of streamAIReply({ settings, messages: apiMessages })) {
+      for await (const delta of streamAIReply({
+        settings,
+        messages: apiMessages,
+      })) {
         full += delta;
         patchSession(sessionID, (session) => ({
           ...session,
@@ -361,7 +399,12 @@ export function ItemPaneSection({
         ...session,
         messages: [
           ...session.messages,
-          { id: nowID("assistant-error"), role: "assistant", text: `Request failed: ${msg}`, meta: "Error" },
+          {
+            id: nowID("assistant-error"),
+            role: "assistant",
+            text: `Request failed: ${msg}`,
+            meta: "Error",
+          },
         ],
       }));
     } finally {
@@ -422,7 +465,11 @@ export function ItemPaneSection({
   }
 
   async function saveSelectionAsAnnotation() {
-    if (!canSaveToAnnotation || !selectedAnnotation || !activeContext?.attachmentItemID) {
+    if (
+      !canSaveToAnnotation ||
+      !selectedAnnotation ||
+      !activeContext?.attachmentItemID
+    ) {
       return;
     }
 
@@ -430,7 +477,9 @@ export function ItemPaneSection({
     setRequestError("");
 
     try {
-      const attachment = Zotero.Items.get(activeContext.attachmentItemID) as Zotero.Item | undefined;
+      const attachment = Zotero.Items.get(activeContext.attachmentItemID) as
+        | Zotero.Item
+        | undefined;
       if (!attachment || !attachment.isAttachment()) {
         throw new Error("Attachment not found for annotation.");
       }
@@ -444,7 +493,8 @@ export function ItemPaneSection({
       annotation.libraryID = attachment.libraryID;
       annotation.parentKey = attachment.key;
       annotation.annotationType = selectedAnnotation.type || "highlight";
-      annotation.annotationPageLabel = selectedAnnotation.position.pageIndex + 1;
+      annotation.annotationPageLabel =
+        selectedAnnotation.position.pageIndex + 1;
       annotation.annotationText = selectedAnnotation.text || "";
       annotation.annotationComment = comment;
       annotation.annotationColor = selectedAnnotation.color || "#ffd400";
@@ -453,12 +503,14 @@ export function ItemPaneSection({
         rects: selectedAnnotation.position.rects || [],
       });
       annotation.annotationSortIndex =
-        selectedAnnotation.sortIndex || `00000|${Date.now().toString().padStart(6, "0")}|00000`;
+        selectedAnnotation.sortIndex ||
+        `00000|${Date.now().toString().padStart(6, "0")}|00000`;
 
       await annotation.saveTx();
       clearSelectionMode();
     } catch (error) {
-      const msg = error instanceof Error ? error.message : "Failed to save annotation.";
+      const msg =
+        error instanceof Error ? error.message : "Failed to save annotation.";
       showError(msg, 2000);
     } finally {
       setIsSavingAnnotation(false);
@@ -498,13 +550,17 @@ export function ItemPaneSection({
     if (!aside) return;
 
     const onWheel = (e: WheelEvent) => {
-      const target = (e.target as Element)?.closest('[data-can-scroll="true"]') as HTMLElement | null;
+      const target = (e.target as Element)?.closest(
+        '[data-can-scroll="true"]',
+      ) as HTMLElement | null;
       if (!target) {
         e.preventDefault();
         return;
       }
       const atTop = e.deltaY < 0 && target.scrollTop <= 0;
-      const atBottom = e.deltaY > 0 && target.scrollTop + target.clientHeight >= target.scrollHeight;
+      const atBottom =
+        e.deltaY > 0 &&
+        target.scrollTop + target.clientHeight >= target.scrollHeight;
       if (atTop || atBottom) e.preventDefault();
       e.stopPropagation();
     };
@@ -582,9 +638,21 @@ export function ItemPaneSection({
   }
 
   const quickActions = [
-    { id: "sum", label: "Summarize", run: () => send("Summarize the main points of this paper.") },
-    { id: "crit", label: "Critique", run: () => send("Critique the methodology and assumptions.") },
-    { id: "notes", label: "To notes", run: () => send("Turn the selection into concise notes with bullets.") },
+    {
+      id: "sum",
+      label: "Summarize",
+      run: () => send("Summarize the main points of this paper."),
+    },
+    {
+      id: "crit",
+      label: "Critique",
+      run: () => send("Critique the methodology and assumptions."),
+    },
+    {
+      id: "notes",
+      label: "To notes",
+      run: () => send("Turn the selection into concise notes with bullets."),
+    },
     { id: "ins", label: "Insert selection", run: insertSelectionToDraft },
   ];
 
@@ -616,7 +684,10 @@ export function ItemPaneSection({
 
         {isHistoryOpen ? (
           <Card className="border-white/10 bg-black/15 p-1.5">
-            <CardContent data-can-scroll="true" className="max-h-[240px] space-y-1.5 overflow-y-auto p-0 pr-1">
+            <CardContent
+              data-can-scroll="true"
+              className="max-h-[240px] space-y-1.5 overflow-y-auto p-0 pr-1"
+            >
               {sessions
                 .slice()
                 .sort((a, b) => b.updatedAt - a.updatedAt)
@@ -640,13 +711,13 @@ export function ItemPaneSection({
                           : "border-white/10 bg-black/20 hover:bg-white/5",
                       )}
                     >
-                      <div className="truncate pr-1 text-[13px] font-medium leading-5 text-[var(--fill-primary)]">
+                      <div className="truncate pr-1 text-[13px] font-medium text-[var(--fill-primary)]">
                         {session.title}
                       </div>
-                      <div className="mt-0.5 text-[11px] leading-4 text-white/50">
-                        {session.messages.length} messages
+                      <div className="mt-3 flex justify-between text-[12px] text-white/50">
+                        <div>{toTime(session.updatedAt)}</div>
+                        <div>{session.messages.length} messages</div>
                       </div>
-                      <div className="text-[11px] leading-4 text-white/45">{toTime(session.updatedAt)}</div>
                     </button>
                   );
                 })}
@@ -698,7 +769,9 @@ export function ItemPaneSection({
           </div>
         ))}
 
-        {isSending ? <div className="text-sm text-white/55">Thinking...</div> : null}
+        {isSending ? (
+          <div className="text-sm text-white/55">Thinking...</div>
+        ) : null}
 
         {showJump ? (
           <Button
@@ -733,7 +806,8 @@ export function ItemPaneSection({
           <Card className="border-white/10 bg-black/20 px-2.5 py-1.5">
             <CardContent className="flex items-center justify-between p-0">
               <div className="text-[13px] text-white/70">
-                Selected {selectedIDs.length} message{selectedIDs.length === 1 ? "" : "s"}
+                Selected {selectedIDs.length} message
+                {selectedIDs.length === 1 ? "" : "s"}
               </div>
               <div className="flex items-center gap-2">
                 <Button
@@ -781,14 +855,23 @@ export function ItemPaneSection({
 
             <div className="flex items-center justify-between gap-2">
               <div className="flex flex-wrap gap-1.5">
-                <Badge variant="outline" className="border-white/10 px-1.5 py-0 text-[12px] text-white/65">
+                <Badge
+                  variant="outline"
+                  className="border-white/10 px-1.5 py-0 text-[12px] text-white/65"
+                >
                   {settings.provider}
                 </Badge>
-                <Badge variant="outline" className="border-white/10 px-1.5 py-0 text-[12px] text-white/65">
+                <Badge
+                  variant="outline"
+                  className="border-white/10 px-1.5 py-0 text-[12px] text-white/65"
+                >
                   {settings.model}
                 </Badge>
                 {queuedSelection ? (
-                  <Badge variant="outline" className="border-white/10 px-1.5 py-0 text-[12px] text-white/65">
+                  <Badge
+                    variant="outline"
+                    className="border-white/10 px-1.5 py-0 text-[12px] text-white/65"
+                  >
                     Selection Ready
                   </Badge>
                 ) : null}
@@ -803,7 +886,9 @@ export function ItemPaneSection({
               </Button>
             </div>
 
-            {requestError ? <div className="text-[13px] text-red-300">{requestError}</div> : null}
+            {requestError ? (
+              <div className="text-[13px] text-red-300">{requestError}</div>
+            ) : null}
           </CardContent>
         </Card>
       </section>

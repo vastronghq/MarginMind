@@ -56,11 +56,10 @@ const ROLE_LABEL: Record<ChatRole, string> = {
   system: "Selection",
 };
 const ROLE_BUBBLE: Record<ChatRole, string> = {
-  system:
-    "border-[var(--accent-blue)]/20 bg-[color-mix(in_srgb,var(--accent-blue)_10%,transparent)] text-[13px] text-white/75",
+  system: "border-blue-400/30 bg-blue-500/10 text-[13px] text-white/80",
   assistant:
     "border-white/10 bg-white/5 text-[14px] text-[var(--fill-primary)]",
-  user: "border-[var(--accent-blue)]/35 bg-[color-mix(in_srgb,var(--accent-blue)_22%,transparent)] text-[14px] text-[var(--fill-primary)]",
+  user: "border-blue-400/40 bg-blue-500/20 text-[14px] text-[var(--fill-primary)]",
 };
 const QUICK_ACTIONS = [
   {
@@ -99,7 +98,13 @@ const createSession = (partial?: Partial<ChatSession>): ChatSession => ({
 });
 const toTime = (ts: number) => {
   const d = new Date(ts);
-  return `${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`;
+  const YYYY = d.getFullYear();
+  const MM = String(d.getMonth() + 1).padStart(2, "0"); // 月份从0开始，需要+1
+  const DD = String(d.getDate()).padStart(2, "0");
+  const HH = String(d.getHours()).padStart(2, "0");
+  const mm = String(d.getMinutes()).padStart(2, "0");
+
+  return `${YYYY}-${MM}-${DD} ${HH}:${mm}`;
 };
 const trimTitle = (text: string, max = 42) => {
   const s = text.replace(/\s+/g, " ").trim();
@@ -542,7 +547,7 @@ export function ItemPaneSection({
         </div>
 
         {isHistoryOpen ? (
-          <Card className="border-white/10 bg-black/15 p-1.5">
+          <Card className="border-white/10 bg-black/20 p-1.5">
             <CardContent
               data-can-scroll="true"
               className="max-h-[240px] space-y-1.5 overflow-y-auto p-0 pr-1"
@@ -566,7 +571,7 @@ export function ItemPaneSection({
                       className={cn(
                         "w-full rounded-lg border p-2 text-left transition",
                         active
-                          ? "border-[var(--accent-blue)]/45 bg-[color-mix(in_srgb,var(--accent-blue)_14%,transparent)]"
+                          ? "border-blue-400/45 bg-blue-500/15"
                           : "border-white/10 bg-black/20 hover:bg-white/5",
                       )}
                     >
@@ -586,7 +591,7 @@ export function ItemPaneSection({
 
         <Card className="border-white/10 bg-black/10 text-white/70">
           <CardHeader className="pb-1.5">
-            <CardTitle className="text-[12px] font-bold uppercase tracking-[0.08em] text-white/40">
+            <CardTitle className="text-[12px] font-bold uppercase tracking-wide text-white/40">
               Context
             </CardTitle>
           </CardHeader>
@@ -631,7 +636,7 @@ export function ItemPaneSection({
                   "relative max-w-[92%] rounded-2xl border px-3 py-2.5",
                   ROLE_BUBBLE[message.role],
                   isSelectionMode && selectedIDs.includes(message.id)
-                    ? "ring-[var(--accent-blue)]/55 ring-2"
+                    ? "ring-2 ring-blue-400/60"
                     : "",
                 )}
               >
@@ -640,10 +645,10 @@ export function ItemPaneSection({
                     type="checkbox"
                     checked={selectedIDs.includes(message.id)}
                     readOnly
-                    className="absolute right-2 top-2 h-4 w-4 accent-[var(--accent-blue)]"
+                    className="absolute right-2 top-2 h-4 w-4 accent-blue-500"
                   />
                 ) : null}
-                <div className="mb-1 flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-[0.08em] text-white/45">
+                <div className="mb-1 flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wide text-white/45">
                   <span>{ROLE_LABEL[message.role]}</span>
                   {message.meta ? (
                     <span className="text-white/30">{message.meta}</span>

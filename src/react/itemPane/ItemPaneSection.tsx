@@ -48,7 +48,8 @@ function setPersistedState(state: PersistedChatState) {
 }
 
 function makeSelectionPrompt(selection: string) {
-  return `Use this selection as evidence and explain its role in the paper:\n\n${selection}`;
+  // return `Use this selection as evidence and explain its role in the paper:\n\n${selection}`;
+  return selection;
 }
 
 function createInitialMessages(): ChatMessage[] {
@@ -231,22 +232,35 @@ export function ItemPaneSection({
   }, [messages, draft, queuedSelection, activeContext]);
 
   useEffect(() => {
-    if (!showSelectedText || !selectedText) return;
+    if (!showSelectedText || !selectedText) {
+      // 清除预览消息
+      setMessages((current) =>
+        current.filter((msg) => msg.id !== "selection-preview"),
+      );
+      setQueuedSelection("");
+      return;
+    }
     if (selectionSignatureRef.current === selectedText) return;
 
     selectionSignatureRef.current = selectedText;
     setQueuedSelection(selectedText);
     setMessages((current) => {
-      const next = current.filter(
-        (message) => message.id !== "selection-context",
+      const previewIndex = current.findIndex(
+        (msg) => msg.id === "selection-preview",
       );
-      next.push({
-        id: "selection-context",
-        role: "system",
+      const previewMessage: ChatMessage = {
+        id: "selection-preview",
+        role: "user",
         text: selectedText,
-        meta: "Reader selection synced",
-      });
-      return next;
+        meta: "Selection preview",
+      };
+      if (previewIndex !== -1) {
+        const next = [...current];
+        next[previewIndex] = previewMessage;
+        return next;
+      } else {
+        return [...current, previewMessage];
+      }
     });
   }, [selectedText, showSelectedText]);
 
@@ -306,15 +320,36 @@ export function ItemPaneSection({
     const trimmed = prompt.trim();
     if (!trimmed) return;
 
-    const userMessage: ChatMessage = {
-      id: `user-${Date.now()}`,
-      role: "user",
-      text: trimmed,
-    };
-    const history = [...messages, userMessage];
+    // 查找预览消息
+    const previewIndex = messages.findIndex(
+      (msg) => msg.id === "selection-preview",
+    );
+    let finalPrompt = trimmed;
 
-    setMessages(history);
+    if (previewIndex !== -1) {
+      const previewMessage = messages[previewIndex];
+      // 合并预览文本和用户输入
+      finalPrompt = `${makeSelectionPrompt(previewMessage.text)}\n\n${trimmed}`;
+      // 替换预览消息为合并后的消息
+      const newMessages = [...messages];
+      newMessages[previewIndex] = {
+        id: `user-${Date.now()}`,
+        role: "user",
+        text: finalPrompt,
+      };
+      setMessages(newMessages);
+    } else {
+      // 没有预览消息，直接添加用户消息
+      const userMessage: ChatMessage = {
+        id: `user-${Date.now()}`,
+        role: "user",
+        text: finalPrompt,
+      };
+      setMessages((current) => [...current, userMessage]);
+    }
+
     setDraft("");
+    setQueuedSelection("");
     setRequestError("");
     setIsSending(true);
 
@@ -324,7 +359,7 @@ export function ItemPaneSection({
           role: "system",
           content: buildSystemPrompt(),
         },
-        ...history
+        ...messages
           .filter(
             (
               message,

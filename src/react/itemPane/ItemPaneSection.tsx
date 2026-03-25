@@ -150,12 +150,16 @@ export function ItemPaneSection({
   const messageRef = useRef<HTMLDivElement | null>(null);
   const autoScrollRef = useRef(true);
   const longPressTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const errorTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const currentSettings = loadAISettings();
 
   useEffect(() => {
     return () => {
       if (longPressTimerRef.current) {
         clearTimeout(longPressTimerRef.current);
+      }
+      if (errorTimeoutRef.current) {
+        clearTimeout(errorTimeoutRef.current);
       }
     };
   }, []);
@@ -371,7 +375,13 @@ export function ItemPaneSection({
     } catch (error) {
       const errorMessage =
         error instanceof Error ? error.message : "Request failed.";
+      if (errorTimeoutRef.current) {
+        clearTimeout(errorTimeoutRef.current);
+      }
       setRequestError(errorMessage);
+      errorTimeoutRef.current = setTimeout(() => {
+        setRequestError("");
+      }, 5000);
       setMessages((current) => [
         ...current,
         {
@@ -472,19 +482,28 @@ export function ItemPaneSection({
         dateModified: new Date().toISOString(),
       } as _ZoteroTypes.Annotations.AnnotationJson;
 
-      const keyGenerator = (Zotero as any).DataObjectUtilities?.generateKey;
-      if (typeof keyGenerator === "function") {
-        const key = keyGenerator();
-        annotationJSON.key = key;
-        annotationJSON.id = key;
+      // Only generate new key if not present (should be present from selectedAnnotation)
+      if (!annotationJSON.id) {
+        const keyGenerator = (Zotero as any).DataObjectUtilities?.generateKey;
+        if (typeof keyGenerator === "function") {
+          const key = keyGenerator();
+          annotationJSON.key = key;
+          annotationJSON.id = key;
+        }
       }
 
       await Zotero.Annotations.saveFromJSON(attachment, annotationJSON);
       clearSelectionMode();
     } catch (error) {
-      setRequestError(
-        error instanceof Error ? error.message : "Failed to save annotation.",
-      );
+      const errorMessage =
+        error instanceof Error ? error.message : "Failed to save annotation.";
+      if (errorTimeoutRef.current) {
+        clearTimeout(errorTimeoutRef.current);
+      }
+      setRequestError(errorMessage);
+      errorTimeoutRef.current = setTimeout(() => {
+        setRequestError("");
+      }, 1500);
     } finally {
       setIsSavingAnnotation(false);
     }

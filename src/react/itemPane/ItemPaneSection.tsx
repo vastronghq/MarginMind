@@ -776,7 +776,7 @@ export function ItemPaneSection({
         ) : null}
 
         <Card className="border-[color-mix(in_srgb,var(--fill-primary)_16%,transparent)] bg-[color-mix(in_srgb,var(--material-sidepane)_90%,var(--fill-primary)_7%)] p-2.5">
-          <CardContent className="space-y-2 p-0">
+          <CardContent className="space-y-2 overflow-hidden p-0">
             <Textarea
               data-can-scroll="true"
               rows={3}
@@ -784,7 +784,7 @@ export function ItemPaneSection({
               value={draft}
               onChange={(e) => updateDraft(e.target.value)}
               disabled={isSending || isSelectionMode}
-              className="min-h-[76px] resize-none border-[color-mix(in_srgb,var(--fill-primary)_16%,transparent)] bg-transparent text-[14px] leading-6 text-[var(--fill-primary)] placeholder:text-[color-mix(in_srgb,var(--fill-primary)_38%,transparent)]"
+              className="resize-none border-[color-mix(in_srgb,var(--fill-primary)_16%,transparent)] bg-transparent text-[14px] leading-6 text-[var(--fill-primary)] placeholder:text-[color-mix(in_srgb,var(--fill-primary)_38%,transparent)]"
             />
 
             <Separator className="bg-[color-mix(in_srgb,var(--fill-primary)_12%,transparent)]" />

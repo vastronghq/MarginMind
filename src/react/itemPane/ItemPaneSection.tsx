@@ -78,7 +78,8 @@ const PROMPTS_EN = {
   summarizeFullText:
     "Summarize the core problem this paper addresses, its main methodology and thesis, and the key findings. Emphasize the unique contribution to the field and specify the research gap the authors aim to fill.",
   critiqueFullText: "",
-
+  explainSelection:
+    "Explain the selected text as a term or concept. Provide a clear definition, explain its significance in the context of academic literature, and include an example if helpful.",
   critiqueSelection:
     "Critique the assumptions, methodology, and arguments of the selected text, highlighting any weaknesses, unexamined premises, and strained interpretations.",
   bulletizeSelection: "Bulletize the selected text with concise, clear points.",
@@ -91,6 +92,8 @@ const PROMPTS = {
     "总结本文所解决的核心问题、主要方法论和论点，以及关键发现。着重阐述该研究在领域内的独特贡献，并明确作者旨在填补的研究空白。",
   critiqueFullText: "",
 
+  explainSelection:
+    "解释所选文本作为术语或概念的含义。给出清晰的定义，说明其在学术文献中的重要性，如有必要可举例说明。",
   critiqueSelection:
     "对所选文本的假设、方法论和论证进行批判性分析，指出其中的不足之处、未经检验的前提以及牵强的解读。",
   bulletizeSelection: "将所选文本提炼为要点，每条要点保持简洁、清晰。",
@@ -195,7 +198,7 @@ function MessageContent({ message }: { message: ChatMessage }) {
     return (
       <div
         data-render-mode="plain"
-        className="select-text whitespace-pre-wrap text-[14px] leading-6"
+        className="select-text whitespace-pre-wrap text-[16px] leading-8"
       >
         {message.text}
       </div>
@@ -203,7 +206,7 @@ function MessageContent({ message }: { message: ChatMessage }) {
   }
 
   return (
-    <div className="select-text text-[14px] leading-6">
+    <div className="select-text text-[16px] leading-8">
       <Markdown
         remarkPlugins={[remarkGfm, remarkMath]}
         rehypePlugins={[rehypeKatex, rehypeHighlight]}
@@ -629,7 +632,12 @@ export function ItemPaneSection({
     //   onClick: () => send("Summarize the main points of this paper."),
     // },
     {
-      id: "Critique",
+      id: "explain",
+      label: "Explain selection",
+      onClick: () => send(PROMPTS.explainSelection),
+    },
+    {
+      id: "critique",
       label: "Critique selection",
       onClick: () => send(PROMPTS.critiqueSelection),
     },

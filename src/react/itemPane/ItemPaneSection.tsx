@@ -74,25 +74,26 @@ const ROLE_BUBBLE: Record<ChatRole, string> = {
     "border-[color-mix(in_srgb,var(--fill-primary)_16%,transparent)] bg-[color-mix(in_srgb,var(--material-sidepane)_84%,var(--fill-primary)_8%)] text-[14px] text-[var(--fill-primary)]",
   user: "border-[color-mix(in_srgb,var(--accent-blue)_45%,transparent)] bg-[color-mix(in_srgb,var(--accent-blue)_20%,transparent)] text-[14px] text-[var(--fill-primary)]",
 };
-const QUICK_ACTIONS = [
-  {
-    id: "summarize",
-    label: "Summarize full text",
-    prompt: "Summarize the main points of this paper.",
-  },
-  {
-    id: "Critique",
-    label: "Critique selection",
-    prompt: "Critique the methodology and assumptions.",
-  },
-  {
-    id: "bulletize",
-    label: "Bulletize selection",
-    prompt: "Turn the selection into concise notes with bullets.",
-  },
-] as const;
-const TRANSLATE_SELECTION_PROMPT =
-  "Translate the selected text to Chinese. Keep the terminology accurate and output only the translation.";
+// const QUICK_ACTIONS = [
+//   {
+//     id: "summarize",
+//     label: "Summarize full text",
+//     prompt: "Summarize the main points of this paper.",
+//   },
+//   {
+//     id: "Critique",
+//     label: "Critique selection",
+//     prompt: "Critique the methodology and assumptions.",
+//   },
+//   {
+//     id: "bulletize",
+//     label: "Bulletize selection",
+//     prompt: "Turn the selection into concise notes with bullets.",
+//   },
+// ] as const;
+
+// const TRANSLATE_SELECTION_PROMPT =
+//   "Translate the selected text to Chinese. Keep the terminology accurate and output only the translation.";
 
 const uid = (p: string) => `${p}-${Date.now()}`;
 const initialMessages = (): ChatMessage[] => [
@@ -237,7 +238,7 @@ export function ItemPaneSection({
   const messages = activeSession?.messages ?? [];
   const draft = activeSession?.draft ?? "";
   const queuedSelection = activeSession?.queuedSelection ?? "";
-  const hasSelectionPreview = messages.some((m) => m.id === PREVIEW_ID);
+  // const hasSelectionPreview = messages.some((m) => m.id === PREVIEW_ID);
   const contextSummary = activeContext
     ? `${activeContext.title} · ${activeContext.creators} · ${activeContext.year}`
     : "No active item context";
@@ -286,21 +287,21 @@ export function ItemPaneSection({
       messages: s.messages.filter((m) => m.id !== PREVIEW_ID),
     }));
   };
-  const translateSelection = async () => {
-    const target = queuedSelection.trim();
-    if (!target) {
-      showError("No selected text to translate.");
-      return;
-    }
-    const hasPreview = activeSession?.messages.some((m) => m.id === PREVIEW_ID);
-    if (hasPreview) {
-      await send(TRANSLATE_SELECTION_PROMPT);
-      return;
-    }
-    await send(
-      `${TRANSLATE_SELECTION_PROMPT}\n\n[Selected text from paper]\n${target}`,
-    );
-  };
+  // const translateSelection = async () => {
+  //   const target = queuedSelection.trim();
+  //   if (!target) {
+  //     showError("No selected text to translate.");
+  //     return;
+  //   }
+  //   const hasPreview = activeSession?.messages.some((m) => m.id === PREVIEW_ID);
+  //   if (hasPreview) {
+  //     await send(TRANSLATE_SELECTION_PROMPT);
+  //     return;
+  //   }
+  //   await send(
+  //     `${TRANSLATE_SELECTION_PROMPT}\n\n[Selected text from paper]\n${target}`,
+  //   );
+  // };
   const clearDraft = () => updateDraft("");
   const stopSending = () => {
     abortControllerRef.current?.abort();
@@ -597,6 +598,42 @@ export function ItemPaneSection({
     );
   }
 
+  const QUICK_ACTIONS = [
+    // {
+    //   id: "summarize",
+    //   label: "Summarize full text",
+    //   onClick: () => send("Summarize the main points of this paper."),
+    // },
+    {
+      id: "Critique",
+      label: "Critique selection",
+      onClick: () => send(`Critique the methodology and assumptions}`),
+    },
+    {
+      id: "bulletize",
+      label: "Bulletize selection",
+      onClick: () => send(`Turn the selection into concise notes with bullets`),
+    },
+    {
+      id: "traslate",
+      label: "Translate selection",
+      onClick: () =>
+        send(
+          `Translate the selected text to Chinese. Keep the terminology accurate and output only the translation`,
+        ),
+    },
+    {
+      id: "insert",
+      label: "Insert selection",
+      onClick: insertSelectionToDraft,
+    },
+    {
+      id: "clear",
+      label: "Clear selection",
+      onClick: clearQueuedSelection,
+    },
+  ] as const;
+
   return (
     <aside
       ref={asideRef}
@@ -758,19 +795,30 @@ export function ItemPaneSection({
 
       <section className="space-y-2 border-t border-[color-mix(in_srgb,var(--fill-primary)_16%,transparent)] p-2.5">
         <div className="flex flex-wrap gap-1.5">
+          <Button
+            size="xs"
+            variant="outline"
+            onClick={() => {
+              send("Summarize the main points of this paper.");
+            }}
+            disabled={isSending || isSelectionMode}
+            className="rounded-full border-[color-mix(in_srgb,var(--fill-primary)_16%,transparent)] bg-[color-mix(in_srgb,var(--material-sidepane)_88%,var(--fill-primary)_8%)] px-2 text-[12px] text-[color-mix(in_srgb,var(--fill-primary)_78%,transparent)]"
+          >
+            Summarize
+          </Button>
           {QUICK_ACTIONS.map((a) => (
             <Button
               key={a.id}
               size="xs"
               variant="outline"
-              onClick={() => send(a.prompt)}
-              disabled={isSending || isSelectionMode}
+              onClick={a.onClick}
+              disabled={isSending || isSelectionMode || !queuedSelection.trim()}
               className="rounded-full border-[color-mix(in_srgb,var(--fill-primary)_16%,transparent)] bg-[color-mix(in_srgb,var(--material-sidepane)_88%,var(--fill-primary)_8%)] px-2 text-[12px] text-[color-mix(in_srgb,var(--fill-primary)_78%,transparent)]"
             >
               {a.label}
             </Button>
           ))}
-          <Button
+          {/* <Button
             size="xs"
             variant="outline"
             onClick={translateSelection}
@@ -796,7 +844,7 @@ export function ItemPaneSection({
             className="rounded-full border-[color-mix(in_srgb,var(--fill-primary)_16%,transparent)] bg-[color-mix(in_srgb,var(--material-sidepane)_88%,var(--fill-primary)_8%)] px-2 text-[12px] text-[color-mix(in_srgb,var(--fill-primary)_78%,transparent)]"
           >
             Clear selection
-          </Button>
+          </Button> */}
         </div>
 
         {isSelectionMode ? (

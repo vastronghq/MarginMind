@@ -158,23 +158,26 @@ const buildSystemPrompt = (ctx: ItemPaneData | null, systemPrompt: string) => {
 function MessageContent({ message }: { message: ChatMessage }) {
   if (message.role !== "assistant") {
     return (
-      <div
-        data-render-mode="plain"
-        className="whitespace-pre-wrap break-words text-[14px] leading-6"
-      >
+      <div data-render-mode="plain" className="text-[14px] leading-6">
         {message.text}
       </div>
     );
   }
 
   return (
-    <div className="break-words text-[14px] leading-6">
+    <div className="text-[14px] leading-6">
       <Markdown
         remarkPlugins={[remarkGfm, remarkMath]}
-        rehypePlugins={[[rehypeKatex, { output: "mathml" }], rehypeHighlight]}
+        rehypePlugins={[rehypeKatex, rehypeHighlight]}
         components={{
           a: ({ ...props }) => (
             <a {...props} target="_blank" rel="noopener noreferrer" />
+          ),
+          pre: ({ ...props }) => (
+            <pre
+              {...props}
+              className={cn("whitespace-pre-wrap", props.className)}
+            />
           ),
         }}
       >

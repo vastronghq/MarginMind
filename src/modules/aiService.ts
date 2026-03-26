@@ -10,8 +10,9 @@ export type AIChatMessage = {
 export async function* streamAIReply(args: {
   settings: AISettings;
   messages: AIChatMessage[];
+  abortSignal?: AbortSignal;
 }) {
-  const { settings, messages } = args;
+  const { settings, messages, abortSignal } = args;
   const apiKey = settings.apiKey.trim();
   if (!apiKey) {
     throw new Error("API key is missing. Set it in Preferences.");
@@ -31,6 +32,7 @@ export async function* streamAIReply(args: {
     messages: requestMessages,
     temperature: clamp(settings.temperature, 0, 2),
     maxOutputTokens: Math.max(1, Math.floor(settings.maxTokens)),
+    abortSignal,
   });
 
   for await (const part of result.fullStream) {

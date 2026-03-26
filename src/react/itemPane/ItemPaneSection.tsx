@@ -52,6 +52,13 @@ type PersistedState = {
 type InSituAIChatWindow = Window & {
   __insituaiItemPaneChatState?: PersistedState;
 };
+const isAbortError = (error: unknown) =>
+  error instanceof DOMException
+    ? error.name === "AbortError"
+    : error instanceof Error
+      ? error.name === "AbortError" ||
+        /aborted|cancelled|canceled/i.test(error.message)
+      : false;
 
 const PREVIEW_ID = "selection-preview";
 const EMPTY_TITLE = "New chat";
@@ -107,7 +114,7 @@ const createSession = (partial?: Partial<ChatSession>): ChatSession => ({
 const toTime = (ts: number) => {
   const d = new Date(ts);
   const YYYY = d.getFullYear();
-  const MM = String(d.getMonth() + 1).padStart(2, "0"); // 月份从0开始，需要+1
+  const MM = String(d.getMonth() + 1).padStart(2, "0"); // 月份�?开始，需�?1
   const DD = String(d.getDate()).padStart(2, "0");
   const HH = String(d.getHours()).padStart(2, "0");
   const mm = String(d.getMinutes()).padStart(2, "0");
@@ -220,6 +227,7 @@ export function ItemPaneSection({
   const messageRef = useRef<HTMLDivElement | null>(null);
   const autoScrollRef = useRef(true);
   const errorTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const abortControllerRef = useRef<AbortController | null>(null);
 
   const settings = loadAISettings();
   const activeSession = useMemo(
@@ -279,7 +287,7 @@ export function ItemPaneSection({
     }));
   };
   const translateSelection = async () => {
-    const target = (queuedSelection || selectedText || "").trim();
+    const target = queuedSelection.trim();
     if (!target) {
       showError("No selected text to translate.");
       return;
@@ -292,6 +300,10 @@ export function ItemPaneSection({
     await send(
       `${TRANSLATE_SELECTION_PROMPT}\n\n[Selected text from paper]\n${target}`,
     );
+  };
+  const clearDraft = () => updateDraft("");
+  const stopSending = () => {
+    abortControllerRef.current?.abort();
   };
   const createNewSession = () => {
     const n = createSession();
@@ -345,6 +357,8 @@ export function ItemPaneSection({
 
     setIsSending(true);
     setRequestError("");
+    const controller = new AbortController();
+    abortControllerRef.current = controller;
     const assistantID = uid("assistant");
     patchSession(sessionID, (s) => ({
       ...s,
@@ -377,6 +391,7 @@ export function ItemPaneSection({
       const stream = streamAIReply({
         settings,
         messages: apiMessages,
+        abortSignal: controller.signal,
       });
 
       for await (const delta of stream) {
@@ -399,6 +414,7 @@ export function ItemPaneSection({
         throw streamError;
       }
     } catch (error) {
+      if (isAbortError(error)) return;
       const msg = error instanceof Error ? error.message : "Request failed.";
       showError(msg);
       patchSession(sessionID, (s) => ({
@@ -414,6 +430,7 @@ export function ItemPaneSection({
         ],
       }));
     } finally {
+      abortControllerRef.current = null;
       setIsSending(false);
     }
   }
@@ -753,14 +770,24 @@ export function ItemPaneSection({
               {a.label}
             </Button>
           ))}
+
           <Button
             size="xs"
             variant="outline"
             onClick={insertSelectionToDraft}
-            disabled={isSending || isSelectionMode}
+            disabled={isSending || isSelectionMode || !queuedSelection.trim()}
             className="rounded-full border-[color-mix(in_srgb,var(--fill-primary)_16%,transparent)] bg-[color-mix(in_srgb,var(--material-sidepane)_88%,var(--fill-primary)_8%)] px-2 text-[12px] text-[color-mix(in_srgb,var(--fill-primary)_78%,transparent)]"
           >
             Insert selection
+          </Button>
+          <Button
+            size="xs"
+            variant="outline"
+            onClick={translateSelection}
+            disabled={isSending || isSelectionMode || !queuedSelection.trim()}
+            className="rounded-full border-[color-mix(in_srgb,var(--fill-primary)_16%,transparent)] bg-[color-mix(in_srgb,var(--material-sidepane)_88%,var(--fill-primary)_8%)] px-2 text-[12px] text-[color-mix(in_srgb,var(--fill-primary)_78%,transparent)]"
+          >
+            Translate selection
           </Button>
           <Button
             size="xs"
@@ -770,19 +797,6 @@ export function ItemPaneSection({
             className="rounded-full border-[color-mix(in_srgb,var(--fill-primary)_16%,transparent)] bg-[color-mix(in_srgb,var(--material-sidepane)_88%,var(--fill-primary)_8%)] px-2 text-[12px] text-[color-mix(in_srgb,var(--fill-primary)_78%,transparent)]"
           >
             Clear selection
-          </Button>
-          <Button
-            size="xs"
-            variant="outline"
-            onClick={translateSelection}
-            disabled={
-              isSending ||
-              isSelectionMode ||
-              !(queuedSelection || selectedText).trim()
-            }
-            className="rounded-full border-[color-mix(in_srgb,var(--fill-primary)_16%,transparent)] bg-[color-mix(in_srgb,var(--material-sidepane)_88%,var(--fill-primary)_8%)] px-2 text-[12px] text-[color-mix(in_srgb,var(--fill-primary)_78%,transparent)]"
-          >
-            Translate selection
           </Button>
         </div>
 
@@ -852,21 +866,28 @@ export function ItemPaneSection({
                 >
                   {settings.model}
                 </Badge>
-                {queuedSelection ? (
-                  <Badge
-                    variant="outline"
-                    className="border-[color-mix(in_srgb,var(--fill-primary)_16%,transparent)] px-1.5 py-0 text-[12px] text-[color-mix(in_srgb,var(--fill-primary)_68%,transparent)]"
-                  >
-                    Selection Ready
-                  </Badge>
-                ) : null}
               </div>
               <Button
-                onClick={() => send(draft)}
-                disabled={!draft.trim() || isSending || isSelectionMode}
-                className="rounded-lg border border-[color-mix(in_srgb,var(--accent-blue)_55%,transparent)] bg-[color-mix(in_srgb,var(--accent-blue)_82%,var(--material-sidepane)_18%)] px-3 py-1.5 text-[13px] font-semibold text-[var(--fill-primary-inverse,var(--fill-primary))]"
+                type="button"
+                variant="outline"
+                size="xs"
+                onClick={clearDraft}
+                disabled={isSelectionMode || !draft.trim() || isSending}
+                className="h-7 border-[color-mix(in_srgb,var(--fill-primary)_16%,transparent)] bg-[color-mix(in_srgb,var(--material-sidepane)_88%,var(--fill-primary)_8%)] px-2.5 text-[12px] text-[color-mix(in_srgb,var(--fill-primary)_82%,transparent)]"
               >
-                {isSending ? "Sending..." : "Send"}
+                Clear
+              </Button>
+              <Button
+                onClick={isSending ? stopSending : () => send(draft)}
+                disabled={isSelectionMode || (!isSending && !draft.trim())}
+                className={cn(
+                  "rounded-lg border px-3 py-1.5 text-[13px] font-semibold",
+                  isSending
+                    ? "border-[color-mix(in_srgb,var(--accent-red,#d14)_55%,transparent)] bg-[color-mix(in_srgb,var(--accent-red,#d14)_72%,var(--material-sidepane)_28%)] text-[var(--fill-primary-inverse,var(--fill-primary))]"
+                    : "border-[color-mix(in_srgb,var(--accent-blue)_55%,transparent)] bg-[color-mix(in_srgb,var(--accent-blue)_82%,var(--material-sidepane)_18%)] text-[var(--fill-primary-inverse,var(--fill-primary))]",
+                )}
+              >
+                {isSending ? "Stop" : "Send"}
               </Button>
             </div>
 

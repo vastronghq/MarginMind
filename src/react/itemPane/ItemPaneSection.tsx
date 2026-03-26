@@ -76,18 +76,18 @@ const ROLE_BUBBLE: Record<ChatRole, string> = {
 };
 const QUICK_ACTIONS = [
   {
-    id: "sum",
-    label: "Summarize",
+    id: "summarize",
+    label: "Summarize full text",
     prompt: "Summarize the main points of this paper.",
   },
   {
-    id: "crit",
-    label: "Critique",
+    id: "Critique",
+    label: "Critique selection",
     prompt: "Critique the methodology and assumptions.",
   },
   {
-    id: "notes",
-    label: "To notes",
+    id: "bulletize",
+    label: "Bulletize selection",
     prompt: "Turn the selection into concise notes with bullets.",
   },
 ] as const;
@@ -99,7 +99,7 @@ const initialMessages = (): ChatMessage[] => [
   {
     id: "assistant-greeting",
     role: "assistant",
-    text: "AI chat is ready. Ask for summary, critique, extraction, or rewrite.",
+    text: "Your AI assistant is ready. Ask for summary, critique, extraction, or translation.",
     meta: "Ready",
   },
 ];
@@ -770,16 +770,6 @@ export function ItemPaneSection({
               {a.label}
             </Button>
           ))}
-
-          <Button
-            size="xs"
-            variant="outline"
-            onClick={insertSelectionToDraft}
-            disabled={isSending || isSelectionMode || !queuedSelection.trim()}
-            className="rounded-full border-[color-mix(in_srgb,var(--fill-primary)_16%,transparent)] bg-[color-mix(in_srgb,var(--material-sidepane)_88%,var(--fill-primary)_8%)] px-2 text-[12px] text-[color-mix(in_srgb,var(--fill-primary)_78%,transparent)]"
-          >
-            Insert selection
-          </Button>
           <Button
             size="xs"
             variant="outline"
@@ -788,6 +778,15 @@ export function ItemPaneSection({
             className="rounded-full border-[color-mix(in_srgb,var(--fill-primary)_16%,transparent)] bg-[color-mix(in_srgb,var(--material-sidepane)_88%,var(--fill-primary)_8%)] px-2 text-[12px] text-[color-mix(in_srgb,var(--fill-primary)_78%,transparent)]"
           >
             Translate selection
+          </Button>
+          <Button
+            size="xs"
+            variant="outline"
+            onClick={insertSelectionToDraft}
+            disabled={isSending || isSelectionMode || !queuedSelection.trim()}
+            className="rounded-full border-[color-mix(in_srgb,var(--fill-primary)_16%,transparent)] bg-[color-mix(in_srgb,var(--material-sidepane)_88%,var(--fill-primary)_8%)] px-2 text-[12px] text-[color-mix(in_srgb,var(--fill-primary)_78%,transparent)]"
+          >
+            Insert selection
           </Button>
           <Button
             size="xs"

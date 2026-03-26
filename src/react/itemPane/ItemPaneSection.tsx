@@ -158,14 +158,17 @@ const buildSystemPrompt = (ctx: ItemPaneData | null, systemPrompt: string) => {
 function MessageContent({ message }: { message: ChatMessage }) {
   if (message.role !== "assistant") {
     return (
-      <div data-render-mode="plain" className="text-[14px] leading-6">
+      <div
+        data-render-mode="plain"
+        className="select-text whitespace-pre-wrap text-[14px] leading-6"
+      >
         {message.text}
       </div>
     );
   }
 
   return (
-    <div className="text-[14px] leading-6">
+    <div className="select-text text-[14px] leading-6">
       <Markdown
         remarkPlugins={[remarkGfm, remarkMath]}
         rehypePlugins={[rehypeKatex, rehypeHighlight]}
@@ -213,8 +216,6 @@ export function ItemPaneSection({
   const asideRef = useRef<HTMLElement | null>(null);
   const messageRef = useRef<HTMLDivElement | null>(null);
   const autoScrollRef = useRef(true);
-  const longPressTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const longPressTriggeredRef = useRef(false);
   const errorTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const settings = loadAISettings();
@@ -284,21 +285,6 @@ export function ItemPaneSection({
     setSelectedIDs((curr) =>
       curr.includes(id) ? curr.filter((x) => x !== id) : [...curr, id],
     );
-  const startLongPress = (id: string) => {
-    if (isSelectionMode) return;
-    longPressTriggeredRef.current = false;
-    if (longPressTimerRef.current) clearTimeout(longPressTimerRef.current);
-    longPressTimerRef.current = setTimeout(() => {
-      longPressTriggeredRef.current = true;
-      setIsSelectionMode(true);
-      setSelectedIDs([id]);
-    }, 420);
-  };
-  const stopLongPress = () => {
-    if (!longPressTimerRef.current) return;
-    clearTimeout(longPressTimerRef.current);
-    longPressTimerRef.current = null;
-  };
 
   const normalizePrompt = (input: string, base: ChatMessage[]) => {
     const text = input.trim();
@@ -475,7 +461,6 @@ export function ItemPaneSection({
 
   useEffect(
     () => () => {
-      if (longPressTimerRef.current) clearTimeout(longPressTimerRef.current);
       if (errorTimerRef.current) clearTimeout(errorTimerRef.current);
     },
     [],
@@ -657,17 +642,15 @@ export function ItemPaneSection({
         {messages.map((message) => (
           <div
             key={message.id}
-            className={isSelectionMode ? "cursor-pointer select-none" : ""}
-            onPointerDown={() => startLongPress(message.id)}
-            onPointerUp={stopLongPress}
-            onPointerLeave={stopLongPress}
-            onPointerCancel={stopLongPress}
+            className={isSelectionMode ? "cursor-pointer select-none" : "select-text"}
+            onContextMenu={(event) => {
+              if (isSelectionMode) return;
+              event.preventDefault();
+              setIsSelectionMode(true);
+              setSelectedIDs([message.id]);
+            }}
             onClick={() => {
               if (!isSelectionMode) return;
-              if (longPressTriggeredRef.current) {
-                longPressTriggeredRef.current = false;
-                return;
-              }
               toggleSelected(message.id);
             }}
           >
@@ -681,6 +664,7 @@ export function ItemPaneSection({
                 className={cn(
                   "relative max-w-[92%] rounded-2xl border px-3 py-2.5",
                   ROLE_BUBBLE[message.role],
+                  isSelectionMode ? "select-none" : "select-text",
                   isSelectionMode && selectedIDs.includes(message.id)
                     ? "ring-2 ring-blue-400/60"
                     : "",

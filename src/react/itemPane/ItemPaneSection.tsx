@@ -557,7 +557,7 @@ export function ItemPaneSection({
   return (
     <aside
       ref={asideRef}
-      className="flex max-h-[80vh] min-h-0 w-full flex-col overflow-hidden border border-[color-mix(in_srgb,var(--accent-blue)_40%,var(--fill-primary)_12%)] bg-[var(--material-sidepane)] text-[var(--fill-primary)]"
+      className="flex max-h-[80vh] min-h-0 w-full flex-col overflow-hidden border border-solid border-[color-mix(in_srgb,var(--accent-blue)_40%,var(--fill-primary)_12%)] bg-[var(--material-sidepane)] text-[var(--fill-primary)]"
     >
       <section className="space-y-2 p-2.5">
         <div className="flex items-center justify-between gap-1.5">
@@ -643,7 +643,9 @@ export function ItemPaneSection({
         {messages.map((message) => (
           <div
             key={message.id}
-            className={isSelectionMode ? "cursor-pointer select-none" : "select-text"}
+            className={
+              isSelectionMode ? "cursor-pointer select-none" : "select-text"
+            }
             onContextMenu={(event) => {
               if (isSelectionMode) return;
               event.preventDefault();

@@ -32,7 +32,7 @@ export const AI_DEFAULTS: AISettings = {
   baseURL: "https://openrouter.ai/api/v1",
   model: "stepfun/step-3.5-flash:free",
   temperature: 0.2,
-  maxTokens: 1200,
+  maxTokens: 4096,
   systemPrompt:
     "You are InSituAI, an academic research assistant. Give precise, structured, and evidence-oriented answers based on the provided paper context.",
 };

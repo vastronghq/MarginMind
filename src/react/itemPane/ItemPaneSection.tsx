@@ -74,6 +74,30 @@ const ROLE_BUBBLE: Record<ChatRole, string> = {
     "border-[color-mix(in_srgb,var(--fill-primary)_16%,transparent)] bg-[color-mix(in_srgb,var(--material-sidepane)_84%,var(--fill-primary)_8%)] text-[14px] text-[var(--fill-primary)]",
   user: "border-[color-mix(in_srgb,var(--accent-blue)_45%,transparent)] bg-[color-mix(in_srgb,var(--accent-blue)_20%,transparent)] text-[14px] text-[var(--fill-primary)]",
 };
+const PROMPTS_EN = {
+  summarizeFullText:
+    "Summarize the core problem this paper addresses, its main methodology and thesis, and the key findings. Emphasize the unique contribution to the field and specify the research gap the authors aim to fill.",
+  critiqueFullText: "",
+
+  critiqueSelection:
+    "Critique the assumptions, methodology, and arguments of the selected text, highlighting any weaknesses, unexamined premises, and strained interpretations.",
+  bulletizeSelection: "Bulletize the selected text with concise, clear points.",
+  translateSelection:
+    "Translate the following into Chinese using formal academic nomenclature. Ensure technical terms align with standard terminology in Deep Learning/Biology/Computer Science. Output only the translation, maintaining a professional and objective tone.",
+};
+
+const PROMPTS = {
+  summarizeFullText:
+    "总结本文所解决的核心问题、主要方法论和论点，以及关键发现。着重阐述该研究在领域内的独特贡献，并明确作者旨在填补的研究空白。",
+  critiqueFullText: "",
+
+  critiqueSelection:
+    "对所选文本的假设、方法论和论证进行批判性分析，指出其中的不足之处、未经检验的前提以及牵强的解读。",
+  bulletizeSelection: "将所选文本提炼为要点，每条要点保持简洁、清晰。",
+  translateSelection:
+    "使用正式的学术术语将以下内容翻译成中文。确保技术术语符合深度学习/生物学/计算机科学领域的标准表述。仅输出翻译结果，保持专业、客观的语气。",
+};
+
 // const QUICK_ACTIONS = [
 //   {
 //     id: "summarize",
@@ -607,20 +631,17 @@ export function ItemPaneSection({
     {
       id: "Critique",
       label: "Critique selection",
-      onClick: () => send(`Critique the methodology and assumptions}`),
+      onClick: () => send(PROMPTS.critiqueSelection),
     },
     {
       id: "bulletize",
       label: "Bulletize selection",
-      onClick: () => send(`Turn the selection into concise notes with bullets`),
+      onClick: () => send(PROMPTS.bulletizeSelection),
     },
     {
       id: "traslate",
       label: "Translate selection",
-      onClick: () =>
-        send(
-          `Translate the selected text to Chinese. Keep the terminology accurate and output only the translation`,
-        ),
+      onClick: () => send(PROMPTS.translateSelection),
     },
     {
       id: "insert",
@@ -798,9 +819,7 @@ export function ItemPaneSection({
           <Button
             size="xs"
             variant="outline"
-            onClick={() => {
-              send("Summarize the main points of this paper.");
-            }}
+            onClick={() => send(PROMPTS.summarizeFullText)}
             disabled={isSending || isSelectionMode}
             className="rounded-full border-[color-mix(in_srgb,var(--fill-primary)_16%,transparent)] bg-[color-mix(in_srgb,var(--material-sidepane)_88%,var(--fill-primary)_8%)] px-2 text-[12px] text-[color-mix(in_srgb,var(--fill-primary)_78%,transparent)]"
           >

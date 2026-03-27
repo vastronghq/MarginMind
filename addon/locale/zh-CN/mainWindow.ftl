@@ -12,6 +12,6 @@ item-info-row-example-label = 示例行
 
 
 item-pane-head-text = 
-    .label = InSitu AI
+    .label = MarginMind
 item-pane-sidenav-tooltip
-    .tooltiptext = InSitu AI 面板
+    .tooltiptext = MarginMind 面板

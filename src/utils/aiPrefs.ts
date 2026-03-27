@@ -34,7 +34,7 @@ export const AI_DEFAULTS: AISettings = {
   temperature: 0.2,
   maxTokens: 4096,
   systemPrompt:
-    "You are InSituAI, an academic research assistant. Give precise, structured, and evidence-oriented answers based on the provided paper context.",
+    "You are MarginMind, an academic research assistant. Give precise, structured, and evidence-oriented answers based on the provided paper context.",
 };
 
 export function getDefaultBaseURL(provider: AIProvider) {

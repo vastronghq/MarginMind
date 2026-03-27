@@ -128,7 +128,7 @@ export function PreferencesPanel() {
         <header className="space-y-2">
           <div className="flex items-center justify-between">
             <h2 className="text-[22px] font-semibold tracking-tight">
-              InSituAI Preferences
+              MarginMind Preferences
             </h2>
             <Badge
               variant="outline"

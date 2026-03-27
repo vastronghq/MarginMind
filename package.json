@@ -4,11 +4,11 @@
   "version": "3.1.0",
   "description": "Zotero Plugin Template",
   "config": {
-    "addonName": "InSituAI",
-    "addonID": "insituai@euclpts.com",
-    "addonRef": "insituai",
-    "addonInstance": "InSituAI",
-    "prefsPrefix": "extensions.zotero.insituai"
+    "addonName": "MarginMind",
+    "addonID": "marginmind@euclpts.com",
+    "addonRef": "marginmind",
+    "addonInstance": "MarginMind",
+    "prefsPrefix": "extensions.zotero.marginmind"
   },
   "repository": {
     "type": "git",

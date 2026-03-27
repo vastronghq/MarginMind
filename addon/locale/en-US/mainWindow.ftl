@@ -12,6 +12,6 @@ item-info-row-example-label = Example Row
 
 
 item-pane-head-text = 
-    .label = InSitu AI
+    .label = MarginMind
 item-pane-sidenav-tooltip
-    .tooltiptext = InSitu AI Pane
+    .tooltiptext = MarginMind Pane

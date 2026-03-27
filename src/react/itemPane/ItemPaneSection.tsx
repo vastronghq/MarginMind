@@ -738,7 +738,7 @@ export function ItemPaneSection({
           <Card className="border-[color-mix(in_srgb,var(--fill-primary)_16%,transparent)] bg-[color-mix(in_srgb,var(--material-sidepane)_86%,var(--fill-primary)_8%)] p-1.5">
             <CardContent
               data-can-scroll="true"
-              className="max-h-[240px] space-y-1.5 p-0 pr-1"
+              className="max-h-[240px] space-y-1.5 overflow-y-auto p-0 pr-1"
             >
               {sessions
                 .slice()

@@ -11,12 +11,25 @@ const roots =
   new WeakMap<Element, Root>();
 reactWindow.__marginmindReactRoots = roots;
 
-export function mountSidebarPanel({ container, data }: SidebarPanelRenderPayload) {
+export function mountSidebarPanel({
+  container,
+  data,
+  showSelectedText,
+  selectedText,
+  selectedAnnotation,
+}: SidebarPanelRenderPayload) {
   let root = roots.get(container);
   if (!root) {
     root = createRoot(container);
     roots.set(container, root);
   }
 
-  root.render(<SidebarPanel data={data} />);
+  root.render(
+    <SidebarPanel
+      data={data}
+      showSelectedText={showSelectedText}
+      selectedText={selectedText}
+      selectedAnnotation={selectedAnnotation}
+    />,
+  );
 }

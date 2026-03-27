@@ -13,6 +13,7 @@ import rehypeKatex from "rehype-katex";
 import { streamAIReply, type AIChatMessage } from "../../modules/aiService";
 import { getPref } from "../../utils/prefs";
 import { loadAISettings } from "../../utils/aiPrefs";
+import type { SidebarPanelData } from "../bridge";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -26,17 +27,8 @@ import { Separator } from "@/components/ui/separator";
 import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
 
-type ItemPaneData = {
-  itemID: number | null;
-  attachmentItemID: number | null;
-  title: string;
-  creators: string;
-  year: string;
-  abstractPreview: string;
-  keyText: string;
-};
 type SidebarPanelProps = {
-  data: ItemPaneData | null;
+  data: SidebarPanelData | null;
   showSelectedText?: boolean;
   selectedText: string;
   selectedAnnotation: _ZoteroTypes.Annotations.AnnotationJson | null;
@@ -54,7 +46,7 @@ type ChatSession = {
 type PersistedState = {
   sessions: ChatSession[];
   activeSessionID: string;
-  activeContext: ItemPaneData | null;
+  activeContext: SidebarPanelData | null;
 };
 type MarginMindChatWindow = Window & {
   __marginmindItemPaneChatState?: PersistedState;
@@ -168,7 +160,7 @@ const writePersisted = (state: PersistedState) => {
     globalThis as unknown as MarginMindChatWindow
   ).__marginmindItemPaneChatState = state;
 };
-const seedState = (data: ItemPaneData | null): PersistedState => {
+const seedState = (data: SidebarPanelData | null): PersistedState => {
   const saved = readPersisted();
   if (!saved?.sessions?.length) {
     const first = createSession();
@@ -189,7 +181,10 @@ const seedState = (data: ItemPaneData | null): PersistedState => {
     activeContext: saved.activeContext ?? data,
   };
 };
-const buildSystemPrompt = (ctx: ItemPaneData | null, systemPrompt: string) => {
+const buildSystemPrompt = (
+  ctx: SidebarPanelData | null,
+  systemPrompt: string,
+) => {
   const lines = [
     "Paper context:",
     `Title: ${ctx?.title ?? "(none)"}`,
@@ -246,7 +241,7 @@ export function SidebarPanel({
   const [activeSessionID, setActiveSessionID] = useState(
     seeded.activeSessionID,
   );
-  const [activeContext, setActiveContext] = useState<ItemPaneData | null>(
+  const [activeContext, setActiveContext] = useState<SidebarPanelData | null>(
     seeded.activeContext ?? data ?? null,
   );
   const [isHistoryOpen, setIsHistoryOpen] = useState(false);

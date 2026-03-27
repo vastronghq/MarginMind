@@ -22,16 +22,21 @@ export type PreferencesRenderPayload = {
 
 export type SidebarPanelData = {
   itemID: number | null;
+  attachmentItemID: number | null;
   title: string;
   creators: string;
   year: string;
-  itemType: string;
   abstractPreview: string;
+  keyText: string;
+  itemType: string;
 };
 
 export type SidebarPanelRenderPayload = {
   container: Element;
   data: SidebarPanelData | null;
+  showSelectedText: boolean;
+  selectedText: string;
+  selectedAnnotation: _ZoteroTypes.Annotations.AnnotationJson | null;
 };
 
 export type MarginMindReactBridge = {

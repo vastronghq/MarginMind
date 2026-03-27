@@ -1,13 +1,13 @@
-import type { InSituAIReactWindow } from "./bridge";
+import type { MarginMindReactWindow } from "./bridge";
 import { mountItemPane } from "./itemPane/mount";
 import { mountPreferences } from "./preferences/mount";
 
-const reactWindow = globalThis as unknown as InSituAIReactWindow;
-const REACT_STYLE_ID = "insituai-react-ui-style";
+const reactWindow = globalThis as unknown as MarginMindReactWindow;
+const REACT_STYLE_ID = "marginmind-react-ui-style";
 
 function ensureReactStyles() {
   const doc = reactWindow.document;
-  const href = reactWindow.__insituaiReactStyleURL;
+  const href = reactWindow.__marginmindReactStyleURL;
   if (!doc || !href) return;
 
   let link = doc.getElementById(REACT_STYLE_ID) as HTMLLinkElement | null;
@@ -23,9 +23,9 @@ function ensureReactStyles() {
   }
 }
 
-reactWindow.__insituaiReact = {
+reactWindow.__marginmindReact = {
   renderItemPane: mountItemPane,
   renderPreferences: mountPreferences,
 };
-reactWindow.__insituaiReactLoaded = true;
+reactWindow.__marginmindReactLoaded = true;
 ensureReactStyles();

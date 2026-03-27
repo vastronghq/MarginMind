@@ -56,8 +56,8 @@ type PersistedState = {
   activeSessionID: string;
   activeContext: ItemPaneData | null;
 };
-type InSituAIChatWindow = Window & {
-  __insituaiItemPaneChatState?: PersistedState;
+type MarginMindChatWindow = Window & {
+  __marginmindItemPaneChatState?: PersistedState;
 };
 const isAbortError = (error: unknown) =>
   error instanceof DOMException
@@ -70,7 +70,7 @@ const isAbortError = (error: unknown) =>
 const PREVIEW_ID = "selection-preview";
 const EMPTY_TITLE = "New chat";
 const ROLE_LABEL: Record<ChatRole, string> = {
-  assistant: "InSitu",
+  assistant: "MarginMind",
   user: "You",
   system: "Selection",
 };
@@ -161,11 +161,12 @@ const trimTitle = (text: string, max = 42) => {
   return !s ? EMPTY_TITLE : s.length > max ? `${s.slice(0, max)}...` : s;
 };
 const readPersisted = (): PersistedState | null =>
-  (globalThis as unknown as InSituAIChatWindow).__insituaiItemPaneChatState ??
-  null;
+  (globalThis as unknown as MarginMindChatWindow)
+    .__marginmindItemPaneChatState ?? null;
 const writePersisted = (state: PersistedState) => {
-  (globalThis as unknown as InSituAIChatWindow).__insituaiItemPaneChatState =
-    state;
+  (
+    globalThis as unknown as MarginMindChatWindow
+  ).__marginmindItemPaneChatState = state;
 };
 const seedState = (data: ItemPaneData | null): PersistedState => {
   const saved = readPersisted();

@@ -1,12 +1,12 @@
 import { createRoot, type Root } from "react-dom/client";
-import type { InSituAIReactWindow, ItemPaneRenderPayload } from "../bridge";
+import type { MarginMindReactWindow, ItemPaneRenderPayload } from "../bridge";
 import { ItemPaneSection } from "./ItemPaneSection";
 
-const reactWindow = globalThis as unknown as InSituAIReactWindow;
+const reactWindow = globalThis as unknown as MarginMindReactWindow;
 const roots =
-  (reactWindow.__insituaiReactRoots as WeakMap<Element, Root> | undefined) ??
+  (reactWindow.__marginmindReactRoots as WeakMap<Element, Root> | undefined) ??
   new WeakMap<Element, Root>();
-reactWindow.__insituaiReactRoots = roots;
+reactWindow.__marginmindReactRoots = roots;
 
 export function mountItemPane({
   container,

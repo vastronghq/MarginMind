@@ -1,9 +1,9 @@
 import { getLocaleID } from "../utils/locale";
-import type { InSituAIReactWindow, ItemPaneData } from "../react/bridge";
+import type { MarginMindReactWindow, ItemPaneData } from "../react/bridge";
 
-const READER_SELECTION_LISTENER_ID = "insituai-reader-selection";
-const ITEM_PANE_MOUNT_ID = "insituai-item-pane-root";
-const READER_PANE_MOUNT_ID = "insituai-reader-item-pane-root";
+const READER_SELECTION_LISTENER_ID = "marginmind-reader-selection";
+const ITEM_PANE_MOUNT_ID = "marginmind-item-pane-root";
+const READER_PANE_MOUNT_ID = "marginmind-reader-item-pane-root";
 const REACT_WINDOW_SCRIPT_URL = `${rootURI}content/scripts/ui.js`;
 const REACT_STYLE_URL = `${rootURI}content/styles/ui.css`;
 const REACT_ASSET_VERSION =
@@ -27,7 +27,7 @@ const readerSelectionHandler: _ZoteroTypes.Reader.EventHandler<
 
 function registerItemPaneSection() {
   Zotero.ItemPaneManager.registerSection({
-    paneID: "insituai-item-pane",
+    paneID: "marginmind-item-pane",
     pluginID: addon.data.config.addonID,
     bodyXHTML: `<html:div id="${ITEM_PANE_MOUNT_ID}" />`,
     header: {
@@ -52,7 +52,7 @@ function registerItemPaneSection() {
 
 function registerReaderItemPaneSection() {
   Zotero.ItemPaneManager.registerSection({
-    paneID: "insituai-reader-item-pane",
+    paneID: "marginmind-reader-item-pane",
     pluginID: addon.data.config.addonID,
     bodyXHTML: `<html:div id="${READER_PANE_MOUNT_ID}" />`,
     header: {
@@ -136,7 +136,7 @@ function renderItemPane(
   item: Zotero.Item | undefined,
   options: { mountId: string; showSelectedText: boolean },
 ) {
-  const win = body.ownerDocument?.defaultView as InSituAIReactWindow | null;
+  const win = body.ownerDocument?.defaultView as MarginMindReactWindow | null;
   if (!win) {
     throw new Error("Item pane window is unavailable");
   }
@@ -148,11 +148,11 @@ function renderItemPane(
     throw new Error(`Item pane mount node not found: ${options.mountId}`);
   }
 
-  if (!win.__insituaiReact) {
+  if (!win.__marginmindReact) {
     throw new Error("React bridge failed to initialize");
   }
 
-  win.__insituaiReact.renderItemPane({
+  win.__marginmindReact.renderItemPane({
     container,
     data: item ? serializeItem(item) : null,
     showSelectedText: options.showSelectedText,
@@ -163,23 +163,23 @@ function renderItemPane(
   });
 }
 
-function ensureReactBridge(win: InSituAIReactWindow) {
+function ensureReactBridge(win: MarginMindReactWindow) {
   if (
-    win.__insituaiReactLoaded &&
-    win.__insituaiReact &&
-    win.__insituaiReactAssetVersion === REACT_ASSET_VERSION
+    win.__marginmindReactLoaded &&
+    win.__marginmindReact &&
+    win.__marginmindReactAssetVersion === REACT_ASSET_VERSION
   ) {
     return;
   }
 
   const suffix = __env__ === "development" ? `?t=${REACT_ASSET_VERSION}` : "";
-  win.__insituaiReactStyleURL = `${REACT_STYLE_URL}${suffix}`;
+  win.__marginmindReactStyleURL = `${REACT_STYLE_URL}${suffix}`;
   Services.scriptloader.loadSubScript(
     `${REACT_WINDOW_SCRIPT_URL}${suffix}`,
     win,
   );
-  win.__insituaiReactLoaded = true;
-  win.__insituaiReactAssetVersion = REACT_ASSET_VERSION;
+  win.__marginmindReactLoaded = true;
+  win.__marginmindReactAssetVersion = REACT_ASSET_VERSION;
 }
 
 function getBodyItem(body: HTMLDivElement) {

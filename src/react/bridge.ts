@@ -20,15 +20,15 @@ export type PreferencesRenderPayload = {
   container: Element;
 };
 
-export type InSituAIReactBridge = {
+export type MarginMindReactBridge = {
   renderItemPane(payload: ItemPaneRenderPayload): void;
   renderPreferences(payload: PreferencesRenderPayload): void;
 };
 
-export type InSituAIReactWindow = Window & {
-  __insituaiReact?: InSituAIReactBridge;
-  __insituaiReactLoaded?: boolean;
-  __insituaiReactRoots?: WeakMap<Element, unknown>;
-  __insituaiReactStyleURL?: string;
-  __insituaiReactAssetVersion?: string;
+export type MarginMindReactWindow = Window & {
+  __marginmindReact?: MarginMindReactBridge;
+  __marginmindReactLoaded?: boolean;
+  __marginmindReactRoots?: WeakMap<Element, unknown>;
+  __marginmindReactStyleURL?: string;
+  __marginmindReactAssetVersion?: string;
 };

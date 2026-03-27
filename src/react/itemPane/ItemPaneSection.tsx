@@ -100,7 +100,7 @@ const PROMPTS = {
   critiqueFullText: "",
 
   explainSelection:
-    "作为本次对话中上下文领域的专家，请你先拆解选文中的专业术语或概念，并提供清晰的定义，然后串联这些概念以解析整段文本的深层含义。",
+    "请你作为本对话领域的专家，先拆解选文中的专业术语与概念，给出它们在原学科中的清晰定义；再结合选文所处的学科背景，将这些概念串联起来，阐述选文的具体含义",
   critiqueSelection:
     "对所选文本的假设、方法论和论证进行批判性分析，指出其中的不足之处、未经检验的前提以及牵强的解读。",
   bulletizeSelection: "将所选文本提炼为要点，每条要点保持简洁、清晰。",
@@ -203,10 +203,7 @@ const buildSystemPrompt = (ctx: ItemPaneData | null, systemPrompt: string) => {
 function MessageContent({ message }: { message: ChatMessage }) {
   if (message.role !== "assistant") {
     return (
-      <div
-        data-render-mode="plain"
-        // className="select-text whitespace-pre-wrap text-[20px] leading-[32px]"
-      >
+      <div data-render-mode="plain" className="whitespace-pre-wrap">
         {message.text}
       </div>
     );
@@ -382,7 +379,7 @@ export function ItemPaneSection({
         messages: [...base, { id: uid("user"), role: "user" as const, text }],
       };
     }
-    const merged = `${text}\n\n[Selected text from paper]\n${base[previewIndex].text}`;
+    const merged = `${text}\n[Selected text from paper]\n${base[previewIndex].text}`;
     const next = [...base];
     next[previewIndex] = { id: uid("user"), role: "user", text: merged };
     return { text: merged, messages: next };

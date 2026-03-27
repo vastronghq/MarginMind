@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState, type KeyboardEvent } from "react";
 import Markdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import remarkMath from "remark-math";
@@ -473,6 +473,18 @@ export function ItemPaneSection({
       setIsSending(false);
     }
   }
+
+  const handleDraftKeyDown = (event: KeyboardEvent<HTMLTextAreaElement>) => {
+    if (event.key !== "Enter" || event.shiftKey) return;
+    if (event.nativeEvent.isComposing) return;
+    event.preventDefault();
+    if (isSelectionMode || (!isSending && !draft.trim())) return;
+    if (isSending) {
+      stopSending();
+      return;
+    }
+    void send(draft);
+  };
 
   async function saveSelectionAsAnnotation() {
     if (
@@ -956,6 +968,7 @@ export function ItemPaneSection({
               placeholder="Ask about the paper..."
               value={draft}
               onChange={(e) => updateDraft(e.target.value)}
+              onKeyDown={handleDraftKeyDown}
               disabled={isSending || isSelectionMode}
               className="resize-none border-[color-mix(in_srgb,var(--fill-primary)_16%,transparent)] bg-transparent text-[14px] leading-6 text-[var(--fill-primary)] placeholder:text-[color-mix(in_srgb,var(--fill-primary)_38%,transparent)]"
             />

@@ -99,7 +99,7 @@ const PROMPTS = {
     "对所选文本的假设、方法论和论证进行批判性分析，指出其中的不足之处、未经检验的前提以及牵强的解读。",
   bulletizeSelection: "将所选文本提炼为要点，每条要点保持简洁、清晰。",
   translateSelection:
-    "使用正式的学术术语将以下内容翻译成中文。确保技术术语符合深度学习/生物学/计算机科学领域的标准表述。仅输出翻译结果，保持专业、客观的语气。",
+    "使用正式的学术术语将以下内容翻译成中文。确保技术术语符合【计算机科学/化学/生物学/人工智能】领域的标准表述。仅输出翻译结果，保持专业、客观的语气。",
 };
 
 // const QUICK_ACTIONS = [
@@ -355,6 +355,14 @@ export function ItemPaneSection({
     setSelectedIDs((curr) =>
       curr.includes(id) ? curr.filter((x) => x !== id) : [...curr, id],
     );
+  const toggleSelectionWithAnyClick = (id: string) => {
+    if (!isSelectionMode) {
+      setIsSelectionMode(true);
+      setSelectedIDs([id]);
+      return;
+    }
+    toggleSelected(id);
+  };
 
   const normalizePrompt = (input: string, base: ChatMessage[]) => {
     const text = input.trim();
@@ -776,10 +784,8 @@ export function ItemPaneSection({
               isSelectionMode ? "cursor-pointer select-none" : "select-text"
             }
             onContextMenu={(event) => {
-              if (isSelectionMode) return;
               event.preventDefault();
-              setIsSelectionMode(true);
-              setSelectedIDs([message.id]);
+              toggleSelectionWithAnyClick(message.id);
             }}
             onClick={() => {
               if (!isSelectionMode) return;

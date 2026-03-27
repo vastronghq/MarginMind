@@ -12,6 +12,11 @@ import {
   unregisterReaderSelectionListener,
 } from "./modules/itemPane";
 import { registerToolbarButton } from "./modules/toolbarButton";
+import {
+  registerSidebarPanel,
+  unregisterAllSidebarPanels,
+  unregisterSidebarPanel,
+} from "./modules/sidebarPanel";
 import { getString, initLocale } from "./utils/locale";
 import { registerPrefsScripts } from "./modules/preferenceScript";
 import { createZToolkit } from "./utils/ztoolkit";
@@ -94,17 +99,20 @@ async function onMainWindowLoad(win: _ZoteroTypes.MainWindow): Promise<void> {
   // PromptExampleFactory.registerConditionalCommandExample();
 
   registerToolbarButton();
+  registerSidebarPanel(win);
 
   await Zotero.Promise.delay(100);
 }
 
 async function onMainWindowUnload(win: Window): Promise<void> {
+  unregisterSidebarPanel(win);
   ztoolkit.unregisterAll();
   addon.data.dialog?.window?.close();
 }
 
 function onShutdown(): void {
   unregisterReaderSelectionListener();
+  unregisterAllSidebarPanels();
   ztoolkit.unregisterAll();
   addon.data.dialog?.window?.close();
   // Remove addon object

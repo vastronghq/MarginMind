@@ -20,9 +20,24 @@ export type PreferencesRenderPayload = {
   container: Element;
 };
 
+export type SidebarPanelData = {
+  itemID: number | null;
+  title: string;
+  creators: string;
+  year: string;
+  itemType: string;
+  abstractPreview: string;
+};
+
+export type SidebarPanelRenderPayload = {
+  container: Element;
+  data: SidebarPanelData | null;
+};
+
 export type MarginMindReactBridge = {
   renderItemPane(payload: ItemPaneRenderPayload): void;
   renderPreferences(payload: PreferencesRenderPayload): void;
+  renderSidebarPanel(payload: SidebarPanelRenderPayload): void;
 };
 
 export type MarginMindReactWindow = Window & {

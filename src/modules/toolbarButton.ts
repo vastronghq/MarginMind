@@ -1,4 +1,5 @@
 import { config } from "../../package.json";
+import { isPanelShown, togglePanel } from "./sidebarPanel";
 
 export function registerToolbarButton(): void {
   const doc = Zotero.getMainWindow().document;
@@ -38,7 +39,10 @@ export function registerToolbarButton(): void {
       listeners: [
         {
           type: "click",
-          listener: () => ztoolkit.log("Toolbar button clicked"),
+          listener: () => {
+            const win = Zotero.getMainWindow();
+            togglePanel(win);
+          },
         },
         {
           type: "mouseover",
@@ -50,8 +54,10 @@ export function registerToolbarButton(): void {
         {
           type: "mouseout",
           listener: (e: Event) => {
-            // Keep pressed state if panel is open
-            ztoolkit.log("Toolbar button mouseout");
+            if (!isPanelShown(Zotero.getMainWindow())) {
+              (e.currentTarget as HTMLElement).style.backgroundColor =
+                "transparent";
+            }
           },
         },
       ],

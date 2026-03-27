@@ -1,4 +1,10 @@
-import { BasicExampleFactory, KeyExampleFactory } from "./modules/examples";
+import {
+  BasicExampleFactory,
+  HelperExampleFactory,
+  KeyExampleFactory,
+  PromptExampleFactory,
+  UIExampleFactory,
+} from "./modules/examples";
 import {
   registerItemPaneSection,
   registerReaderItemPaneSection,
@@ -22,7 +28,13 @@ async function onStartup() {
 
   BasicExampleFactory.registerNotifier();
 
-  KeyExampleFactory.registerShortcuts();
+  // KeyExampleFactory.registerShortcuts();
+
+  // await UIExampleFactory.registerExtraColumn();
+
+  // await UIExampleFactory.registerExtraColumnWithCustomCell();
+
+  // UIExampleFactory.registerItemPaneCustomInfoRow();
 
   // UIExampleFactory.registerItemPaneSection();
 
@@ -65,6 +77,20 @@ async function onMainWindowLoad(win: _ZoteroTypes.MainWindow): Promise<void> {
   //   progress: 30,
   //   text: `[30%] ${getString("startup-begin")}`,
   // });
+
+  UIExampleFactory.registerStyleSheet(win);
+
+  UIExampleFactory.registerRightClickMenuItem();
+
+  UIExampleFactory.registerRightClickMenuPopup(win);
+
+  UIExampleFactory.registerWindowMenuWithSeparator();
+
+  PromptExampleFactory.registerNormalCommandExample();
+
+  PromptExampleFactory.registerAnonymousCommandExample(win);
+
+  PromptExampleFactory.registerConditionalCommandExample();
 
   await Zotero.Promise.delay(100);
 }

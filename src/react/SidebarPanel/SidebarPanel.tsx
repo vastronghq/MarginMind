@@ -23,6 +23,8 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { ChevronDown } from "lucide-react";
+
 import { Separator } from "@/components/ui/separator";
 import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
@@ -857,13 +859,13 @@ export function SidebarPanel({
         ) : null}
         {showJump ? (
           <Button
-            type="button"
-            size="xs"
-            variant="outline"
+            // type="button"
+            size="icon"
+            // variant="outline"
             onClick={jumpToLatest}
-            className="sticky bottom-0 ml-auto rounded-full border-[color-mix(in_srgb,var(--fill-primary)_18%,transparent)] bg-[color-mix(in_srgb,var(--material-sidepane)_72%,var(--fill-primary)_16%)] px-2.5 text-[12px] text-[color-mix(in_srgb,var(--fill-primary)_84%,transparent)]"
+            className="sticky bottom-0 mx-auto rounded-full border-[1px] border-[color-mix(in_srgb,var(--fill-primary)_18%,transparent)] bg-[color-mix(in_srgb,var(--material-sidepane)_72%,var(--fill-primary)_16%)] p-3 text-[color-mix(in_srgb,var(--fill-primary)_84%,transparent)]"
           >
-            Jump to latest
+            <ChevronDown />
           </Button>
         ) : null}
       </section>

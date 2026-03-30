@@ -213,8 +213,12 @@ const handleInternalJump = async (href: string) => {
     const itemKey = url.pathname.split("/").pop();
     const pageStr = url.searchParams.get("page");
     const regionStr = url.searchParams.get("region");
-    const region: number[] = regionStr?.split(",").map(Number) ?? [];
-    const regionArr: Array<number[]> = [region];
+
+    // const region: number[] = regionStr?.split(",").map(Number) ?? [];
+    // const regionArr: Array<number[]> = [region];
+    const regionArr: Array<number[]> = JSON.parse(
+      decodeURIComponent(regionStr as string) ?? "[]",
+    ); // regionStr应当形如'[[48, 368.569, 299.997, 378.069], [48, 357.029, 299.997, 366.529], [48, 345.489, 299.997, 354.989], [48, 333.949, 255.356, 343.449]]'
     // const regionArr: Array<number[]> = [
     //   [48, 368.569, 299.997, 378.069],
     //   [48, 357.029, 299.997, 366.529],

@@ -15,7 +15,7 @@ import {
   type AIPreset,
   type AIProvider,
   type AISettings,
-} from "../../utils/aiPrefs";
+} from "../../modules/aiPrefs";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";

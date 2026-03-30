@@ -12,7 +12,7 @@ import rehypeHighlight from "rehype-highlight";
 import rehypeKatex from "rehype-katex";
 import { streamAIReply, type AIChatMessage } from "../../modules/aiService";
 import { getPref } from "../../utils/prefs";
-import { loadAISettings } from "../../utils/aiPrefs";
+import { loadAISettings } from "../../modules/aiPrefs";
 import type { SidebarPanelData } from "../bridge";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";

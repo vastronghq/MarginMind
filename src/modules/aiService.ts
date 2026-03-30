@@ -1,7 +1,7 @@
 import { streamText, type ModelMessage } from "ai";
 import { createOpenRouter } from "@openrouter/ai-sdk-provider";
 import OpenAI from "openai";
-import type { AIProvider, AISettings } from "../utils/aiPrefs";
+import type { AIProvider, AISettings } from "./aiPrefs";
 
 export type AIChatMessage = {
   role: "system" | "user" | "assistant";

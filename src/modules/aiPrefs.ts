@@ -1,4 +1,4 @@
-import { getPref, setPref } from "./prefs";
+import { getPref, setPref } from "../utils/prefs";
 
 type PluginPrefsMap = _ZoteroTypes.Prefs["PluginPrefsMap"];
 
@@ -15,6 +15,7 @@ export type AIProvider =
   | "aliyun" // 阿里云 (阿里巴巴): 通义千问 Qwen 系列, 开源与闭源结合最好
   | "volcengine" // 火山引擎 (字节跳动): 豆包 Doubao, 算力储备极其雄厚
   | "minimax" // MiniMax (稀宇科技 - 上海): 海螺 AI, 擅长角色扮演与情感交互
+  | "longcat" // LongCat (美团)
 
   // --- 模型聚合与托管平台 (Aggregators) ---
   | "openrouter" // OpenRouter: 全球模型聚合器，一个 Key 调通几乎所有主流模型
@@ -49,6 +50,7 @@ export const AI_PROVIDER_OPTIONS: Array<{ value: AIProvider; label: string }> =
     { value: "aliyun", label: "Qwen (通义千问, Qwen系列)" },
     { value: "volcengine", label: "Volcengine (火山引擎, Doubao系列)" },
     { value: "minimax", label: "MiniMax (稀宇科技, MiniMax系列)" },
+    { value: "longcat", label: "LongCat AI (美团, LongCat系列)" },
     { value: "groq", label: "Groq (极速推理, 开源模型托管)" },
     { value: "mistral", label: "Mistral AI (欧洲开源大模型)" },
     { value: "cohere", label: "Cohere (企业级RAG, 多语言模型)" },
@@ -71,6 +73,7 @@ const BASE_URL_MAP: Record<AIProvider, string> = {
   aliyun: "https://dashscope.aliyuncs.com/compatible-mode/v1",
   volcengine: "https://ark.cn-beijing.volces.com/api/v3",
   minimax: "https://api.minimax.chat/v1",
+  longcat: "https://api.longcat.chat/openai/v1",
   groq: "https://api.groq.com/openai/v1",
   mistral: "https://api.mistral.ai/v1",
   cohere: "https://api.cohere.ai/v1",
@@ -90,6 +93,7 @@ const DEFAULT_MODEL_MAP: Record<AIProvider, string> = {
   aliyun: "qwen-3.5-omni-flash",
   volcengine: "doubao-seed-1-8-251228",
   minimax: "hailuo-ai-m2.7-flash",
+  longcat: "LongCat-Flash-Thinking-2601",
   groq: "llama-4-70b-instruct",
   mistral: "mistral-large-2506",
   cohere: "command-r2-plus",

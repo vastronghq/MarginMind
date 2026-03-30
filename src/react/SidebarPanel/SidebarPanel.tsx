@@ -36,7 +36,13 @@ type SidebarPanelProps = {
   selectedAnnotation: _ZoteroTypes.Annotations.AnnotationJson | null;
 };
 type ChatRole = "assistant" | "user" | "system";
-type ChatMessage = { id: string; role: ChatRole; text: string; meta?: string };
+type ChatMessage = {
+  id: string;
+  role: ChatRole;
+  text: string;
+  meta?: string;
+  thinking?: string;
+};
 type ChatSession = {
   id: string;
   title: string;
@@ -44,6 +50,7 @@ type ChatSession = {
   messages: ChatMessage[];
   draft: string;
   queuedSelection: string;
+  thinkingEnabled?: boolean;
 };
 type PersistedState = {
   sessions: ChatSession[];
@@ -72,8 +79,8 @@ const ROLE_BUBBLE: Record<ChatRole, string> = {
   system:
     "w-full border-[color-mix(in_srgb,var(--accent-blue)_35%,transparent)] border-solid bg-[color-mix(in_srgb,var(--accent-blue)_16%,transparent)] text-[13px] text-[color-mix(in_srgb,var(--fill-primary)_88%,transparent)]",
   assistant:
-    "w-full border-[color-mix(in_srgb,var(--fill-primary)_16%,transparent)] border-solid bg-[color-mix(in_srgb,var(--material-sidepane)_84%,var(--fill-primary)_8%)] text-[var(--fill-primary)] text-[14px] leading-[22px]",
-  user: "max-w-[80%] border-[color-mix(in_srgb,var(--accent-blue)_45%,transparent)] border-solid bg-[color-mix(in_srgb,var(--accent-blue)_20%,transparent)] text-[var(--fill-primary)] text-[14px] leading-[22px]",
+    "w-full border-[color-mix(in_srgb,var(--fill-primary)_16%,transparent)] border-solid bg-[color-mix(in_srgb,var(--material-sidepane)_84%,var(--fill-primary)_8%)] text-[var(--fill-primary)] text-[18px] leading-[30px]",
+  user: "max-w-[80%] border-[color-mix(in_srgb,var(--accent-blue)_45%,transparent)] border-solid bg-[color-mix(in_srgb,var(--accent-blue)_20%,transparent)] text-[var(--fill-primary)] text-[18px] leading-[30px]",
 };
 
 const top_btn_style =
@@ -81,6 +88,14 @@ const top_btn_style =
 
 const quick_btn_style =
   "rounded-full border-[1px] border-[color-mix(in_srgb,var(--fill-primary)_16%,transparent)] bg-[color-mix(in_srgb,var(--material-sidepane)_88%,var(--fill-primary)_8%)] px-2 text-[12px] text-[color-mix(in_srgb,var(--fill-primary)_78%,transparent)]";
+
+// const THINKING_MODELS: Record<string, string> = {
+//   "deepseek-chat": "deepseek-reasoner",
+//   "deepseek-v3": "deepseek-reasoner",
+//   "gemini-2.0-flash": "gemini-2.0-flash-thinking-exp",
+//   "gemini-2.5-flash": "gemini-2.5-flash-preview-04-17-thinking",
+//   "gemini-2.5-pro": "gemini-2.5-pro-preview-05-06",
+// };
 
 const PROMPTS_EN = {
   summarizeFullText:
@@ -146,6 +161,7 @@ const createSession = (partial?: Partial<ChatSession>): ChatSession => ({
   messages: partial?.messages ?? initialMessages(),
   draft: partial?.draft ?? "",
   queuedSelection: partial?.queuedSelection ?? "",
+  thinkingEnabled: partial?.thinkingEnabled ?? false,
 });
 const toTime = (ts: number) => {
   const d = new Date(ts);
@@ -272,43 +288,73 @@ function MessageContent({ message }: { message: ChatMessage }) {
   }
 
   return (
-    // <div className="select-text text-[20px] leading-[32px]">
-    // 解决markdown首末边距过大的问题
-    <div className="[&>*:first-child]:mt-0 [&>*:last-child]:mb-0">
-      <Markdown
-        remarkPlugins={[remarkGfm, remarkMath]}
-        rehypePlugins={[rehypeKatex, rehypeHighlight]}
-        // 关键修复：放行 zotero 协议，防止被react-markdown过滤
-        urlTransform={(uri) => (uri.startsWith("zotero://") ? uri : uri)}
-        components={{
-          a: ({ href, ...props }) => (
-            <a
-              {...props}
-              // href={href} // 可以直接内部跳转，也没有blank弹窗，但是不够强大
-              // target="_blank"
-              rel="noopener noreferrer"
-              onClick={(e) => {
-                e.preventDefault();
-                if (!href) return;
-                if (href.startsWith("zotero://")) {
-                  handleInternalJump(href);
-                  // Zotero.openInViewer(href); // 可以内部跳转，但是有blank弹窗，且无法高亮
-                } else {
-                  Zotero.launchURL(href);
+    <div>
+      {message.thinking ? (
+        <div data-thinking-section>
+          <details open className="group mb-1.5">
+            <summary className="cursor-pointer select-none text-[12px] font-medium uppercase tracking-wide text-[color-mix(in_srgb,var(--fill-primary)_42%,transparent)] hover:text-[color-mix(in_srgb,var(--fill-primary)_60%,transparent)]">
+              THINKING
+            </summary>
+            <div className="mt-1 border-y-0 border-l-2 border-r-0 border-solid border-[color-mix(in_srgb,var(--fill-primary)_14%,transparent)] pl-3 text-[14px] leading-[24px] text-[color-mix(in_srgb,var(--fill-primary)_52%,transparent)] [&>*:first-child]:mt-0 [&>*:last-child]:mb-0">
+              <Markdown
+                remarkPlugins={[remarkGfm, remarkMath]}
+                rehypePlugins={[rehypeKatex, rehypeHighlight]}
+                urlTransform={(uri) =>
+                  uri.startsWith("zotero://") ? uri : uri
                 }
-              }}
-            />
-          ),
-          pre: ({ ...props }) => (
-            <pre
-              {...props}
-              className={cn("whitespace-pre-wrap", props.className)}
-            />
-          ),
-        }}
-      >
-        {message.text}
-      </Markdown>
+                components={{
+                  pre: ({ ...props }) => (
+                    <pre
+                      {...props}
+                      className={cn("whitespace-pre-wrap", props.className)}
+                    />
+                  ),
+                }}
+              >
+                {message.thinking}
+              </Markdown>
+            </div>
+          </details>
+        </div>
+      ) : null}
+      {/* <div className="select-text text-[20px] leading-[32px]"> */}
+      {/* 解决markdown首末边距过大的问题 */}
+      <div className="[&>*:first-child]:mt-0 [&>*:last-child]:mb-0">
+        <Markdown
+          remarkPlugins={[remarkGfm, remarkMath]}
+          rehypePlugins={[rehypeKatex, rehypeHighlight]}
+          // 关键修复：放行 zotero 协议，防止被react-markdown过滤
+          urlTransform={(uri) => (uri.startsWith("zotero://") ? uri : uri)}
+          components={{
+            a: ({ href, ...props }) => (
+              <a
+                {...props}
+                // href={href} // 可以直接内部跳转，也没有blank弹窗，但是不够强大
+                // target="_blank"
+                rel="noopener noreferrer"
+                onClick={(e) => {
+                  e.preventDefault();
+                  if (!href) return;
+                  if (href.startsWith("zotero://")) {
+                    handleInternalJump(href);
+                    // Zotero.openInViewer(href); // 可以内部跳转，但是有blank弹窗，且无法高亮
+                  } else {
+                    Zotero.launchURL(href);
+                  }
+                }}
+              />
+            ),
+            pre: ({ ...props }) => (
+              <pre
+                {...props}
+                className={cn("whitespace-pre-wrap", props.className)}
+              />
+            ),
+          }}
+        >
+          {message.text}
+        </Markdown>
+      </div>
     </div>
   );
 }
@@ -365,6 +411,7 @@ export function SidebarPanel({
     selectedIDs.length > 0 &&
     !isSavingAnnotation;
   const canDeleteSelected = selectedIDs.length > 0 && !isSending;
+  const thinkingEnabled = !!activeSession?.thinkingEnabled;
 
   const patchSession = (id: string, fn: (s: ChatSession) => ChatSession) =>
     setSessions((curr) =>
@@ -376,6 +423,9 @@ export function SidebarPanel({
   const clearSelectionMode = () => {
     setIsSelectionMode(false);
     setSelectedIDs([]);
+  };
+  const toggleThinking = () => {
+    patchActive((s) => ({ ...s, thinkingEnabled: !s.thinkingEnabled }));
   };
   const showError = (text: string, ms = 5000) => {
     if (errorTimerRef.current) clearTimeout(errorTimerRef.current);
@@ -483,6 +533,14 @@ export function SidebarPanel({
     setRequestError("");
     const controller = new AbortController();
     abortControllerRef.current = controller;
+
+    const useThinking = thinkingEnabled;
+    // const effectiveSettings = useThinking
+    //   ? { ...settings, model: THINKING_MODELS[settings.model]! }
+    //   : settings;
+    const effectiveSettings = settings;
+    const displayMeta = `${effectiveSettings.provider} / ${effectiveSettings.model}`;
+
     const assistantID = uid("assistant");
     patchSession(sessionID, (s) => ({
       ...s,
@@ -492,7 +550,7 @@ export function SidebarPanel({
           id: assistantID,
           role: "assistant",
           text: "",
-          meta: `${settings.provider} / ${settings.model}`,
+          meta: displayMeta,
         },
       ],
     }));
@@ -501,7 +559,10 @@ export function SidebarPanel({
       const apiMessages: AIChatMessage[] = [
         {
           role: "system",
-          content: buildSystemPrompt(activeContext, settings.systemPrompt),
+          content: buildSystemPrompt(
+            activeContext,
+            effectiveSettings.systemPrompt,
+          ),
         },
         ...norm.messages
           .filter(
@@ -511,19 +572,30 @@ export function SidebarPanel({
           .map((m) => ({ role: m.role, content: m.text })),
       ];
       let full = "";
+      let thinking = "";
       let streamError: unknown = null;
       const stream = streamAIReply({
-        settings,
+        settings: effectiveSettings,
         messages: apiMessages,
         abortSignal: controller.signal,
       });
 
-      for await (const delta of stream) {
-        full += delta;
+      for await (const chunk of stream) {
+        if (chunk.type === "thinking") {
+          thinking += chunk.content;
+        } else {
+          full += chunk.content;
+        }
         patchSession(sessionID, (s) => ({
           ...s,
           messages: s.messages.map((m) =>
-            m.id === assistantID ? { ...m, text: full } : m,
+            m.id === assistantID
+              ? {
+                  ...m,
+                  text: full,
+                  thinking: thinking || (useThinking ? " " : undefined),
+                }
+              : m,
           ),
         }));
       }
@@ -677,6 +749,18 @@ export function SidebarPanel({
       list.scrollTop = list.scrollHeight;
     }
   }, [messages, isSending]);
+
+  // 当消息发送完成（停止发送）时，自动折叠聊天界面中所有展开的“思考过程”区块。
+  useEffect(() => {
+    if (isSending) return;
+    const list = messageRef.current;
+    if (!list) return;
+    list
+      .querySelectorAll<HTMLDetailsElement>(
+        "[data-thinking-section] > details[open]",
+      )
+      .forEach((el) => (el.open = false));
+  }, [isSending]);
 
   useEffect(() => {
     const list = messageRef.current;
@@ -914,7 +998,7 @@ export function SidebarPanel({
 
         {isSending ? (
           <div className="text-sm text-[color-mix(in_srgb,var(--fill-primary)_60%,transparent)]">
-            Thinking...
+            Answering...
           </div>
         ) : null}
         {showJump ? (
@@ -932,6 +1016,20 @@ export function SidebarPanel({
 
       <section className="space-y-2 border-t border-[color-mix(in_srgb,var(--fill-primary)_16%,transparent)] p-2.5">
         <div className="flex flex-wrap gap-1.5">
+          <Button
+            size="xs"
+            variant="outline"
+            onClick={toggleThinking}
+            disabled={isSending}
+            className={cn(
+              quick_btn_style,
+              thinkingEnabled
+                ? "border-[color-mix(in_srgb,var(--accent-blue)_50%,transparent)] bg-[color-mix(in_srgb,var(--accent-blue)_18%,transparent)] text-[color-mix(in_srgb,var(--accent-blue)_90%,transparent)]"
+                : "",
+            )}
+          >
+            {thinkingEnabled ? "Thinking: on" : "Thinking: off"}
+          </Button>
           <Button
             size="xs"
             variant="outline"

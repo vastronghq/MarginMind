@@ -226,7 +226,12 @@ function MessageContent({ message }: { message: ChatMessage }) {
               rel="noopener noreferrer"
               onClick={(e) => {
                 e.preventDefault();
-                if (href) Zotero.launchURL(href);
+                if (!href) return;
+                if (href.startsWith("zotero://")) {
+                  Zotero.openInViewer(href);
+                } else {
+                  Zotero.launchURL(href);
+                }
               }}
             />
           ),

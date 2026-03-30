@@ -28,6 +28,7 @@ import { ChevronDown } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
 import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
+import { log } from "console";
 
 type SidebarPanelProps = {
   data: SidebarPanelData | null;
@@ -205,6 +206,63 @@ const buildSystemPrompt = (
   return `${systemPrompt}\n\n${lines.join("\n")}`;
 };
 
+const handleInternalJump = async (href: string) => {
+  if (!href || !href.startsWith("zotero://")) return;
+
+  try {
+    const library = Zotero.Libraries.get(1);
+    if (library && typeof library.waitForDataLoad === "function") {
+      await library.waitForDataLoad();
+    }
+
+    const url = new URL(href);
+    // 提取 Item Key (例如从 /library/items/T6SA2S7P 提取 T6SA2S7P)
+    const itemKey = url.pathname.split("/").pop();
+    const pageStr = url.searchParams.get("page");
+    const region = url.searchParams.get("region");
+
+    // 1. 获取对应的 Item 对象
+    const item: any = await Zotero.Items.getByLibraryAndKey(
+      Zotero.Libraries.userLibraryID,
+      itemKey as string,
+    );
+    if (!item) throw new Error("Item not found");
+
+    // 2. 调用真正的 PDF Reader 接口 (此接口不会产生 about:blank)
+    // pageIndex 是从 0 开始的，所以需要 -1
+    const openOptions = {
+      pageIndex: pageStr ? parseInt(pageStr) - 1 : 0,
+    };
+
+    try {
+      Zotero.Reader.open(item, openOptions);
+    } catch (err) {
+      console.error("Zotero Internal Jump Error:", err);
+      // 如果原生方法失败，作为保底再使用 launchURL，但这样会有系统弹窗
+      // Zotero.launchURL(href);
+    }
+    // const reader = await Zotero.Reader.open(item, openOptions);
+    console.log(1323213);
+    // 3. 处理 region 高亮跳转 (如果 Reader 已打开)
+    if (region && reader) {
+      // 解析 region: "left,bottom,right,top"
+      const [l, b, r, t] = region.split(",").map(Number);
+      console.log(4566666666666);
+
+      // 在 Zotero 7 中，你可以使用内部视图对象进行精细滚动
+      // 这里提供一个通用的平滑滚动尝试
+      reader.navigate({
+        pageIndex: openOptions.pageIndex,
+        rect: [l, t, r, b], // 注意 Zotero 内部 API 坐标顺序可能略有不同
+      });
+    }
+  } catch (err) {
+    console.error("Zotero Internal Jump Error:", err);
+    // 如果原生方法失败，作为保底再使用 launchURL，但这样会有系统弹窗
+    Zotero.launchURL(href);
+  }
+};
+
 function MessageContent({ message }: { message: ChatMessage }) {
   if (message.role !== "assistant") {
     return (
@@ -221,16 +279,32 @@ function MessageContent({ message }: { message: ChatMessage }) {
       <Markdown
         remarkPlugins={[remarkGfm, remarkMath]}
         rehypePlugins={[rehypeKatex, rehypeHighlight]}
+        // 关键修复 1：允许 zotero 协议
+        urlTransform={(value) =>
+          value.startsWith("zotero://") ? value : value
+        }
         components={{
           a: ({ href, ...props }) => (
             <a
               {...props}
-              href={href}
-              target="_blank"
+              href={href} // 可以直接内部跳转，也没有blank弹窗，但是不够强大
+              // target="_blank"
               rel="noopener noreferrer"
               onClick={(e) => {
-                e.preventDefault();
-                if (href) Zotero.launchURL(href);
+                console.log(4546);
+                if (!href?.startsWith("zotero://")) {
+                  e.preventDefault();
+                  Zotero.launchURL(href);
+                }
+
+                // e.preventDefault();  // 似乎不能用到e，否则
+                // if (href?.startsWith("zotero://")) {
+                // Zotero.openInViewer(href); // 内部跳转，但是有blank弹窗，而且不够强大（平滑、高亮等）
+                // handleInternalJump(href);
+                // }
+                // else {
+                // Zotero.launchURL(href);
+                // }
               }}
             />
           ),

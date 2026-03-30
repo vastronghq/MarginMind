@@ -77,7 +77,7 @@ function CustomDropdown<T extends string>(props: {
                 onChange(o.value);
                 setOpen(false);
               }}
-              className={`flex w-full items-center px-3 py-2 text-left text-[13px] transition-colors hover:bg-[color-mix(in_srgb,var(--accent-blue)_15%,transparent)] ${
+              className={`flex w-full items-center justify-start px-3 py-2 text-left text-[13px] transition-colors hover:bg-[color-mix(in_srgb,var(--accent-blue)_15%,transparent)] ${
                 o.value === value
                   ? "bg-[color-mix(in_srgb,var(--accent-blue)_10%,transparent)] font-medium"
                   : ""

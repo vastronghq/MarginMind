@@ -67,7 +67,7 @@ export function getDefaultModel(provider: AIProvider) {
     case "openaiCompatible":
       return "gpt-4.1-mini";
     case "volcengine":
-      return "doubao-seed-1.6-flash";
+      return "doubao-seed-1.8-flash";
     default:
       return AI_DEFAULTS.model;
   }
@@ -149,4 +149,61 @@ export function resetAISettings() {
   setPref("aiTemperature", String(AI_DEFAULTS.temperature));
   setPref("aiMaxTokens", AI_DEFAULTS.maxTokens);
   setPref("aiSystemPrompt", AI_DEFAULTS.systemPrompt);
+}
+
+// ─── Presets ───────────────────────────────────────────────────────────────
+
+export type AIPreset = {
+  name: string;
+  settings: AISettings;
+};
+
+export function loadPresets(): AIPreset[] {
+  const raw = getPref("aiPresets");
+  if (typeof raw !== "string" || !raw.trim()) return [];
+  try {
+    const arr = JSON.parse(raw);
+    if (!Array.isArray(arr)) return [];
+    return arr.filter(
+      (p: any) =>
+        p &&
+        typeof p.name === "string" &&
+        p.settings &&
+        typeof p.settings === "object",
+    );
+  } catch {
+    return [];
+  }
+}
+
+function writePresets(presets: AIPreset[]) {
+  setPref("aiPresets", JSON.stringify(presets));
+}
+
+export function savePreset(name: string, settings: AISettings) {
+  const presets = loadPresets();
+  const idx = presets.findIndex((p) => p.name === name);
+  const entry: AIPreset = { name, settings: { ...settings } };
+  if (idx >= 0) {
+    presets[idx] = entry;
+  } else {
+    presets.push(entry);
+  }
+  writePresets(presets);
+}
+
+export function deletePreset(name: string) {
+  const presets = loadPresets().filter((p) => p.name !== name);
+  writePresets(presets);
+}
+
+export function applyPreset(preset: AIPreset) {
+  const s = preset.settings;
+  saveAISetting("provider", s.provider);
+  saveAISetting("apiKey", s.apiKey);
+  saveAISetting("baseURL", s.baseURL);
+  saveAISetting("model", s.model);
+  saveAISetting("temperature", s.temperature);
+  saveAISetting("maxTokens", s.maxTokens);
+  saveAISetting("systemPrompt", s.systemPrompt);
 }

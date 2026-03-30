@@ -9,3 +9,4 @@ pref(
   "aiSystemPrompt",
   "You are MarginMind, an academic research assistant. Give precise, structured, and evidence-oriented answers based on the provided paper context.",
 );
+pref("aiPresets", "[]");

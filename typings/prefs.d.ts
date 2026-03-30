@@ -15,6 +15,7 @@ declare namespace _ZoteroTypes {
       "aiMaxTokens": number;
       "annotationColor": string;
       "aiSystemPrompt": string;
+      "aiPresets": string;
     };
   }
 }

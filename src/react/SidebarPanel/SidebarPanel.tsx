@@ -336,7 +336,6 @@ export function SidebarPanel({
   const [isSavingAnnotation, setIsSavingAnnotation] = useState(false);
 
   const selectionSigRef = useRef("");
-  const asideRef = useRef<HTMLElement | null>(null);
   const messageRef = useRef<HTMLDivElement | null>(null);
   const autoScrollRef = useRef(true);
   const forceScrollRef = useRef(false);
@@ -665,27 +664,6 @@ export function SidebarPanel({
   );
 
   useEffect(() => {
-    const aside = asideRef.current;
-    if (!aside) return;
-    const onWheel = (e: WheelEvent) => {
-      const el = (e.target as Element)?.closest(
-        '[data-can-scroll="true"]',
-      ) as HTMLElement | null;
-      if (!el) {
-        e.preventDefault();
-        return;
-      }
-      const atTop = e.deltaY < 0 && el.scrollTop <= 0;
-      const atBottom =
-        e.deltaY > 0 && el.scrollTop + el.clientHeight >= el.scrollHeight;
-      if (atTop || atBottom) e.preventDefault();
-      e.stopPropagation();
-    };
-    aside.addEventListener("wheel", onWheel, { passive: false });
-    return () => aside.removeEventListener("wheel", onWheel);
-  }, []);
-
-  useEffect(() => {
     const list = messageRef.current;
     if (!list) return;
 
@@ -801,7 +779,6 @@ export function SidebarPanel({
 
   return (
     <aside
-      ref={asideRef}
       // className="flex h-full min-h-0 w-full flex-col overflow-hidden border border-solid border-[color-mix(in_srgb,var(--accent-blue)_40%,var(--fill-primary)_12%)] bg-[var(--material-sidepane)] text-[var(--fill-primary)]"
       className="flex h-full min-h-0 w-full flex-col overflow-hidden bg-[var(--material-sidepane)] text-[var(--fill-primary)]"
     >
@@ -828,10 +805,7 @@ export function SidebarPanel({
 
         {isHistoryOpen ? (
           <Card className="border-[color-mix(in_srgb,var(--fill-primary)_16%,transparent)] bg-[color-mix(in_srgb,var(--material-sidepane)_86%,var(--fill-primary)_8%)] p-1.5">
-            <CardContent
-              data-can-scroll="true"
-              className="max-h-[240px] space-y-1.5 overflow-y-auto p-0 pr-1"
-            >
+            <CardContent className="max-h-[240px] space-y-1.5 overflow-y-auto p-0 pr-1">
               {sessions
                 .slice()
                 .sort((a, b) => b.updatedAt - a.updatedAt)
@@ -882,7 +856,6 @@ export function SidebarPanel({
       </section>
 
       <section
-        data-can-scroll="true"
         ref={messageRef}
         className="relative flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto px-2.5 pb-2.5"
       >
@@ -1060,7 +1033,6 @@ export function SidebarPanel({
         <Card className="border-[color-mix(in_srgb,var(--fill-primary)_16%,transparent)] bg-[color-mix(in_srgb,var(--material-sidepane)_90%,var(--fill-primary)_7%)] p-2.5">
           <CardContent className="space-y-2 overflow-hidden p-0">
             <Textarea
-              data-can-scroll="true"
               rows={3}
               placeholder="Ask about the paper..."
               value={draft}

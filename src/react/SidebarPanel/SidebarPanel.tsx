@@ -804,7 +804,7 @@ export function SidebarPanel({
     if (!list) return;
     const onScroll = () => {
       const nearBottom =
-        list.scrollHeight - list.scrollTop - list.clientHeight <= 512;
+        list.scrollHeight - list.scrollTop - list.clientHeight <= 300;
       autoScrollRef.current = nearBottom;
       setShowJump(!nearBottom);
     };
@@ -1152,15 +1152,15 @@ export function SidebarPanel({
         ) : null}
 
         <Card className="border-[color-mix(in_srgb,var(--fill-primary)_16%,transparent)] bg-[color-mix(in_srgb,var(--material-sidepane)_90%,var(--fill-primary)_7%)] p-2.5">
-          <CardContent className="space-y-2 overflow-hidden p-0">
-            <Textarea
-              rows={3}
+          <CardContent className="space-y-2 p-0">
+            <textarea
+              rows={4}
               placeholder="Ask about the paper..."
               value={draft}
               onChange={(e) => updateDraft(e.target.value)}
               onKeyDown={handleDraftKeyDown}
               disabled={isSending || isSelectionMode}
-              className="resize-none border-[color-mix(in_srgb,var(--fill-primary)_16%,transparent)] bg-transparent text-[14px] leading-6 text-[var(--fill-primary)] placeholder:text-[color-mix(in_srgb,var(--fill-primary)_38%,transparent)]"
+              className="w-full resize-none border-[color-mix(in_srgb,var(--fill-primary)_16%,transparent)] bg-transparent text-[14px] leading-6 text-[var(--fill-primary)] placeholder:text-[color-mix(in_srgb,var(--fill-primary)_38%,transparent)]"
             />
 
             <Separator className="bg-[color-mix(in_srgb,var(--fill-primary)_12%,transparent)]" />

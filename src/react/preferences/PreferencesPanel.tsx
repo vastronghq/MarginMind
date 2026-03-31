@@ -266,15 +266,15 @@ export function PreferencesPanel() {
                   onChange={(e) =>
                     updateBaseSetting("annotationColor", e.target.value)
                   }
-                  className="h-9 w-14 cursor-pointer rounded border border-[color-mix(in_srgb,var(--fill-primary)_18%,transparent)] bg-transparent p-1"
+                  className="w-18 h-9 cursor-pointer rounded border border-[color-mix(in_srgb,var(--fill-primary)_18%,transparent)] bg-transparent p-1"
                 />
-                <Input
+                <input
                   type="text"
                   value={baseSettings.annotationColor}
                   onChange={(e) =>
                     updateBaseSetting("annotationColor", e.target.value)
                   }
-                  className="h-9 border-[color-mix(in_srgb,var(--fill-primary)_18%,transparent)] bg-[color-mix(in_srgb,var(--material-sidepane)_84%,var(--fill-primary)_8%)] font-mono text-[var(--fill-primary)]"
+                  className="h-9 flex-1 border-[color-mix(in_srgb,var(--fill-primary)_18%,transparent)] bg-[color-mix(in_srgb,var(--material-sidepane)_84%,var(--fill-primary)_8%)] font-mono text-[var(--fill-primary)]"
                 />
               </div>
             </div>
@@ -284,8 +284,15 @@ export function PreferencesPanel() {
 
         {/* AI API Configuration Card */}
         <Card className="border-[color-mix(in_srgb,var(--fill-primary)_16%,transparent)] bg-[color-mix(in_srgb,var(--material-sidepane)_90%,var(--fill-primary)_8%)] p-4 text-[var(--fill-primary)]">
-          <CardHeader className="p-0 pb-4">
+          <CardHeader className="flex flex-row items-center justify-between p-0 pb-4">
             <CardTitle className="text-[16px]">AI API Configuration</CardTitle>
+            <Button
+              variant="outline"
+              onClick={resetAll}
+              className="h-8 border-[color-mix(in_srgb,var(--fill-primary)_18%,transparent)] bg-[color-mix(in_srgb,var(--material-sidepane)_84%,var(--fill-primary)_8%)] px-4 text-[12px] font-medium transition-colors hover:bg-[color-mix(in_srgb,var(--fill-primary)_10%,transparent)]"
+            >
+              Reset AI defaults
+            </Button>
           </CardHeader>
 
           <CardContent className="flex flex-col justify-between gap-4 p-0">
@@ -371,84 +378,89 @@ export function PreferencesPanel() {
             <Separator className="bg-[color-mix(in_srgb,var(--fill-primary)_14%,transparent)]" />
 
             {/* ── API Key ──────────────────────────────────────────── */}
-            <div className="overflow-hidden">
+            <div className="flex w-full flex-col">
               <span className="text-[12px] font-bold uppercase tracking-wider text-[color-mix(in_srgb,var(--fill-primary)_50%,transparent)]">
                 API Key
               </span>
-              <Input
+              <input
                 type="password"
                 value={aiSettings.apiKey}
                 onChange={(e) => updateAISetting("apiKey", e.target.value)}
                 placeholder="API key"
-                className="h-9 border-[color-mix(in_srgb,var(--fill-primary)_18%,transparent)] bg-[color-mix(in_srgb,var(--material-sidepane)_84%,var(--fill-primary)_8%)]"
+                className="h-9 border-[1px] border-[color-mix(in_srgb,var(--fill-primary)_18%,transparent)] bg-[color-mix(in_srgb,var(--material-sidepane)_84%,var(--fill-primary)_8%)]"
               />
             </div>
 
             <Separator className="bg-[color-mix(in_srgb,var(--fill-primary)_14%,transparent)]" />
 
             {/* ── Base URL ─────────────────────────────────────────── */}
-            <div className="overflow-hidden">
+            <div className="flex w-full flex-col">
               <span className="text-[12px] font-bold uppercase tracking-wider text-[color-mix(in_srgb,var(--fill-primary)_50%,transparent)]">
                 Base URL
               </span>
-              <Input
+              <input
                 value={aiSettings.baseURL}
                 onChange={(e) => updateAISetting("baseURL", e.target.value)}
                 placeholder={getDefaultBaseURL(aiSettings.provider)}
-                className="h-9 border-[color-mix(in_srgb,var(--fill-primary)_18%,transparent)] bg-[color-mix(in_srgb,var(--material-sidepane)_84%,var(--fill-primary)_8%)]"
+                className="h-9 border-[1px] border-[color-mix(in_srgb,var(--fill-primary)_18%,transparent)] bg-[color-mix(in_srgb,var(--material-sidepane)_84%,var(--fill-primary)_8%)]"
               />
             </div>
 
             <Separator className="bg-[color-mix(in_srgb,var(--fill-primary)_14%,transparent)]" />
 
             {/* ── Model ────────────────────────────────────────────── */}
-            <div className="overflow-hidden">
+            <div className="flex w-full flex-col">
               <span className="text-[12px] font-bold uppercase tracking-wider text-[color-mix(in_srgb,var(--fill-primary)_50%,transparent)]">
                 Model
               </span>
-              <Input
+              <input
                 value={aiSettings.model}
                 onChange={(e) => updateAISetting("model", e.target.value)}
                 placeholder={getDefaultModel(aiSettings.provider)}
-                className="h-9 border-[color-mix(in_srgb,var(--fill-primary)_18%,transparent)] bg-[color-mix(in_srgb,var(--material-sidepane)_84%,var(--fill-primary)_8%)]"
+                className="h-9 border-[1px] border-[color-mix(in_srgb,var(--fill-primary)_18%,transparent)] bg-[color-mix(in_srgb,var(--material-sidepane)_84%,var(--fill-primary)_8%)]"
               />
             </div>
 
             <Separator className="bg-[color-mix(in_srgb,var(--fill-primary)_14%,transparent)]" />
 
             {/* ── Temperature / Max Tokens ─────────────────────────── */}
-            <div className="flex items-center gap-2">
-              <span className="text-[12px] font-bold uppercase tracking-wider text-[color-mix(in_srgb,var(--fill-primary)_50%,transparent)]">
-                Temperature
-              </span>
-              <Input
-                type="number"
-                value={aiSettings.temperature}
-                min={0}
-                max={2}
-                step={0.1}
-                onChange={(e) =>
-                  updateAISetting(
-                    "temperature",
-                    parseFloat(e.target.value || "0"),
-                  )
-                }
-                className="h-9 border-[color-mix(in_srgb,var(--fill-primary)_18%,transparent)] bg-[color-mix(in_srgb,var(--material-sidepane)_84%,var(--fill-primary)_8%)] font-mono text-[var(--fill-primary)]"
-              />
-              <span className="text-[12px] font-bold uppercase tracking-wider text-[color-mix(in_srgb,var(--fill-primary)_50%,transparent)]">
-                Max Tokens
-              </span>
-              <Input
-                type="number"
-                value={aiSettings.maxTokens}
-                onChange={(e) =>
-                  updateAISetting(
-                    "maxTokens",
-                    parseInt(e.target.value || "1", 10),
-                  )
-                }
-                className="h-9 border-[color-mix(in_srgb,var(--fill-primary)_18%,transparent)] bg-[color-mix(in_srgb,var(--material-sidepane)_84%,var(--fill-primary)_8%)] font-mono text-[var(--fill-primary)]"
-              />
+            <div className="flex w-full items-center gap-2">
+              <div className="flex flex-1 flex-col">
+                <span className="text-[12px] font-bold uppercase tracking-wider text-[color-mix(in_srgb,var(--fill-primary)_50%,transparent)]">
+                  Temperature
+                </span>
+                <input
+                  type="number"
+                  value={aiSettings.temperature}
+                  min={0}
+                  max={2}
+                  step={0.1}
+                  onChange={(e) =>
+                    updateAISetting(
+                      "temperature",
+                      parseFloat(e.target.value || "0"),
+                    )
+                  }
+                  className="h-9 border-[color-mix(in_srgb,var(--fill-primary)_18%,transparent)] bg-[color-mix(in_srgb,var(--material-sidepane)_84%,var(--fill-primary)_8%)] font-mono text-[var(--fill-primary)]"
+                />
+              </div>
+
+              <div className="flex flex-1 flex-col">
+                <span className="text-[12px] font-bold uppercase tracking-wider text-[color-mix(in_srgb,var(--fill-primary)_50%,transparent)]">
+                  Max Tokens
+                </span>
+                <input
+                  type="number"
+                  value={aiSettings.maxTokens}
+                  onChange={(e) =>
+                    updateAISetting(
+                      "maxTokens",
+                      parseInt(e.target.value || "1", 10),
+                    )
+                  }
+                  className="h-9 border-[color-mix(in_srgb,var(--fill-primary)_18%,transparent)] bg-[color-mix(in_srgb,var(--material-sidepane)_84%,var(--fill-primary)_8%)] font-mono text-[var(--fill-primary)]"
+                />
+              </div>
             </div>
 
             <Separator className="bg-[color-mix(in_srgb,var(--fill-primary)_14%,transparent)]" />
@@ -472,13 +484,6 @@ export function PreferencesPanel() {
 
         {/* Footer */}
         <footer className="flex items-center justify-between pt-2">
-          <Button
-            variant="outline"
-            onClick={resetAll}
-            className="h-8 border-[color-mix(in_srgb,var(--fill-primary)_18%,transparent)] bg-[color-mix(in_srgb,var(--material-sidepane)_84%,var(--fill-primary)_8%)] px-4 text-[12px] font-medium transition-colors hover:bg-[color-mix(in_srgb,var(--fill-primary)_10%,transparent)]"
-          >
-            Reset AI defaults
-          </Button>
           <div className="flex items-center gap-2">
             <div
               className={`h-1.5 w-1.5 rounded-full ${status === "saved" ? "bg-green-500" : "bg-amber-500"}`}

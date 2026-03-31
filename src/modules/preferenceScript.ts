@@ -1,10 +1,20 @@
 import { config } from "../../package.json";
+import { getLocaleID, getString } from "../utils/locale";
 import type { MarginMindReactWindow } from "../react/bridge";
 
 const REACT_WINDOW_SCRIPT_URL = `${rootURI}content/scripts/ui.js`;
 const REACT_STYLE_URL = `${rootURI}content/styles/ui.css`;
 const REACT_ASSET_VERSION =
   __env__ === "development" ? `${Date.now()}` : "production";
+
+export function registerPrefs() {
+  Zotero.PreferencePanes.register({
+    pluginID: addon.data.config.addonID,
+    src: rootURI + "content/preferences.xhtml",
+    label: getString("prefs-title"),
+    image: `chrome://${addon.data.config.addonRef}/content/icons/icon.svg`,
+  });
+}
 
 export async function registerPrefsScripts(window: Window) {
   const prefsWindow = window as MarginMindReactWindow;

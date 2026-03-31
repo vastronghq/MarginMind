@@ -28,7 +28,7 @@ export function registerToolbarButton(): void {
         title: "MarginMind",
       },
       styles: {
-        backgroundImage: `url(chrome://${config.addonRef}/content/icons/favicon.png)`,
+        backgroundImage: `url(chrome://${config.addonRef}/content/icons/icon.svg)`,
         backgroundRepeat: "no-repeat",
         backgroundPosition: "center",
         backgroundSize: "18px",

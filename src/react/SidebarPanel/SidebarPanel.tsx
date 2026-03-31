@@ -42,6 +42,7 @@ type ChatMessage = {
   text: string;
   meta?: string;
   thinking?: string;
+  thoughtDuration?: number;
 };
 type ChatSession = {
   id: string;
@@ -50,7 +51,6 @@ type ChatSession = {
   messages: ChatMessage[];
   draft: string;
   queuedSelection: string;
-  thinkingEnabled?: boolean;
 };
 type PersistedState = {
   sessions: ChatSession[];
@@ -161,7 +161,6 @@ const createSession = (partial?: Partial<ChatSession>): ChatSession => ({
   messages: partial?.messages ?? initialMessages(),
   draft: partial?.draft ?? "",
   queuedSelection: partial?.queuedSelection ?? "",
-  thinkingEnabled: partial?.thinkingEnabled ?? false,
 });
 const toTime = (ts: number) => {
   const d = new Date(ts);
@@ -292,8 +291,10 @@ function MessageContent({ message }: { message: ChatMessage }) {
       {message.thinking ? (
         <div data-thinking-section>
           <details open className="group mb-1.5">
-            <summary className="cursor-pointer select-none text-[12px] font-medium uppercase tracking-wide text-[color-mix(in_srgb,var(--fill-primary)_42%,transparent)] hover:text-[color-mix(in_srgb,var(--fill-primary)_60%,transparent)]">
-              THINKING
+            <summary className="cursor-pointer select-none text-[12px] font-medium tracking-wide text-[color-mix(in_srgb,var(--fill-primary)_42%,transparent)] hover:text-[color-mix(in_srgb,var(--fill-primary)_60%,transparent)]">
+              {message.thoughtDuration != null
+                ? `Thought for ${message.thoughtDuration} second${message.thoughtDuration === 1 ? "" : "s"}`
+                : "Thinking"}
             </summary>
             <div className="mt-1 border-y-0 border-l-2 border-r-0 border-solid border-[color-mix(in_srgb,var(--fill-primary)_14%,transparent)] pl-3 text-[14px] leading-[24px] text-[color-mix(in_srgb,var(--fill-primary)_52%,transparent)] [&>*:first-child]:mt-0 [&>*:last-child]:mb-0">
               <Markdown
@@ -387,6 +388,7 @@ export function SidebarPanel({
   const forceScrollRef = useRef(false);
   const errorTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const abortControllerRef = useRef<AbortController | null>(null);
+  const thinkingStartRef = useRef<number | null>(null);
 
   const settings = loadAISettings();
   const annotationColor = getPref("annotationColor");
@@ -411,7 +413,6 @@ export function SidebarPanel({
     selectedIDs.length > 0 &&
     !isSavingAnnotation;
   const canDeleteSelected = selectedIDs.length > 0 && !isSending;
-  const thinkingEnabled = !!activeSession?.thinkingEnabled;
 
   const patchSession = (id: string, fn: (s: ChatSession) => ChatSession) =>
     setSessions((curr) =>
@@ -423,9 +424,6 @@ export function SidebarPanel({
   const clearSelectionMode = () => {
     setIsSelectionMode(false);
     setSelectedIDs([]);
-  };
-  const toggleThinking = () => {
-    patchActive((s) => ({ ...s, thinkingEnabled: !s.thinkingEnabled }));
   };
   const showError = (text: string, ms = 5000) => {
     if (errorTimerRef.current) clearTimeout(errorTimerRef.current);
@@ -534,13 +532,6 @@ export function SidebarPanel({
     const controller = new AbortController();
     abortControllerRef.current = controller;
 
-    const useThinking = thinkingEnabled;
-    // const effectiveSettings = useThinking
-    //   ? { ...settings, model: THINKING_MODELS[settings.model]! }
-    //   : settings;
-    const effectiveSettings = settings;
-    const displayMeta = `${effectiveSettings.provider} / ${effectiveSettings.model}`;
-
     const assistantID = uid("assistant");
     patchSession(sessionID, (s) => ({
       ...s,
@@ -550,7 +541,7 @@ export function SidebarPanel({
           id: assistantID,
           role: "assistant",
           text: "",
-          meta: displayMeta,
+          meta: `${settings.provider} / ${settings.model}`,
         },
       ],
     }));
@@ -559,10 +550,7 @@ export function SidebarPanel({
       const apiMessages: AIChatMessage[] = [
         {
           role: "system",
-          content: buildSystemPrompt(
-            activeContext,
-            effectiveSettings.systemPrompt,
-          ),
+          content: buildSystemPrompt(activeContext, settings.systemPrompt),
         },
         ...norm.messages
           .filter(
@@ -574,14 +562,18 @@ export function SidebarPanel({
       let full = "";
       let thinking = "";
       let streamError: unknown = null;
+      thinkingStartRef.current = null;
       const stream = streamAIReply({
-        settings: effectiveSettings,
+        settings,
         messages: apiMessages,
         abortSignal: controller.signal,
       });
 
       for await (const chunk of stream) {
         if (chunk.type === "thinking") {
+          if (thinkingStartRef.current === null) {
+            thinkingStartRef.current = Date.now();
+          }
           thinking += chunk.content;
         } else {
           full += chunk.content;
@@ -593,9 +585,22 @@ export function SidebarPanel({
               ? {
                   ...m,
                   text: full,
-                  thinking: thinking || (useThinking ? " " : undefined),
+                  thinking: thinking || undefined,
                 }
               : m,
+          ),
+        }));
+      }
+
+      if (thinkingStartRef.current !== null) {
+        const duration = Math.max(
+          1,
+          Math.round((Date.now() - thinkingStartRef.current) / 1000),
+        );
+        patchSession(sessionID, (s) => ({
+          ...s,
+          messages: s.messages.map((m) =>
+            m.id === assistantID ? { ...m, thoughtDuration: duration } : m,
           ),
         }));
       }
@@ -767,7 +772,7 @@ export function SidebarPanel({
     if (!list) return;
     const onScroll = () => {
       const nearBottom =
-        list.scrollHeight - list.scrollTop - list.clientHeight <= 128;
+        list.scrollHeight - list.scrollTop - list.clientHeight <= 256;
       autoScrollRef.current = nearBottom;
       setShowJump(!nearBottom);
     };
@@ -1016,20 +1021,6 @@ export function SidebarPanel({
 
       <section className="space-y-2 border-t border-[color-mix(in_srgb,var(--fill-primary)_16%,transparent)] p-2.5">
         <div className="flex flex-wrap gap-1.5">
-          <Button
-            size="xs"
-            variant="outline"
-            onClick={toggleThinking}
-            disabled={isSending}
-            className={cn(
-              quick_btn_style,
-              thinkingEnabled
-                ? "border-[color-mix(in_srgb,var(--accent-blue)_50%,transparent)] bg-[color-mix(in_srgb,var(--accent-blue)_18%,transparent)] text-[color-mix(in_srgb,var(--accent-blue)_90%,transparent)]"
-                : "",
-            )}
-          >
-            {thinkingEnabled ? "Thinking: on" : "Thinking: off"}
-          </Button>
           <Button
             size="xs"
             variant="outline"

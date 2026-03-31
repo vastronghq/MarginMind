@@ -772,7 +772,7 @@ export function SidebarPanel({
     if (!list) return;
     const onScroll = () => {
       const nearBottom =
-        list.scrollHeight - list.scrollTop - list.clientHeight <= 256;
+        list.scrollHeight - list.scrollTop - list.clientHeight <= 512;
       autoScrollRef.current = nearBottom;
       setShowJump(!nearBottom);
     };

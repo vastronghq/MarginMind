@@ -12,9 +12,12 @@ import rehypeHighlight from "rehype-highlight";
 import rehypeKatex from "rehype-katex";
 import { streamAIReply, type AIChatMessage } from "../../modules/aiService";
 import { getPref } from "../../utils/prefs";
-import { loadAISettings } from "../../modules/aiPrefs";
+import {
+  loadAISettings,
+  loadPresets,
+  applyPreset,
+} from "../../modules/aiPrefs";
 import type { SidebarPanelData } from "../bridge";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -381,16 +384,31 @@ export function SidebarPanel({
   const [isSelectionMode, setIsSelectionMode] = useState(false);
   const [selectedIDs, setSelectedIDs] = useState<string[]>([]);
   const [isSavingAnnotation, setIsSavingAnnotation] = useState(false);
+  const [isPresetOpen, setIsPresetOpen] = useState(false);
+  const [presetPos, setPresetPos] = useState({ left: 0, bottom: 0 });
 
   const selectionSigRef = useRef("");
   const messageRef = useRef<HTMLDivElement | null>(null);
   const autoScrollRef = useRef(true);
   const forceScrollRef = useRef(false);
   const errorTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const presetDropdownRef = useRef<HTMLDivElement | null>(null);
   const abortControllerRef = useRef<AbortController | null>(null);
   const thinkingStartRef = useRef<number | null>(null);
 
   const settings = loadAISettings();
+  const presets = loadPresets();
+  const activePreset = useMemo(
+    () =>
+      presets.find(
+        (p) =>
+          p.settings.provider === settings.provider &&
+          p.settings.apiKey === settings.apiKey &&
+          p.settings.baseURL === settings.baseURL &&
+          p.settings.model === settings.model,
+      ),
+    [presets, settings],
+  );
   const annotationColor = getPref("annotationColor");
   const activeSession = useMemo(
     () => sessions.find((s) => s.id === activeSessionID) ?? sessions[0],
@@ -739,6 +757,20 @@ export function SidebarPanel({
     },
     [],
   );
+
+  useEffect(() => {
+    if (!isPresetOpen) return;
+    const onDown = (e: MouseEvent) => {
+      if (
+        presetDropdownRef.current &&
+        !presetDropdownRef.current.contains(e.target as Node)
+      ) {
+        setIsPresetOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", onDown);
+    return () => document.removeEventListener("mousedown", onDown);
+  }, [isPresetOpen]);
 
   useEffect(() => {
     const list = messageRef.current;
@@ -1134,19 +1166,62 @@ export function SidebarPanel({
             <Separator className="bg-[color-mix(in_srgb,var(--fill-primary)_12%,transparent)]" />
 
             <div className="flex items-center justify-between gap-2">
-              <div className="flex flex-wrap gap-1.5">
-                <Badge
-                  variant="outline"
-                  className="border-[color-mix(in_srgb,var(--fill-primary)_16%,transparent)] px-1.5 py-0 text-[12px] text-[color-mix(in_srgb,var(--fill-primary)_68%,transparent)]"
+              <div ref={presetDropdownRef} className="relative flex-1">
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    const rect = e.currentTarget.getBoundingClientRect();
+                    setPresetPos({
+                      left: rect.left,
+                      bottom: window.innerHeight - rect.top + 4,
+                    });
+                    setIsPresetOpen((v) => !v);
+                  }}
+                  disabled={isSending}
+                  className="flex w-full cursor-pointer items-center gap-1 bg-transparent px-0 py-0 text-left text-[12px] text-[color-mix(in_srgb,var(--fill-primary)_68%,transparent)] transition hover:text-[color-mix(in_srgb,var(--fill-primary)_90%,transparent)]"
                 >
-                  {settings.provider}
-                </Badge>
-                <Badge
-                  variant="outline"
-                  className="border-[color-mix(in_srgb,var(--fill-primary)_16%,transparent)] px-1.5 py-0 text-[12px] text-[color-mix(in_srgb,var(--fill-primary)_68%,transparent)]"
-                >
-                  {settings.model}
-                </Badge>
+                  <span className="line-clamp-1">
+                    {activePreset
+                      ? activePreset.name
+                      : `${settings.provider} / ${settings.model}`}
+                  </span>
+                  <ChevronDown className="h-3 w-3 shrink-0 opacity-50" />
+                </button>
+                {isPresetOpen ? (
+                  <div
+                    style={{
+                      position: "fixed",
+                      left: presetPos.left,
+                      bottom: presetPos.bottom,
+                    }}
+                    className="z-50 max-h-[200px] min-w-[160px] overflow-y-auto rounded-lg border border-[color-mix(in_srgb,var(--fill-primary)_16%,transparent)] bg-[color-mix(in_srgb,var(--material-sidepane)_82%,var(--fill-primary)_12%)] py-1 shadow-lg"
+                  >
+                    {presets.length === 0 ? (
+                      <div className="px-3 py-2 text-[12px] text-[color-mix(in_srgb,var(--fill-primary)_48%,transparent)]">
+                        No presets configured
+                      </div>
+                    ) : (
+                      presets.map((p) => (
+                        <button
+                          key={p.name}
+                          type="button"
+                          onClick={() => {
+                            applyPreset(p);
+                            setIsPresetOpen(false);
+                          }}
+                          className={cn(
+                            "w-full cursor-pointer px-3 py-1.5 text-left text-[12px] transition",
+                            activePreset?.name === p.name
+                              ? "bg-[color-mix(in_srgb,var(--accent-blue)_12%,transparent)] text-[var(--fill-primary)]"
+                              : "text-[color-mix(in_srgb,var(--fill-primary)_78%,transparent)] hover:bg-[color-mix(in_srgb,var(--fill-primary)_6%,transparent)]",
+                          )}
+                        >
+                          {p.name}
+                        </button>
+                      ))
+                    )}
+                  </div>
+                ) : null}
               </div>
               <Button
                 type="button"

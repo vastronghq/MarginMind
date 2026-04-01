@@ -32,6 +32,7 @@ export function registerSidebarPanel(win: _ZoteroTypes.MainWindow) {
   const state = createSidebarState(win);
   windowStates.set(win, state);
   registerSidebarReaderSelectionListener();
+  registerSidebarButtonListeners(win);
 }
 
 export function unregisterSidebarPanel(win: Window) {
@@ -40,6 +41,7 @@ export function unregisterSidebarPanel(win: Window) {
   win.clearInterval(state.tickerID);
   win.clearInterval(state.widthSyncID);
   win.removeEventListener("resize", state.resizeHandler);
+  unregisterSidebarButtonListeners(win);
   state.panel.remove();
   windowStates.delete(win);
 }
@@ -295,4 +297,71 @@ function unregisterSidebarReaderSelectionListener() {
     );
   } catch (_error) {}
   sidebarReaderSelectionListenerRegistered = false;
+}
+
+// ========== 侧边栏按钮联动逻辑 ==========
+
+// 存储每个窗口的侧边栏按钮监听器状态
+type SidebarButtonState = {
+  toolbarClickHandler: (event: Event) => void;
+};
+const sidebarButtonStates = new WeakMap<Window, SidebarButtonState>();
+
+/**
+ * 注册侧边栏按钮监听器
+ * 监听侧边栏关闭按钮和其他功能按钮的点击事件
+ */
+function registerSidebarButtonListeners(win: Window) {
+  const existing = sidebarButtonStates.get(win);
+  if (existing) return;
+
+  const doc = win.document;
+
+  // 统一的工具栏点击处理函数
+  const toolbarClickHandler = (event: Event) => {
+    const target = event.target as HTMLElement;
+    if (!target) return;
+
+    // 检查是否点击了侧边栏关闭按钮
+    const isToggleButton =
+      target.closest('[data-l10n-id="toggle-item-pane"]') ||
+      target.closest('[data-l10n-id="toggle-context-pane"]');
+
+    // 检查是否点击了其他侧边栏功能按钮（非本插件按钮）
+    const isOtherSidebarButton =
+      target.closest(".zotero-tb-button") &&
+      !target.closest(`#${config.addonRef}-toolbar-button`);
+
+    if (isToggleButton || isOtherSidebarButton) {
+      // 强制联动关闭 / 失去焦点保护
+      if (isPanelShown(win)) {
+        hidePanel(win);
+        ztoolkit.log("Hidden panel due to sidebar button click");
+      }
+    }
+  };
+
+  // 监听整个工具栏的点击事件
+  const toolbar = doc.getElementById("zotero-tabs-toolbar");
+  if (toolbar) {
+    toolbar.addEventListener("click", toolbarClickHandler);
+  }
+
+  sidebarButtonStates.set(win, { toolbarClickHandler });
+}
+
+/**
+ * 注销侧边栏按钮监听器
+ */
+function unregisterSidebarButtonListeners(win: Window) {
+  const state = sidebarButtonStates.get(win);
+  if (!state) return;
+
+  const doc = win.document;
+  const toolbar = doc.getElementById("zotero-tabs-toolbar");
+  if (toolbar) {
+    toolbar.removeEventListener("click", state.toolbarClickHandler);
+  }
+
+  sidebarButtonStates.delete(win);
 }

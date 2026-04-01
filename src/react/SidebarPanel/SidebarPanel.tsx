@@ -82,7 +82,7 @@ const ROLE_BUBBLE: Record<ChatRole, string> = {
   system:
     "w-full border-[color-mix(in_srgb,var(--accent-blue)_35%,transparent)] border-solid bg-[color-mix(in_srgb,var(--accent-blue)_16%,transparent)] text-[color-mix(in_srgb,var(--fill-primary)_88%,transparent)]",
   assistant:
-    "w-full border-[color-mix(in_srgb,var(--fill-primary)_16%,transparent)] border-solid bg-[color-mix(in_srgb,var(--material-sidepane)_84%,var(--fill-primary)_8%)] text-[var(--fill-primary)]",
+    "w-full overflow-hidden border-[color-mix(in_srgb,var(--fill-primary)_16%,transparent)] border-solid bg-[color-mix(in_srgb,var(--material-sidepane)_84%,var(--fill-primary)_8%)] text-[var(--fill-primary)]",
   user: "max-w-[80%] border-[color-mix(in_srgb,var(--accent-blue)_45%,transparent)] border-solid bg-[color-mix(in_srgb,var(--accent-blue)_20%,transparent)] text-[var(--fill-primary)]",
 };
 
@@ -1055,7 +1055,7 @@ export function SidebarPanel({
   return (
     <aside
       // className="flex h-full min-h-0 w-full flex-col overflow-hidden border border-solid border-[color-mix(in_srgb,var(--accent-blue)_40%,var(--fill-primary)_12%)] bg-[var(--material-sidepane)] text-[var(--fill-primary)]"
-      className="flex h-full min-h-0 w-full flex-col overflow-hidden bg-[var(--material-sidepane)] text-[var(--fill-primary)]"
+      className="flex h-full min-h-0 w-full flex-col bg-[var(--material-sidepane)] text-[var(--fill-primary)]"
     >
       <section className="space-y-2 p-2.5">
         <div className="flex items-center justify-between gap-1.5">

@@ -3,6 +3,12 @@ import { isPanelShown, showPanel, hidePanel } from "./sidebarPanel";
 
 const TOOLBAR_BUTTON_ID = `${config.addonRef}-toolbar-button`;
 
+// 保存 sidenav 监听器引用，以便卸载时移除
+const sidenavListeners: Array<{
+  element: Element;
+  handler: (e: Event) => void;
+}> = [];
+
 export function registerToolbarButton(): void {
   const doc = Zotero.getMainWindow().document;
 
@@ -49,8 +55,8 @@ export function registerToolbarButton(): void {
               hidePanel(win);
             } else {
               // 激活逻辑：显示面板并强制打开侧边栏
-              showPanel(win);
               forceOpenSidebar(win);
+              showPanel(win);
             }
           },
         },
@@ -75,6 +81,33 @@ export function registerToolbarButton(): void {
     anchor.nextElementSibling as Element,
   ) as HTMLElement;
 
+  // 监听侧边栏内部按钮点击，关闭插件面板
+  for (const sidenav of [
+    doc.getElementById("zotero-view-item-sidenav"),
+    doc.getElementById("zotero-context-pane-sidenav"),
+  ]) {
+    if (!sidenav) continue;
+    // ztoolkit.log("sidenav", sidenav);
+    const handler = (e: Event) => {
+      const target = e.target as HTMLElement;
+      //   // ztoolkit.log("target", target);
+      const btn = target.closest(".btn");
+      //   // ztoolkit.log("btn", btn);
+      if (!btn) return;
+      const win = Zotero.getMainWindow();
+      if (!isPanelShown(win)) return;
+      // // toggle-pane → 关闭插件面板，让原生 handler 继续关闭侧边栏
+      // if ((btn as HTMLElement).dataset.action === "toggle-pane") {
+      //   hidePanel(win);
+      //   return;
+      // }
+      // // 其他功能按钮 → 关闭插件面板，释放空间
+      hidePanel(win);
+    };
+    sidenav.addEventListener("click", handler);
+    sidenavListeners.push({ element: sidenav, handler });
+  }
+
   ztoolkit.log("Toolbar button registered", button);
 }
 
@@ -82,6 +115,13 @@ export function unregisterToolbarButton(): void {
   const doc = Zotero.getMainWindow()?.document;
   if (!doc) return;
 
+  // 移除 sidenav 监听器
+  for (const { element, handler } of sidenavListeners) {
+    element.removeEventListener("click", handler);
+  }
+  sidenavListeners.length = 0;
+
+  // 移除按钮
   const button = doc.getElementById(TOOLBAR_BUTTON_ID);
   if (button) {
     button.remove();
@@ -97,7 +137,6 @@ function forceOpenSidebar(win: Window): void {
   const doc = win.document;
   const selectedType = (win as { Zotero_Tabs?: { selectedType?: string } })
     .Zotero_Tabs?.selectedType;
-  ztoolkit.log("forceOpenSidebar", selectedType);
 
   // 根据当前界面类型，找到对应的侧边栏切换按钮
   let toggleButton: HTMLElement | null = null;
@@ -107,17 +146,11 @@ function forceOpenSidebar(win: Window): void {
     toggleButton = doc.querySelector('[data-l10n-id="toggle-item-pane"]');
   }
 
-  if (!toggleButton) {
-    ztoolkit.log("Sidebar toggle button not found");
-    return;
-  }
-  ztoolkit.log("toggleButton", toggleButton);
+  if (!toggleButton) return;
 
   // 检查侧边栏是否已经打开
   if (!isSidebarVisible(win)) {
-    // 点击按钮打开侧边栏
     toggleButton.click();
-    ztoolkit.log("Forced sidebar open");
   }
 }
 
@@ -129,23 +162,17 @@ function isSidebarVisible(win: Window): boolean {
   const selectedType = (win as { Zotero_Tabs?: { selectedType?: string } })
     .Zotero_Tabs?.selectedType;
 
-  let targetId = "";
+  let splitterId = "";
   if (selectedType === "reader") {
-    targetId = "splitter#zotero-context-splitter";
+    splitterId = "splitter#zotero-context-splitter";
   } else if (selectedType === "library") {
-    targetId = "splitter#zotero-items-splitter";
+    splitterId = "splitter#zotero-items-splitter";
   }
 
-  const target = doc.querySelector(targetId);
-  ztoolkit.log("isSidebarVisible", target);
-  if (!target) return false;
+  if (!splitterId) return false;
 
-  // // 检查spliter中的状态值
-  const state = target.getAttribute("state");
-  ztoolkit.log("isSidebarVisible", state);
-  if (state === "collapsed") {
-    return false;
-  } else {
-    return true;
-  }
+  const splitter = doc.querySelector(splitterId);
+  if (!splitter) return false;
+
+  return splitter.getAttribute("state") !== "collapsed";
 }

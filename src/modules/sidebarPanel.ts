@@ -351,3 +351,46 @@ function bindSidebarObservers(win: Window): MutationObserver[] {
 
   return observers;
 }
+
+/**
+ * 绑定 MutationObserver 监听侧边栏 splitter 的 state 属性变化
+ * 同时监听 Library 和 Reader 两个 splitter
+ */
+function bindSidebarObservers(win: Window): MutationObserver[] {
+  const doc = win.document;
+  const splitterIds = ["zotero-items-splitter", "zotero-context-splitter"];
+  const observers: MutationObserver[] = [];
+
+  for (const splitterId of splitterIds) {
+    const splitter = doc.getElementById(splitterId);
+    if (!splitter) continue;
+
+    const observer = new MutationObserver((mutations) => {
+      for (const mutation of mutations) {
+        if (
+          mutation.type === "attributes" &&
+          mutation.attributeName === "state"
+        ) {
+          const currentState = splitter.getAttribute("state");
+          if (currentState === "collapsed") {
+            const state = windowStates.get(win);
+            if (state?.visible) {
+              state.visible = false;
+              state.panel.style.display = "none";
+              ztoolkit.log("Auto-hid panel: sidebar collapsed");
+            }
+          }
+        }
+      }
+    });
+
+    observer.observe(splitter, {
+      attributes: true,
+      attributeFilter: ["state"],
+    });
+
+    observers.push(observer);
+  }
+
+  return observers;
+}

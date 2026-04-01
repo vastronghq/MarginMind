@@ -75,6 +75,31 @@ export function registerToolbarButton(): void {
     anchor.nextElementSibling as Element,
   ) as HTMLElement;
 
+  ztoolkit.log("444444444444444444444444444");
+  for (const sidenav of [
+    doc.getElementById("zotero-view-item-sidenav"),
+    doc.getElementById("zotero-context-pane-sidenav"),
+  ]) {
+    if (!sidenav) continue;
+    // ztoolkit.log("sidenav", sidenav);
+    sidenav.addEventListener("click", (e) => {
+      const target = e.target as HTMLElement;
+      //   // ztoolkit.log("target", target);
+      const btn = target.closest(".btn");
+      //   // ztoolkit.log("btn", btn);
+      if (!btn) return;
+      const win = Zotero.getMainWindow();
+      if (!isPanelShown(win)) return;
+      // // toggle-pane → 关闭插件面板，让原生 handler 继续关闭侧边栏
+      // if ((btn as HTMLElement).dataset.action === "toggle-pane") {
+      //   hidePanel(win);
+      //   return;
+      // }
+      // // 其他功能按钮 → 关闭插件面板，释放空间
+      hidePanel(win);
+    });
+  }
+
   ztoolkit.log("Toolbar button registered", button);
 }
 

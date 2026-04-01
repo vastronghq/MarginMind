@@ -17,7 +17,7 @@ type SidebarState = {
   widthSyncID: number;
   resizeHandler: () => void;
   lastKey: string;
-  sidebarCheckID: number;
+  sidebarObservers: MutationObserver[];
 };
 
 const windowStates = new WeakMap<Window, SidebarState>();
@@ -41,7 +41,7 @@ export function unregisterSidebarPanel(win: Window) {
   if (!state) return;
   win.clearInterval(state.tickerID);
   win.clearInterval(state.widthSyncID);
-  win.clearInterval(state.sidebarCheckID);
+  state.sidebarObservers.forEach((obs) => obs.disconnect());
   win.removeEventListener("resize", state.resizeHandler);
   unregisterSidebarButtonListeners(win);
   state.panel.remove();
@@ -66,6 +66,11 @@ export function showPanel(win: Window = Zotero.getMainWindow()) {
   state.visible = true;
   state.panel.style.display = "block";
   renderPanel(win, state, true);
+
+  // 面板显示时，绑定侧边栏状态监听
+  if (state.sidebarObservers.length === 0) {
+    state.sidebarObservers = bindSidebarObservers(win);
+  }
 }
 
 export function hidePanel(win: Window = Zotero.getMainWindow()) {
@@ -74,6 +79,10 @@ export function hidePanel(win: Window = Zotero.getMainWindow()) {
   if (!state.visible) return;
   state.visible = false;
   state.panel.style.display = "none";
+
+  // 面板隐藏时，断开侧边栏状态监听
+  state.sidebarObservers.forEach((obs) => obs.disconnect());
+  state.sidebarObservers = [];
 }
 
 export function togglePanel(win: Window = Zotero.getMainWindow()) {
@@ -132,15 +141,7 @@ function createSidebarState(win: Window): SidebarState {
     widthSyncID: win.setInterval(() => syncPanelWidth(panel, doc, win), 450),
     resizeHandler,
     lastKey: "",
-    sidebarCheckID: win.setInterval(() => {
-      // 定期检查侧边栏状态，若已关闭则强制关闭插件面板
-      const latest = windowStates.get(win);
-      if (!latest?.visible) return;
-      if (!isSidebarOpen(win)) {
-        hidePanel(win);
-        ztoolkit.log("Auto-hid panel because sidebar was closed");
-      }
-    }, 300),
+    sidebarObservers: [],
   };
   return state;
 }
@@ -400,4 +401,47 @@ function isSidebarOpen(win: Window): boolean {
 
   const state = splitter.getAttribute("state");
   return state !== "collapsed";
+}
+
+/**
+ * 绑定 MutationObserver 监听侧边栏 splitter 的 state 属性变化
+ * 同时监听 Library 和 Reader 两个 splitter
+ */
+function bindSidebarObservers(win: Window): MutationObserver[] {
+  const doc = win.document;
+  const splitterIds = ["zotero-items-splitter", "zotero-context-splitter"];
+  const observers: MutationObserver[] = [];
+
+  for (const splitterId of splitterIds) {
+    const splitter = doc.getElementById(splitterId);
+    if (!splitter) continue;
+
+    const observer = new MutationObserver((mutations) => {
+      for (const mutation of mutations) {
+        if (
+          mutation.type === "attributes" &&
+          mutation.attributeName === "state"
+        ) {
+          const currentState = splitter.getAttribute("state");
+          if (currentState === "collapsed") {
+            const state = windowStates.get(win);
+            if (state?.visible) {
+              state.visible = false;
+              state.panel.style.display = "none";
+              ztoolkit.log("Auto-hid panel: sidebar collapsed");
+            }
+          }
+        }
+      }
+    });
+
+    observer.observe(splitter, {
+      attributes: true,
+      attributeFilter: ["state"],
+    });
+
+    observers.push(observer);
+  }
+
+  return observers;
 }

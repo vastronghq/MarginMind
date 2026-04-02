@@ -59,7 +59,7 @@ function createSingleButton(
   btn.innerHTML = label;
   btn.className = "highlight";
   btn.style.cursor = "pointer";
-  btn.addEventListener("click", () => handleAction(action, prompt));
+  btn.addEventListener("click", () => handleAction(action, prompt), true);
   return btn;
 }
 
@@ -81,23 +81,22 @@ function tryInject(doc: Document): void {
   const toolToggle = popup.querySelector(".tool-toggle");
   if (!toolToggle) return;
 
-  const wrap1 = doc.createElement("div");
-  wrap1.id = `${config.addonRef}-text-selection-popup-btn-wrap-1`;
-  wrap1.className = "tool-toggle";
+  const container = doc.createElement("div");
+  container.id = GROUP_ID;
 
-  wrap1.appendChild(
+  const row1 = doc.createElement("div");
+  row1.className = "tool-toggle";
+  row1.appendChild(
     createSingleButton(doc, "Explain", "explain", PROMPTS.explainSelection),
   );
-  wrap1.appendChild(
+  row1.appendChild(
     createSingleButton(doc, "Critique", "critique", PROMPTS.critiqueSelection),
   );
-  toolToggle.after(wrap1);
+  container.appendChild(row1);
 
-  const wrap2 = doc.createElement("div");
-  wrap2.id = `${config.addonRef}-text-selection-popup-btn-wrap-2`;
-  wrap2.className = "tool-toggle";
-
-  wrap2.appendChild(
+  const row2 = doc.createElement("div");
+  row2.className = "tool-toggle";
+  row2.appendChild(
     createSingleButton(
       doc,
       "Bulletize",
@@ -105,7 +104,7 @@ function tryInject(doc: Document): void {
       PROMPTS.bulletizeSelection,
     ),
   );
-  wrap2.appendChild(
+  row2.appendChild(
     createSingleButton(
       doc,
       "Translate",
@@ -113,14 +112,14 @@ function tryInject(doc: Document): void {
       PROMPTS.translateSelection,
     ),
   );
-  wrap1.after(wrap2);
+  container.appendChild(row2);
 
-  const wrap3 = doc.createElement("div");
-  wrap3.id = `${config.addonRef}-text-selection-popup-btn-wrap-3`;
-  wrap3.className = "tool-toggle";
+  const row3 = doc.createElement("div");
+  row3.className = "tool-toggle";
+  row3.appendChild(createSingleButton(doc, "Insert", "insert"));
+  container.appendChild(row3);
 
-  wrap3.appendChild(createSingleButton(doc, "Insert", "insert"));
-  wrap2.after(wrap3);
+  toolToggle.after(container);
 }
 
 // ── Observer lifecycle ────────────────────────────────────────────────────────

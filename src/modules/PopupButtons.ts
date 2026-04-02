@@ -7,130 +7,167 @@ let listenerRegistered = false;
 const observedDocs = new Set<Document>();
 const observers: MutationObserver[] = [];
 
-function createButtonGroup(doc: Document): HTMLElement {
-  const group = doc.createElement("div");
-  group.id = GROUP_ID;
-  group.className = "tool-toggle";
-  // group.style.width = "100%";
-  // group.style.height = "100%";
-  // group.style.padding = "0 8px";
+// ── Prompts ──────────────────────────────────────────────────────────────────
 
-  const btn1 = doc.createElement("button");
-  btn1.tabIndex = -1;
-  btn1.title = "button 1";
-  btn1.innerHTML = `
-  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-brain-icon lucide-brain"><path d="M12 18V5"/><path d="M15 13a4.17 4.17 0 0 1-3-4 4.17 4.17 0 0 1-3 4"/><path d="M17.598 6.5A3 3 0 1 0 12 5a3 3 0 1 0-5.598 1.5"/><path d="M17.997 5.125a4 4 0 0 1 2.526 5.77"/><path d="M18 18a4 4 0 0 0 2-7.464"/><path d="M19.967 17.483A4 4 0 1 1 12 18a4 4 0 1 1-7.967-.517"/><path d="M6 18a4 4 0 0 1-2-7.464"/><path d="M6.003 5.125a4 4 0 0 0-2.526 5.77"/></svg>Send
-  `;
-  btn1.className = "highlight";
-  btn1.style.border = "1px solid var(--fill-primary)";
-  btn1.style.height = "22px";
-  btn1.style.cursor = "pointer";
-  // btn1.addEventListener("click", () => handleCopy(group));
-  btn1.addEventListener("click", () => ztoolkit.log("copy clicked"));
+const PROMPTS = {
+  explainSelection:
+    "请你作为本对话领域的专家，先拆解选文中的专业术语与概念，给出它们的定义（如涉及交叉学科，请剥离交叉部分，还原其在原学科中的定义）；再结合选文所处的学科背景，将这些概念串联起来，阐述选文的具体含义。",
+  critiqueSelection:
+    "对所选文本的假设、方法论和论证进行批判性分析，指出其中的不足之处、未经检验的前提以及牵强的解读。",
+  bulletizeSelection: "将所选文本提炼为要点，每条要点保持简洁、清晰。",
+  translateSelection:
+    "使用规范的学术术语将以下内容翻译成【中文】。确保技术术语符合【计算机科学/化学/生物学/人工智能】领域的标准表述。重要术语保留英文原文，并在括号内附上【中文】翻译。仅输出翻译结果，保持专业、客观的语气。",
+};
 
-  const btn2 = doc.createElement("button");
-  btn2.tabIndex = -1;
-  btn2.title = "button 2";
-  btn2.innerHTML = `
-  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-send-icon lucide-send"><path d="M14.536 21.686a.5.5 0 0 0 .937-.016l6.5-19a.496.496 0 0 0-.635-.635l-19 6.5a.5.5 0 0 0-.016.937l7.93 3.18a2 2 0 0 1 1.112 1.11z"/><path d="m21.854 2.147-10.94 10.939"/></svg>
-  `;
-  btn2.className = "underline";
-  btn2.style.border = "1px solid var(--fill-primary)";
-  btn2.style.height = "22px";
-  btn1.style.cursor = "pointer";
-  btn2.addEventListener("click", () => ztoolkit.log("annotate clicked"));
+// ── Callback mechanism (SidebarPanel registers its send handler) ─────────────
 
-  group.appendChild(btn1);
-  group.appendChild(btn2);
-  return group;
+type PopupAction =
+  | "explain"
+  | "critique"
+  | "bulletize"
+  | "translate"
+  | "insert";
+
+type PopupActionCallback = (action: PopupAction, selectedText: string) => void;
+let actionCallback: PopupActionCallback | null = null;
+
+export function registerPopupActionCallback(cb: PopupActionCallback): void {
+  actionCallback = cb;
 }
 
-// function handleCopy(group: HTMLElement): void {
-//   const popup = group.closest(".view-popup") as HTMLElement | null;
-//   if (!popup) return;
+export function unregisterPopupActionCallback(): void {
+  actionCallback = null;
+}
 
-//   const win = popup.ownerDocument?.defaultView;
-//   if (!win) return;
+// ── Helpers ──────────────────────────────────────────────────────────────────
 
-//   const reader = (win as any).Zotero?.Reader?.getByWindow?.(win);
-//   if (!reader) return;
+function getReaderSelectedText(doc: Document): string | null {
+  const win = doc.defaultView;
+  if (!win) return null;
+  const reader = (win as any).Zotero?.Reader?.getByWindow?.(win);
+  return reader?._lastSelection?.text ?? null;
+}
 
-//   const selection = reader._lastSelection;
-//   const text = selection?.text;
-//   if (!text) return;
+function forceOpenSidebar(win: Window): void {
+  const doc = win.document;
+  const selectedType = (win as { Zotero_Tabs?: { selectedType?: string } })
+    .Zotero_Tabs?.selectedType;
 
-//   win.navigator.clipboard.writeText(text).then(() => {
-//     const btn = group.querySelector(
-//       "button:first-child",
-//     ) as HTMLButtonElement | null;
-//     if (btn) {
-//       btn.classList.add("active");
-//       setTimeout(() => btn.classList.remove("active"), 800);
-//     }
-//   });
-// }
+  let toggleButton: HTMLElement | null = null;
+  if (selectedType === "reader") {
+    toggleButton = doc.querySelector('[data-l10n-id="toggle-context-pane"]');
+  } else if (selectedType === "library") {
+    toggleButton = doc.querySelector('[data-l10n-id="toggle-item-pane"]');
+  }
 
-// function handleAnnotate(group: HTMLElement): void {
-//   const popup = group.closest(".view-popup") as HTMLElement | null;
-//   if (!popup) return;
+  if (!toggleButton) return;
 
-//   const win = popup.ownerDocument?.defaultView;
-//   if (!win) return;
+  const splitterId =
+    selectedType === "reader"
+      ? "splitter#zotero-context-splitter"
+      : selectedType === "library"
+        ? "splitter#zotero-items-splitter"
+        : "";
+  if (!splitterId) return;
 
-//   const reader = (win as any).Zotero?.Reader?.getByWindow?.(win);
-//   if (!reader) return;
+  const splitter = doc.querySelector(splitterId);
+  if (splitter && splitter.getAttribute("state") === "collapsed") {
+    toggleButton.click();
+  }
+}
 
-//   const selection = reader._lastSelection;
-//   const text = selection?.text;
-//   if (!text) return;
+function createSingleButton(
+  doc: Document,
+  label: string,
+  action: PopupAction,
+  prompt?: string,
+): HTMLElement {
+  const btn = doc.createElement("button");
+  btn.tabIndex = -1;
+  btn.title = label;
+  btn.innerHTML = label;
+  btn.className = "highlight";
+  // btn.style.height = "22px";
+  btn.style.cursor = "pointer";
+  btn.addEventListener("click", () => handleAction(doc, action, prompt));
+  return btn;
+}
 
-//   const annotation = selection?.annotation;
-//   if (!annotation) return;
+function handleAction(
+  doc: Document,
+  action: PopupAction,
+  prompt?: string,
+): void {
+  ztoolkit.log("action", action);
+  // const text = getReaderSelectedText(doc);
 
-//   (win as any).Zotero?.PaneManager?.show("zotero-pane", "zotero-view-item");
+  // if (!text) return;
 
-//   const item = (win as any).Zotero?.Reader?.getWindowReader?.(win)?.find(
-//     (r: any) => r === reader,
-//   )?.item;
-//   if (!item) return;
+  // const win = doc.defaultView;
+  // if (win) forceOpenSidebar(win);
 
-//   const parentItem = item.parentItem || item;
-//   const note = new (win as any).Zotero.Item("note");
-//   note.setNote(
-//     `<p><strong>Annotation:</strong></p><blockquote>${text}</blockquote>`,
-//   );
-//   note.parentKey = parentItem.key;
-//   note.saveTx();
+  // if (actionCallback) {
+  //   actionCallback(action, text);
+  // }
+}
 
-//   const btn = group.querySelector(
-//     "button:last-child",
-//   ) as HTMLButtonElement | null;
-//   if (btn) {
-//     btn.classList.add("active");
-//     setTimeout(() => btn.classList.remove("active"), 800);
-//   }
-// }
-
-// function injectButtons(popup: HTMLElement, doc: Document): void {
-//   const existing = doc.getElementById(GROUP_ID);
-//   if (existing) existing.remove();
-
-//   const toolToggle = popup.querySelector(".tool-toggle");
-//   if (!toolToggle) return;
-
-//   const group = createButtonGroup(doc);
-//   toolToggle.after(group);
-// }
-
+// ── Inject ───────────────────────────────────────────────────────────────────
 function tryInject(doc: Document): void {
   const popup = doc.querySelector(".view-popup") as HTMLElement | null;
   if (!popup || doc.getElementById(GROUP_ID)) return;
 
   const toolToggle = popup.querySelector(".tool-toggle");
-  if (toolToggle) {
-    const group = createButtonGroup(doc);
-    toolToggle.after(group);
-  }
+  if (!toolToggle) return;
+
+  const wrap1 = doc.createElement("div");
+  wrap1.id = `${config.addonRef}-text-selection-popup-btn-wrap-1`;
+  wrap1.className = "tool-toggle";
+
+  const btn1 = createSingleButton(
+    doc,
+    "Explain",
+    "explain",
+    PROMPTS.explainSelection,
+  );
+  const btn2 = createSingleButton(
+    doc,
+    "Critique",
+    "critique",
+    PROMPTS.critiqueSelection,
+  );
+  wrap1.appendChild(btn1);
+  wrap1.appendChild(btn2);
+
+  toolToggle.after(wrap1);
+
+  const wrap2 = doc.createElement("div");
+  wrap2.id = `${config.addonRef}-text-selection-popup-btn-wrap-2`;
+  wrap2.className = "tool-toggle";
+
+  const btn3 = createSingleButton(
+    doc,
+    "Bulletize",
+    "bulletize",
+    PROMPTS.bulletizeSelection,
+  );
+  const btn4 = createSingleButton(
+    doc,
+    "Translate",
+    "translate",
+    PROMPTS.translateSelection,
+  );
+  wrap2.appendChild(btn3);
+  wrap2.appendChild(btn4);
+
+  wrap1.after(wrap2);
+
+  const wrap3 = doc.createElement("div");
+  wrap3.id = `${config.addonRef}-text-selection-popup-btn-wrap-3`;
+  wrap3.className = "tool-toggle";
+
+  const btn5 = createSingleButton(doc, "Insert", "insert");
+  wrap3.appendChild(btn5);
+  wrap2.after(wrap3);
 }
 
 function observeDoc(doc: Document): void {
@@ -145,8 +182,6 @@ function observeDoc(doc: Document): void {
   observer.observe(doc.body, {
     childList: true,
     subtree: true,
-    // attributes: true,
-    // attributeFilter: ["class", "style"],
   });
   observers.push(observer);
 }
@@ -184,7 +219,6 @@ export function unregisterTextSelectionPopupButtons(): void {
   observers.length = 0;
   observedDocs.clear();
 
-  // 全局清理
   Zotero.getMainWindows().forEach((win) => {
     const popupDocs = [
       win.document,

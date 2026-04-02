@@ -28,6 +28,10 @@ import {
   readCacheSync,
   writeCache,
 } from "../../modules/markdownCache";
+import {
+  registerPopupActionCallback,
+  unregisterPopupActionCallback,
+} from "../../modules/PopupButtons";
 import type { SidebarPanelData } from "../bridge";
 import { Button } from "@/components/ui/button";
 import {
@@ -1013,6 +1017,29 @@ export function SidebarPanel({
   );
 
   useEffect(() => {
+    registerPopupActionCallback((action, selectedText) => {
+      if (action === "insert") {
+        updateDraft(
+          draft.trim()
+            ? `${draft.trim()}\n\n[Selected text]\n${selectedText}`
+            : `[Selected text]\n${selectedText}`,
+        );
+        clearQueuedSelection();
+        return;
+      }
+      const promptMap: Record<string, string> = {
+        explain: PROMPTS.explainSelection,
+        critique: PROMPTS.critiqueSelection,
+        bulletize: PROMPTS.bulletizeSelection,
+        translate: PROMPTS.translateSelection,
+      };
+      const prompt = promptMap[action];
+      if (prompt) void send(prompt);
+    });
+    return () => unregisterPopupActionCallback();
+  }, [draft, send]);
+
+  useEffect(() => {
     if (!isPresetOpen) return;
     const onDown = (e: MouseEvent) => {
       if (
@@ -1113,44 +1140,6 @@ export function SidebarPanel({
       </Card>
     );
   }
-
-  const QUICK_ACTIONS = [
-    // {
-    //   id: "summarize",
-    //   label: "Summarize full text",
-    //   onClick: () => send("Summarize the main points of this paper."),
-    // },
-    {
-      id: "explain",
-      label: "Explain selection",
-      onClick: () => send(PROMPTS.explainSelection),
-    },
-    {
-      id: "critique",
-      label: "Critique selection",
-      onClick: () => send(PROMPTS.critiqueSelection),
-    },
-    {
-      id: "bulletize",
-      label: "Bulletize selection",
-      onClick: () => send(PROMPTS.bulletizeSelection),
-    },
-    {
-      id: "traslate",
-      label: "Translate selection",
-      onClick: () => send(PROMPTS.translateSelection),
-    },
-    {
-      id: "insert",
-      label: "Insert selection",
-      onClick: insertSelectionToDraft,
-    },
-    {
-      id: "clear",
-      label: "Clear selection",
-      onClick: clearQueuedSelection,
-    },
-  ] as const;
 
   return (
     <aside
@@ -1359,45 +1348,6 @@ export function SidebarPanel({
           >
             Summarize
           </Button>
-          {QUICK_ACTIONS.map((a) => (
-            <Button
-              key={a.id}
-              size="xs"
-              variant="outline"
-              onClick={a.onClick}
-              disabled={isSending || isSelectionMode || !queuedSelection.trim()}
-              className={quick_btn_style}
-            >
-              {a.label}
-            </Button>
-          ))}
-          {/* <Button
-            size="xs"
-            variant="outline"
-            onClick={translateSelection}
-            disabled={isSending || isSelectionMode || !queuedSelection.trim()}
-            className="rounded-full border-[color-mix(in_srgb,var(--fill-primary)_16%,transparent)] bg-[color-mix(in_srgb,var(--material-sidepane)_88%,var(--fill-primary)_8%)] px-2 text-[12px] text-[color-mix(in_srgb,var(--fill-primary)_78%,transparent)]"
-          >
-            Translate selection
-          </Button>
-          <Button
-            size="xs"
-            variant="outline"
-            onClick={insertSelectionToDraft}
-            disabled={isSending || isSelectionMode || !queuedSelection.trim()}
-            className="rounded-full border-[color-mix(in_srgb,var(--fill-primary)_16%,transparent)] bg-[color-mix(in_srgb,var(--material-sidepane)_88%,var(--fill-primary)_8%)] px-2 text-[12px] text-[color-mix(in_srgb,var(--fill-primary)_78%,transparent)]"
-          >
-            Insert selection
-          </Button>
-          <Button
-            size="xs"
-            variant="outline"
-            onClick={clearQueuedSelection}
-            disabled={isSending || isSelectionMode || !hasSelectionPreview}
-            className="rounded-full border-[color-mix(in_srgb,var(--fill-primary)_16%,transparent)] bg-[color-mix(in_srgb,var(--material-sidepane)_88%,var(--fill-primary)_8%)] px-2 text-[12px] text-[color-mix(in_srgb,var(--fill-primary)_78%,transparent)]"
-          >
-            Clear selection
-          </Button> */}
         </div>
 
         {isSelectionMode ? (

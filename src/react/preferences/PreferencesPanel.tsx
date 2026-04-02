@@ -404,6 +404,21 @@ export function PreferencesPanel() {
 
             <Separator className="bg-[color-mix(in_srgb,var(--fill-primary)_14%,transparent)]" />
 
+            {/* ── Base URL ─────────────────────────────────────────── */}
+            <div className="flex w-full flex-col">
+              <span className="text-[12px] font-bold uppercase tracking-wider text-[color-mix(in_srgb,var(--fill-primary)_50%,transparent)]">
+                Base URL
+              </span>
+              <input
+                value={aiSettings.baseURL}
+                onChange={(e) => updateAISetting("baseURL", e.target.value)}
+                placeholder={getDefaultBaseURL(aiSettings.provider)}
+                className="h-9 border-[1px] border-[color-mix(in_srgb,var(--fill-primary)_18%,transparent)] bg-[color-mix(in_srgb,var(--material-sidepane)_84%,var(--fill-primary)_8%)]"
+              />
+            </div>
+
+            <Separator className="bg-[color-mix(in_srgb,var(--fill-primary)_14%,transparent)]" />
+
             {/* ── API Key ──────────────────────────────────────────── */}
             <div className="flex w-full flex-col">
               <span className="text-[12px] font-bold uppercase tracking-wider text-[color-mix(in_srgb,var(--fill-primary)_50%,transparent)]">
@@ -414,21 +429,6 @@ export function PreferencesPanel() {
                 value={aiSettings.apiKey}
                 onChange={(e) => updateAISetting("apiKey", e.target.value)}
                 placeholder="API key"
-                className="h-9 border-[1px] border-[color-mix(in_srgb,var(--fill-primary)_18%,transparent)] bg-[color-mix(in_srgb,var(--material-sidepane)_84%,var(--fill-primary)_8%)]"
-              />
-            </div>
-
-            <Separator className="bg-[color-mix(in_srgb,var(--fill-primary)_14%,transparent)]" />
-
-            {/* ── Base URL ─────────────────────────────────────────── */}
-            <div className="flex w-full flex-col">
-              <span className="text-[12px] font-bold uppercase tracking-wider text-[color-mix(in_srgb,var(--fill-primary)_50%,transparent)]">
-                Base URL
-              </span>
-              <input
-                value={aiSettings.baseURL}
-                onChange={(e) => updateAISetting("baseURL", e.target.value)}
-                placeholder={getDefaultBaseURL(aiSettings.provider)}
                 className="h-9 border-[1px] border-[color-mix(in_srgb,var(--fill-primary)_18%,transparent)] bg-[color-mix(in_srgb,var(--material-sidepane)_84%,var(--fill-primary)_8%)]"
               />
             </div>
@@ -506,6 +506,38 @@ export function PreferencesPanel() {
                 className="resize-none border-[color-mix(in_srgb,var(--fill-primary)_18%,transparent)] bg-[color-mix(in_srgb,var(--material-sidepane)_84%,var(--fill-primary)_8%)] p-3"
               />
             </div>
+          </CardContent>
+        </Card>
+
+        {/* MinerU Card */}
+        <Card className="border-[color-mix(in_srgb,var(--fill-primary)_16%,transparent)] bg-[color-mix(in_srgb,var(--material-sidepane)_90%,var(--fill-primary)_8%)] p-4 text-[var(--fill-primary)]">
+          <CardHeader className="p-0 pb-4">
+            <CardTitle className="text-[16px]">MinerU Configuration</CardTitle>
+          </CardHeader>
+          <CardContent className="flex flex-col justify-between gap-4 p-0">
+            <div className="flex w-full flex-col">
+              <span className="text-[12px] font-bold uppercase tracking-wider text-[color-mix(in_srgb,var(--fill-primary)_50%,transparent)]">
+                API Key{" "}
+                <span className="lowercase">
+                  {" "}
+                  (apply from{" "}
+                  <a href="https://mineru.net/apiManage/token">
+                    https://mineru.net/apiManage/token
+                  </a>
+                  )
+                </span>
+              </span>
+
+              <input
+                type="password"
+                // value={}
+                onChange={() => {}}
+                placeholder="Paste your MinerU API key here"
+                className="h-9 border-[1px] border-[color-mix(in_srgb,var(--fill-primary)_18%,transparent)] bg-[color-mix(in_srgb,var(--material-sidepane)_84%,var(--fill-primary)_8%)]"
+              />
+            </div>
+
+            <Separator className="bg-[color-mix(in_srgb,var(--fill-primary)_14%,transparent)]" />
           </CardContent>
         </Card>
 

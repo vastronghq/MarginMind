@@ -49,13 +49,14 @@ export function unregisterPopupActionCallback(): void {
 
 function createSingleButton(
   doc: Document,
+  title: string,
   label: string,
   action: PopupAction,
   prompt?: string,
 ): HTMLElement {
   const btn = doc.createElement("button");
   btn.tabIndex = -1;
-  btn.title = label;
+  btn.title = title;
   btn.innerHTML = label;
   btn.className = "highlight";
   btn.style.cursor = "pointer";
@@ -87,10 +88,22 @@ function tryInject(doc: Document): void {
   const row1 = doc.createElement("div");
   row1.className = "tool-toggle";
   row1.appendChild(
-    createSingleButton(doc, "Explain", "explain", PROMPTS.explainSelection),
+    createSingleButton(
+      doc,
+      "Explain selection in MarginMind",
+      "Explain",
+      "explain",
+      PROMPTS.explainSelection,
+    ),
   );
   row1.appendChild(
-    createSingleButton(doc, "Critique", "critique", PROMPTS.critiqueSelection),
+    createSingleButton(
+      doc,
+      "Critique selection in MarginMind",
+      "Critique",
+      "critique",
+      PROMPTS.critiqueSelection,
+    ),
   );
   container.appendChild(row1);
 
@@ -99,6 +112,7 @@ function tryInject(doc: Document): void {
   row2.appendChild(
     createSingleButton(
       doc,
+      "Bulletize selection in MarginMind",
       "Bulletize",
       "bulletize",
       PROMPTS.bulletizeSelection,
@@ -107,6 +121,7 @@ function tryInject(doc: Document): void {
   row2.appendChild(
     createSingleButton(
       doc,
+      "Translate selection in MarginMind",
       "Translate",
       "translate",
       PROMPTS.translateSelection,
@@ -116,7 +131,14 @@ function tryInject(doc: Document): void {
 
   const row3 = doc.createElement("div");
   row3.className = "tool-toggle";
-  row3.appendChild(createSingleButton(doc, "Insert", "insert"));
+  row3.appendChild(
+    createSingleButton(
+      doc,
+      "Insert selection to MarginMind",
+      "Insert",
+      "insert",
+    ),
+  );
   container.appendChild(row3);
 
   toolToggle.after(container);

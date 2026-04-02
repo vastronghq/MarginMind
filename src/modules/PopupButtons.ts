@@ -2,7 +2,10 @@ import { config } from "../../package.json";
 
 const GROUP_ID = `${config.addonRef}-text-selection-popup-btn-group`;
 const LISTENER_ID = `${config.addonRef}-text-selection-popup-listener`;
+const SELECTION_LISTENER_ID = `${config.addonRef}-popup-selection-listener`;
+
 let listenerRegistered = false;
+let selectionListenerRegistered = false;
 
 const observedDocs = new Set<Document>();
 const observers: MutationObserver[] = [];
@@ -19,7 +22,53 @@ const PROMPTS = {
     "使用规范的学术术语将以下内容翻译成【中文】。确保技术术语符合【计算机科学/化学/生物学/人工智能】领域的标准表述。重要术语保留英文原文，并在括号内附上【中文】翻译。仅输出翻译结果，保持专业、客观的语气。",
 };
 
-// ── Callback mechanism (SidebarPanel registers its send handler) ─────────────
+// ── Selection capture (single source of truth) ───────────────────────────────
+
+export let latestSelectionText = "";
+export let latestSelectionAnnotation: _ZoteroTypes.Annotations.AnnotationJson | null =
+  null;
+
+const PopupSelectionHandler: _ZoteroTypes.Reader.EventHandler<
+  "renderTextSelectionPopup"
+> = (event) => {
+  const annotation = event.params.annotation;
+  const text = annotation.text?.trim();
+  if (!text) return;
+  const page = annotation.position.pageIndex + 1;
+  latestSelectionText = `${text} (page ${page})`;
+  latestSelectionAnnotation = annotation;
+  // ztoolkit.log("PopupSelectionHandler", latestSelectionText);
+};
+
+function registerPopupSelectionListener(): void {
+  if (selectionListenerRegistered) return;
+  try {
+    Zotero.Reader.unregisterEventListener(
+      "renderTextSelectionPopup",
+      PopupSelectionHandler,
+    );
+  } catch (_error) {}
+
+  Zotero.Reader.registerEventListener(
+    "renderTextSelectionPopup",
+    PopupSelectionHandler,
+    SELECTION_LISTENER_ID,
+  );
+  selectionListenerRegistered = true;
+}
+
+export function unregisterPopupSelectionListener(): void {
+  if (!selectionListenerRegistered) return;
+  try {
+    Zotero.Reader.unregisterEventListener(
+      "renderTextSelectionPopup",
+      PopupSelectionHandler,
+    );
+  } catch (_error) {}
+  selectionListenerRegistered = false;
+}
+
+// ── Popup action callback (SidebarPanel registers its send handler) ──────────
 
 type PopupAction =
   | "explain"
@@ -39,42 +88,7 @@ export function unregisterPopupActionCallback(): void {
   actionCallback = null;
 }
 
-// ── Helpers ──────────────────────────────────────────────────────────────────
-
-function getReaderSelectedText(doc: Document): string | null {
-  const win = doc.defaultView;
-  if (!win) return null;
-  const reader = (win as any).Zotero?.Reader?.getByWindow?.(win);
-  return reader?._lastSelection?.text ?? null;
-}
-
-function forceOpenSidebar(win: Window): void {
-  const doc = win.document;
-  const selectedType = (win as { Zotero_Tabs?: { selectedType?: string } })
-    .Zotero_Tabs?.selectedType;
-
-  let toggleButton: HTMLElement | null = null;
-  if (selectedType === "reader") {
-    toggleButton = doc.querySelector('[data-l10n-id="toggle-context-pane"]');
-  } else if (selectedType === "library") {
-    toggleButton = doc.querySelector('[data-l10n-id="toggle-item-pane"]');
-  }
-
-  if (!toggleButton) return;
-
-  const splitterId =
-    selectedType === "reader"
-      ? "splitter#zotero-context-splitter"
-      : selectedType === "library"
-        ? "splitter#zotero-items-splitter"
-        : "";
-  if (!splitterId) return;
-
-  const splitter = doc.querySelector(splitterId);
-  if (splitter && splitter.getAttribute("state") === "collapsed") {
-    toggleButton.click();
-  }
-}
+// ── Button creation ──────────────────────────────────────────────────────────
 
 function createSingleButton(
   doc: Document,
@@ -87,31 +101,22 @@ function createSingleButton(
   btn.title = label;
   btn.innerHTML = label;
   btn.className = "highlight";
-  // btn.style.height = "22px";
   btn.style.cursor = "pointer";
-  btn.addEventListener("click", () => handleAction(doc, action, prompt));
+  btn.addEventListener("click", () => handleAction(action, prompt));
   return btn;
 }
 
-function handleAction(
-  doc: Document,
-  action: PopupAction,
-  prompt?: string,
-): void {
-  ztoolkit.log("action", action);
-  // const text = getReaderSelectedText(doc);
+function handleAction(action: PopupAction, prompt?: string): void {
+  const text = latestSelectionText;
+  if (!text) return;
 
-  // if (!text) return;
-
-  // const win = doc.defaultView;
-  // if (win) forceOpenSidebar(win);
-
-  // if (actionCallback) {
-  //   actionCallback(action, text);
-  // }
+  if (actionCallback) {
+    actionCallback(action, text);
+  }
 }
 
 // ── Inject ───────────────────────────────────────────────────────────────────
+
 function tryInject(doc: Document): void {
   const popup = doc.querySelector(".view-popup") as HTMLElement | null;
   if (!popup || doc.getElementById(GROUP_ID)) return;
@@ -123,50 +128,41 @@ function tryInject(doc: Document): void {
   wrap1.id = `${config.addonRef}-text-selection-popup-btn-wrap-1`;
   wrap1.className = "tool-toggle";
 
-  const btn1 = createSingleButton(
-    doc,
-    "Explain",
-    "explain",
-    PROMPTS.explainSelection,
+  wrap1.appendChild(
+    createSingleButton(doc, "Explain", "explain", PROMPTS.explainSelection),
   );
-  const btn2 = createSingleButton(
-    doc,
-    "Critique",
-    "critique",
-    PROMPTS.critiqueSelection,
+  wrap1.appendChild(
+    createSingleButton(doc, "Critique", "critique", PROMPTS.critiqueSelection),
   );
-  wrap1.appendChild(btn1);
-  wrap1.appendChild(btn2);
-
   toolToggle.after(wrap1);
 
   const wrap2 = doc.createElement("div");
   wrap2.id = `${config.addonRef}-text-selection-popup-btn-wrap-2`;
   wrap2.className = "tool-toggle";
 
-  const btn3 = createSingleButton(
-    doc,
-    "Bulletize",
-    "bulletize",
-    PROMPTS.bulletizeSelection,
+  wrap2.appendChild(
+    createSingleButton(
+      doc,
+      "Bulletize",
+      "bulletize",
+      PROMPTS.bulletizeSelection,
+    ),
   );
-  const btn4 = createSingleButton(
-    doc,
-    "Translate",
-    "translate",
-    PROMPTS.translateSelection,
+  wrap2.appendChild(
+    createSingleButton(
+      doc,
+      "Translate",
+      "translate",
+      PROMPTS.translateSelection,
+    ),
   );
-  wrap2.appendChild(btn3);
-  wrap2.appendChild(btn4);
-
   wrap1.after(wrap2);
 
   const wrap3 = doc.createElement("div");
   wrap3.id = `${config.addonRef}-text-selection-popup-btn-wrap-3`;
   wrap3.className = "tool-toggle";
 
-  const btn5 = createSingleButton(doc, "Insert", "insert");
-  wrap3.appendChild(btn5);
+  wrap3.appendChild(createSingleButton(doc, "Insert", "insert"));
   wrap2.after(wrap3);
 }
 
@@ -193,27 +189,32 @@ const SelectionPopupHandler: _ZoteroTypes.Reader.EventHandler<
   if (doc) observeDoc(doc);
 };
 
-export function registerTextSelectionPopupButtons(): void {
-  if (listenerRegistered) return;
+// ── Register / Unregister ────────────────────────────────────────────────────
 
-  Zotero.Reader.registerEventListener(
-    "renderTextSelectionPopup",
-    SelectionPopupHandler,
-    LISTENER_ID,
-  );
-  listenerRegistered = true;
-  ztoolkit.log("Popup buttons registered");
+export function registerTextSelectionPopupButtons(): void {
+  if (!listenerRegistered) {
+    Zotero.Reader.registerEventListener(
+      "renderTextSelectionPopup",
+      SelectionPopupHandler,
+      LISTENER_ID,
+    );
+    listenerRegistered = true;
+    ztoolkit.log("Popup buttons registered");
+  }
+
+  registerPopupSelectionListener();
 }
 
 export function unregisterTextSelectionPopupButtons(): void {
-  if (!listenerRegistered) return;
+  if (listenerRegistered) {
+    Zotero.Reader.unregisterEventListener(
+      "renderTextSelectionPopup",
+      SelectionPopupHandler,
+    );
+    listenerRegistered = false;
+  }
 
-  Zotero.Reader.unregisterEventListener(
-    "renderTextSelectionPopup",
-    SelectionPopupHandler,
-  );
-
-  listenerRegistered = false;
+  unregisterPopupSelectionListener();
 
   observers.forEach((observer) => observer.disconnect());
   observers.length = 0;

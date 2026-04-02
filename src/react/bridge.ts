@@ -34,8 +34,6 @@ export type SidebarPanelData = {
 export type SidebarPanelRenderPayload = {
   container: Element;
   data: SidebarPanelData | null;
-  showSelectedText: boolean;
-  selectedText: string;
   selectedAnnotation: _ZoteroTypes.Annotations.AnnotationJson | null;
   markdownStatus: "none" | "cached" | "parsing" | "error";
   markdownContent: string | null;

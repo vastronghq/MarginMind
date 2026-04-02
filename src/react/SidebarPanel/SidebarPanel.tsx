@@ -49,8 +49,6 @@ import { cn } from "@/lib/utils";
 
 type SidebarPanelProps = {
   data: SidebarPanelData | null;
-  showSelectedText?: boolean;
-  selectedText: string;
   selectedAnnotation: _ZoteroTypes.Annotations.AnnotationJson | null;
   markdownStatus: "none" | "cached" | "parsing" | "error";
   markdownContent: string | null;
@@ -70,7 +68,6 @@ type ChatSession = {
   updatedAt: number;
   messages: ChatMessage[];
   draft: string;
-  queuedSelection: string;
 };
 type PersistedState = {
   sessions: ChatSession[];
@@ -88,7 +85,6 @@ const isAbortError = (error: unknown) =>
         /aborted|cancelled|canceled/i.test(error.message)
       : false;
 
-const PREVIEW_ID = "selection-preview";
 const EMPTY_TITLE = "New chat";
 const ROLE_LABEL: Record<ChatRole, string> = {
   assistant: "MarginMind",
@@ -180,7 +176,6 @@ const createSession = (partial?: Partial<ChatSession>): ChatSession => ({
   updatedAt: partial?.updatedAt ?? Date.now(),
   messages: partial?.messages ?? initialMessages(),
   draft: partial?.draft ?? "",
-  queuedSelection: partial?.queuedSelection ?? "",
 });
 const toTime = (ts: number) => {
   const d = new Date(ts);
@@ -542,8 +537,6 @@ function MessageContent({ message }: { message: ChatMessage }) {
 
 export function SidebarPanel({
   data,
-  showSelectedText = false,
-  selectedText,
   selectedAnnotation,
   markdownStatus: initialMarkdownStatus,
   markdownContent: initialMarkdownContent,
@@ -575,7 +568,6 @@ export function SidebarPanel({
   );
   const [parseProgress, setParseProgress] = useState("");
 
-  const selectionSigRef = useRef("");
   const messageRef = useRef<HTMLDivElement | null>(null);
   const autoScrollRef = useRef(true);
   const forceScrollRef = useRef(false);
@@ -605,8 +597,6 @@ export function SidebarPanel({
   );
   const messages = activeSession?.messages ?? [];
   const draft = activeSession?.draft ?? "";
-  const queuedSelection = activeSession?.queuedSelection ?? "";
-  // const hasSelectionPreview = messages.some((m) => m.id === PREVIEW_ID);
   const contextSummary = activeContext
     ? `${activeContext.title} · ${activeContext.creators} · ${activeContext.year}`
     : "No active item context";
@@ -614,7 +604,6 @@ export function SidebarPanel({
     ? `${activeContext.title} / ${activeContext.creators} / ${activeContext.year} / ${activeContext.keyText}`
     : "No active item context";
   const canSaveToAnnotation =
-    !!queuedSelection.trim() &&
     !!selectedAnnotation &&
     !!activeContext?.attachmentItemID &&
     selectedIDs.length > 0 &&
@@ -640,37 +629,6 @@ export function SidebarPanel({
 
   const updateDraft = (next: string) =>
     patchActive((s) => ({ ...s, draft: next }));
-  const insertSelectionToDraft = () => {
-    if (!queuedSelection) return;
-    updateDraft(
-      draft.trim()
-        ? `${draft.trim()}\n\n[Selected text]\n${queuedSelection}`
-        : `[Selected text]\n${queuedSelection}`,
-    );
-  };
-  const clearQueuedSelection = () => {
-    selectionSigRef.current = "";
-    patchActive((s) => ({
-      ...s,
-      queuedSelection: "",
-      messages: s.messages.filter((m) => m.id !== PREVIEW_ID),
-    }));
-  };
-  // const translateSelection = async () => {
-  //   const target = queuedSelection.trim();
-  //   if (!target) {
-  //     showError("No selected text to translate.");
-  //     return;
-  //   }
-  //   const hasPreview = activeSession?.messages.some((m) => m.id === PREVIEW_ID);
-  //   if (hasPreview) {
-  //     await send(TRANSLATE_SELECTION_PROMPT);
-  //     return;
-  //   }
-  //   await send(
-  //     `${TRANSLATE_SELECTION_PROMPT}\n\n[Selected text from paper]\n${target}`,
-  //   );
-  // };
   const clearDraft = () => updateDraft("");
   const stopSending = () => {
     abortControllerRef.current?.abort();
@@ -745,7 +703,6 @@ export function SidebarPanel({
     setSessions((curr) => [n, ...curr]);
     setActiveSessionID(n.id);
     setRequestError("");
-    selectionSigRef.current = "";
     clearSelectionMode();
   };
   const jumpToLatest = () => {
@@ -771,17 +728,10 @@ export function SidebarPanel({
   const normalizePrompt = (input: string, base: ChatMessage[]) => {
     const text = input.trim();
     if (!text) return null;
-    const previewIndex = base.findIndex((m) => m.id === PREVIEW_ID);
-    if (previewIndex === -1) {
-      return {
-        text,
-        messages: [...base, { id: uid("user"), role: "user" as const, text }],
-      };
-    }
-    const merged = `${text}\n\n[Selected text from paper]\n${base[previewIndex].text}`;
-    const next = [...base];
-    next[previewIndex] = { id: uid("user"), role: "user", text: merged };
-    return { text: merged, messages: next };
+    return {
+      text,
+      messages: [...base, { id: uid("user"), role: "user" as const, text }],
+    };
   };
 
   async function send(prompt: string) {
@@ -975,17 +925,12 @@ export function SidebarPanel({
   function deleteSelectedMessages() {
     if (!activeSession || !canDeleteSelected) return;
     const selectedSet = new Set(selectedIDs);
-    const deletingPreview = selectedSet.has(PREVIEW_ID);
 
     patchSession(activeSession.id, (s) => ({
       ...s,
-      queuedSelection: deletingPreview ? "" : s.queuedSelection,
       messages: s.messages.filter((m) => !selectedSet.has(m.id)),
     }));
 
-    if (deletingPreview) {
-      selectionSigRef.current = "";
-    }
     clearSelectionMode();
   }
 
@@ -1024,7 +969,6 @@ export function SidebarPanel({
             ? `${draft.trim()}\n\n[Selected text]\n${selectedText}`
             : `[Selected text]\n${selectedText}`,
         );
-        clearQueuedSelection();
         return;
       }
       const promptMap: Record<string, string> = {
@@ -1093,42 +1037,6 @@ export function SidebarPanel({
     list.addEventListener("scroll", onScroll, { passive: true });
     return () => list.removeEventListener("scroll", onScroll);
   }, []);
-
-  useEffect(() => {
-    if (!activeSession) return;
-    if (!showSelectedText || !selectedText) {
-      patchActive((s) => {
-        if (!s.queuedSelection && !s.messages.some((m) => m.id === PREVIEW_ID))
-          return s;
-        return {
-          ...s,
-          queuedSelection: "",
-          messages: s.messages.filter((m) => m.id !== PREVIEW_ID),
-        };
-      });
-      return;
-    }
-    if (selectionSigRef.current === selectedText) return;
-    selectionSigRef.current = selectedText;
-    patchActive((s) => {
-      const i = s.messages.findIndex((m) => m.id === PREVIEW_ID);
-      const preview: ChatMessage = {
-        id: PREVIEW_ID,
-        role: "user",
-        text: selectedText,
-        meta: "Selection preview",
-      };
-      if (i === -1)
-        return {
-          ...s,
-          queuedSelection: selectedText,
-          messages: [...s.messages, preview],
-        };
-      const next = [...s.messages];
-      next[i] = preview;
-      return { ...s, queuedSelection: selectedText, messages: next };
-    });
-  }, [selectedText, showSelectedText, activeSessionID]);
 
   if (!activeContext && !messages.length) {
     return (
@@ -1367,7 +1275,7 @@ export function SidebarPanel({
                   disabled={!canSaveToAnnotation}
                   className="h-7 border-[color-mix(in_srgb,var(--fill-primary)_16%,transparent)] bg-transparent px-2 text-[12px] text-[color-mix(in_srgb,var(--fill-primary)_82%,transparent)]"
                   title={
-                    queuedSelection.trim()
+                    selectedAnnotation
                       ? "Create annotation with selected messages in comment"
                       : "Select text in reader first"
                   }

@@ -1,10 +1,13 @@
 import type { MarginMindReactWindow, SidebarPanelData } from "../react/bridge";
 import { config } from "../../package.json";
 import { hasCache, readCacheSync } from "./markdownCache";
+import {
+  latestSelectionAnnotation,
+  unregisterPopupSelectionListener,
+} from "./PopupButtons";
 
 const PANEL_ID = `${config.addonRef}-react-sidebar-panel`;
 const PANEL_ROOT_ID = `${config.addonRef}-react-sidebar-panel-root`;
-const SIDEBAR_READER_SELECTION_LISTENER_ID = `${config.addonRef}-sidebar-reader-selection`;
 const REACT_WINDOW_SCRIPT_URL = `${rootURI}content/scripts/ui.js`;
 const REACT_STYLE_URL = `${rootURI}content/styles/ui.css`;
 const REACT_ASSET_VERSION =
@@ -22,10 +25,6 @@ type SidebarState = {
 };
 
 const windowStates = new WeakMap<Window, SidebarState>();
-let latestReaderSelectionText = "";
-let latestReaderSelectionAnnotation: _ZoteroTypes.Annotations.AnnotationJson | null =
-  null;
-let sidebarReaderSelectionListenerRegistered = false;
 
 export function registerSidebarPanel(win: _ZoteroTypes.MainWindow) {
   const existing = windowStates.get(win);
@@ -33,7 +32,6 @@ export function registerSidebarPanel(win: _ZoteroTypes.MainWindow) {
 
   const state = createSidebarState(win);
   windowStates.set(win, state);
-  registerSidebarReaderSelectionListener();
 }
 
 export function unregisterSidebarPanel(win: Window) {
@@ -51,7 +49,7 @@ export function unregisterAllSidebarPanels() {
   for (const win of Zotero.getMainWindows()) {
     unregisterSidebarPanel(win);
   }
-  unregisterSidebarReaderSelectionListener();
+  unregisterPopupSelectionListener();
 }
 
 export function isPanelShown(win: Window = Zotero.getMainWindow()) {
@@ -165,7 +163,7 @@ function syncPanelWidth(panel: HTMLDivElement, doc: Document, win: Window) {
 
 function renderPanel(win: Window, state: SidebarState, force = false) {
   const item = getCurrentItem(win);
-  const key = `${item?.id ?? "none"}:${item?.dateModified ?? ""}:${latestReaderSelectionText}`;
+  const key = `${item?.id ?? "none"}:${item?.dateModified ?? ""}`;
   if (!force && state.lastKey === key) return;
   state.lastKey = key;
 
@@ -187,10 +185,8 @@ function renderPanel(win: Window, state: SidebarState, force = false) {
   reactWin.__marginmindReact?.renderSidebarPanel({
     container: state.root,
     data,
-    showSelectedText: isReaderTabActive(win),
-    selectedText: latestReaderSelectionText,
     selectedAnnotation: isReaderTabActive(win)
-      ? latestReaderSelectionAnnotation
+      ? latestSelectionAnnotation
       : null,
     markdownStatus,
     markdownContent,
@@ -278,51 +274,6 @@ function formatCreators(item: Zotero.Item) {
 function isReaderTabActive(win: Window) {
   const tabs = (win as { Zotero_Tabs?: _ZoteroTypes.Zotero_Tabs }).Zotero_Tabs;
   return tabs?.selectedType === "reader";
-}
-
-const sidebarReaderSelectionHandler: _ZoteroTypes.Reader.EventHandler<
-  "renderTextSelectionPopup"
-> = (event) => {
-  const annotation = event.params.annotation;
-  const text = annotation.text?.trim();
-  if (!text) return;
-  const page = annotation.position.pageIndex + 1;
-  latestReaderSelectionText = `${text} (page ${page})`;
-  latestReaderSelectionAnnotation = annotation;
-
-  for (const win of Zotero.getMainWindows()) {
-    const state = windowStates.get(win);
-    if (!state?.visible) continue;
-    renderPanel(win, state, true);
-  }
-};
-
-function registerSidebarReaderSelectionListener() {
-  if (sidebarReaderSelectionListenerRegistered) return;
-  try {
-    Zotero.Reader.unregisterEventListener(
-      "renderTextSelectionPopup",
-      sidebarReaderSelectionHandler,
-    );
-  } catch (_error) {}
-
-  Zotero.Reader.registerEventListener(
-    "renderTextSelectionPopup",
-    sidebarReaderSelectionHandler,
-    SIDEBAR_READER_SELECTION_LISTENER_ID,
-  );
-  sidebarReaderSelectionListenerRegistered = true;
-}
-
-function unregisterSidebarReaderSelectionListener() {
-  if (!sidebarReaderSelectionListenerRegistered) return;
-  try {
-    Zotero.Reader.unregisterEventListener(
-      "renderTextSelectionPopup",
-      sidebarReaderSelectionHandler,
-    );
-  } catch (_error) {}
-  sidebarReaderSelectionListenerRegistered = false;
 }
 
 /**

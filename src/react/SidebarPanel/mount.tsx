@@ -14,8 +14,6 @@ reactWindow.__marginmindReactRoots = roots;
 export function mountSidebarPanel({
   container,
   data,
-  showSelectedText,
-  selectedText,
   selectedAnnotation,
   markdownStatus,
   markdownContent,
@@ -29,8 +27,6 @@ export function mountSidebarPanel({
   root.render(
     <SidebarPanel
       data={data}
-      showSelectedText={showSelectedText}
-      selectedText={selectedText}
       selectedAnnotation={selectedAnnotation}
       markdownStatus={markdownStatus}
       markdownContent={markdownContent}

@@ -5,8 +5,7 @@ const LISTENER_ID = `${config.addonRef}-text-selection-popup-listener`;
 
 let listenerRegistered = false;
 
-const observedDocs = new Set<Document>();
-const observers: MutationObserver[] = [];
+const docObservers = new Map<Document, MutationObserver>();
 
 // ── Prompts ──────────────────────────────────────────────────────────────────
 
@@ -124,9 +123,15 @@ function tryInject(doc: Document): void {
   wrap2.after(wrap3);
 }
 
+// ── Observer lifecycle ────────────────────────────────────────────────────────
+
 function observeDoc(doc: Document): void {
-  if (observedDocs.has(doc)) return;
-  observedDocs.add(doc);
+  // Disconnect any existing observer for this doc
+  const existing = docObservers.get(doc);
+  if (existing) {
+    existing.disconnect();
+    docObservers.delete(doc);
+  }
 
   tryInject(doc);
 
@@ -137,7 +142,7 @@ function observeDoc(doc: Document): void {
     childList: true,
     subtree: true,
   });
-  observers.push(observer);
+  docObservers.set(doc, observer);
 }
 
 // ── Single handler: capture selection + inject buttons ───────────────────────
@@ -182,9 +187,10 @@ export function unregisterTextSelectionPopupButtons(): void {
   );
   listenerRegistered = false;
 
-  observers.forEach((observer) => observer.disconnect());
-  observers.length = 0;
-  observedDocs.clear();
+  for (const observer of docObservers.values()) {
+    observer.disconnect();
+  }
+  docObservers.clear();
 
   Zotero.getMainWindows().forEach((win) => {
     const popupDocs = [

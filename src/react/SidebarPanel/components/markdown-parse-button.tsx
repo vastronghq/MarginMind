@@ -84,7 +84,7 @@ export function MarkdownStatusBadge({
   );
 }
 
-export function MarkdownButton({
+export function MarkdownParseButton({
   status,
   onClick,
   parseProgress,

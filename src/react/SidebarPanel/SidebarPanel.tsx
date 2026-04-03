@@ -45,7 +45,8 @@ import {
 import { ChevronDown } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
 import { Textarea } from "@/components/ui/textarea";
-import { MarkdownButton } from "./components/markdownStatusBadge";
+import { MarkdownParseButton } from "./components/markdown-parse-button";
+import { CollapsibleDetails } from "./components/collapsible-details";
 import { cn } from "@/lib/utils";
 
 type SidebarPanelProps = {
@@ -501,14 +502,57 @@ function MessageContent({ message }: { message: ChatMessage }) {
     return (
       <div data-render-mode="plain" className="whitespace-pre-wrap">
         {contextPart && (
-          <details className="mb-2">
-            <summary className="cursor-pointer select-none text-[11px] text-[color-mix(in_srgb,var(--fill-primary)_42%,transparent)]">
-              [Context]
-            </summary>
-            <div className="mt-1 rounded bg-[color-mix(in_srgb,var(--fill-primary)_8%,transparent)] p-2 text-[12px] text-[color-mix(in_srgb,var(--fill-primary)_52%,transparent)]">
-              {contextPart}
-            </div>
-          </details>
+          <CollapsibleDetails
+            title="[Context]"
+            content={contextPart}
+            defaultOpen={false}
+            components={{
+              a: mdComponents?.a,
+              pre: mdComponents?.pre,
+              code: mdComponents?.code,
+              table: mdComponents?.table,
+              ul: mdComponents?.ul,
+              ol: mdComponents?.ol,
+              li: mdComponents?.li,
+              thead: mdComponents?.thead,
+              th: mdComponents?.th,
+              tr: mdComponents?.tr,
+              td: mdComponents?.td,
+              img: mdComponents?.img,
+            }}
+          />
+          // <details className="mb-2">
+          //   <summary className="cursor-pointer select-none text-[12px] font-medium tracking-wide text-[color-mix(in_srgb,var(--fill-primary)_42%,transparent)] hover:text-[color-mix(in_srgb,var(--fill-primary)_60%,transparent)]">
+          //     [Context]
+          //   </summary>
+          //   <div className="mt-1 border-y-0 border-l-2 border-r-0 border-solid border-[color-mix(in_srgb,var(--fill-primary)_14%,transparent)] pl-3 text-[14px] leading-[24px] text-[color-mix(in_srgb,var(--fill-primary)_52%,transparent)] [&>*:first-child]:mt-0 [&>*:last-child]:mb-0">
+          //     {/* <div className="mt-1 rounded bg-[color-mix(in_srgb,var(--fill-primary)_8%,transparent)] p-2 text-[12px] text-[color-mix(in_srgb,var(--fill-primary)_52%,transparent)]"> */}
+          //     <Markdown
+          //       remarkPlugins={[remarkGfm, remarkMath]}
+          //       rehypePlugins={[rehypeKatex, rehypeHighlight]}
+          //       // 关键修复：放行 zotero 协议，防止被react-markdown过滤
+          //       urlTransform={(uri) =>
+          //         uri.startsWith("zotero://") ? uri : uri
+          //       }
+          //       components={{
+          //         a: mdComponents?.a,
+          //         pre: mdComponents?.pre,
+          //         code: mdComponents?.code,
+          //         table: mdComponents?.table,
+          //         ul: mdComponents?.ul,
+          //         ol: mdComponents?.ol,
+          //         li: mdComponents?.li,
+          //         thead: mdComponents?.thead,
+          //         th: mdComponents?.th,
+          //         tr: mdComponents?.tr,
+          //         td: mdComponents?.td,
+          //         img: mdComponents?.img,
+          //       }}
+          //     >
+          //       {contextPart}
+          //     </Markdown>
+          //   </div>
+          // </details>
         )}
         {userPart && <div>{userPart}</div>}
       </div>
@@ -519,25 +563,16 @@ function MessageContent({ message }: { message: ChatMessage }) {
     <div>
       {message.thinking ? (
         <div data-thinking-section>
-          <details open className="group mb-1.5">
-            <summary className="cursor-pointer select-none text-[12px] font-medium tracking-wide text-[color-mix(in_srgb,var(--fill-primary)_42%,transparent)] hover:text-[color-mix(in_srgb,var(--fill-primary)_60%,transparent)]">
-              {message.thoughtDuration != null
+          <CollapsibleDetails
+            title={
+              message.thoughtDuration != null
                 ? `Thought for ${message.thoughtDuration} second${message.thoughtDuration === 1 ? "" : "s"}`
-                : "Thinking"}
-            </summary>
-            <div className="mt-1 border-y-0 border-l-2 border-r-0 border-solid border-[color-mix(in_srgb,var(--fill-primary)_14%,transparent)] pl-3 text-[14px] leading-[24px] text-[color-mix(in_srgb,var(--fill-primary)_52%,transparent)] [&>*:first-child]:mt-0 [&>*:last-child]:mb-0">
-              <Markdown
-                remarkPlugins={[remarkGfm, remarkMath]}
-                rehypePlugins={[rehypeKatex, rehypeHighlight]}
-                urlTransform={(uri) =>
-                  uri.startsWith("zotero://") ? uri : uri
-                }
-                components={mdComponents}
-              >
-                {message.thinking}
-              </Markdown>
-            </div>
-          </details>
+                : "Thinking"
+            }
+            content={message.thinking}
+            defaultOpen={true}
+            components={mdComponents}
+          />
         </div>
       ) : null}
       {/* <div className="select-text text-[20px] leading-[32px]"> */}
@@ -1259,7 +1294,7 @@ export function SidebarPanel({
         <div className="flex w-full items-center gap-2">
           <div className="flex-none">
             {data?.attachmentItemID ? (
-              <MarkdownButton
+              <MarkdownParseButton
                 status={markdownStatus}
                 onClick={triggerParse}
                 parseProgress={parseProgress}

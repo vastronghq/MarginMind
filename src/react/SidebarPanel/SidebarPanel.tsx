@@ -575,6 +575,7 @@ export function SidebarPanel({
   const presetDropdownRef = useRef<HTMLDivElement | null>(null);
   const abortControllerRef = useRef<AbortController | null>(null);
   const thinkingStartRef = useRef<number | null>(null);
+  const draftRef = useRef("");
 
   const settings = loadAISettings();
   const markdownFontSize = getPref("markdownFontSize") || "text-[18px]";
@@ -597,6 +598,9 @@ export function SidebarPanel({
   );
   const messages = activeSession?.messages ?? [];
   const draft = activeSession?.draft ?? "";
+  useEffect(() => {
+    draftRef.current = draft;
+  }, [draft]);
   const contextSummary = activeContext
     ? `${activeContext.title} · ${activeContext.creators} · ${activeContext.year}`
     : "No active item context";
@@ -961,27 +965,30 @@ export function SidebarPanel({
     [],
   );
 
+  const sendCallbackRef = useRef(send);
+  sendCallbackRef.current = send;
+
   useEffect(() => {
     registerPopupActionCallback((action, selectedText, prompt) => {
       console.log("注册回调");
       if (action === "insert") {
         updateDraft(
-          draft.trim()
-            ? `${draft.trim()}\n\n[Selected text]\n${selectedText}`
+          draftRef.current.trim()
+            ? `${draftRef.current.trim()}\n\n[Selected text]\n${selectedText}`
             : `[Selected text]\n${selectedText}`,
         );
         return;
       }
       if (prompt) {
         const fullPrompt = `${prompt}\n\n${selectedText}`;
-        void send(fullPrompt);
+        void sendCallbackRef.current(fullPrompt);
       }
     });
     return () => {
       console.log("注销回调");
       unregisterPopupActionCallback();
     };
-  }, [draft, send]);
+  }, []);
 
   useEffect(() => {
     if (!isPresetOpen) return;

@@ -81,7 +81,7 @@ function handleAction(action: PopupAction, prompt?: string): void {
   const text = latestSelectionAnnotation?.text?.trim();
   if (!text) return;
   const pageLabel = latestSelectionAnnotation?.pageLabel;
-  const promptSnippet = `>>>Selected Text (from Page ${pageLabel}):\n${text}`;
+  const snippet = `>>>Selected Text (from Page ${pageLabel}):\n${text}`;
 
   const mainWin = Zotero.getMainWindow();
   if (!mainWin) return;
@@ -90,7 +90,7 @@ function handleAction(action: PopupAction, prompt?: string): void {
     | PopupActionCallback
     | undefined;
   if (actionCallback) {
-    actionCallback(action, promptSnippet, prompt);
+    actionCallback(action, snippet, prompt);
   } else {
     ztoolkit.log("[PopupButtons] WARNING: actionCallback not found on mainWin");
   }

@@ -701,7 +701,8 @@ export function SidebarPanel({
   useEffect(() => {
     setMarkdownStatus(initialMarkdownStatus);
     setMarkdownContent(initialMarkdownContent);
-  }, [initialMarkdownStatus, initialMarkdownContent]);
+    setParseProgress("");
+  }, [initialMarkdownStatus, initialMarkdownContent, data?.attachmentItemID]);
   const createNewSession = () => {
     const n = createSession();
     setSessions((curr) => [n, ...curr]);

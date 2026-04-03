@@ -603,21 +603,8 @@ export function SidebarPanel({
   const [totalTokens, setTotalTokens] = useState(0);
 
   useEffect(() => {
-    if (isSending) return;
-    try {
-      const enc = encodingForModel("gpt-5");
-      let tokens = 0;
-      for (const msg of messages) {
-        tokens += enc.encode(msg.text).length;
-      }
-      if (markdownContent) {
-        tokens += enc.encode(markdownContent).length;
-      }
-      setTotalTokens(tokens);
-    } catch {
-      setTotalTokens(0);
-    }
-  }, [isSending, messages, markdownContent]);
+    setTotalTokens(0);
+  }, [sessions, activeSessionID, activeContext]);
 
   useEffect(() => {
     draftRef.current = draft;
@@ -725,6 +712,7 @@ export function SidebarPanel({
     setMarkdownContent(initialMarkdownContent);
     setParseProgress("");
   }, [initialMarkdownStatus, initialMarkdownContent, data?.attachmentItemID]);
+
   const createNewSession = () => {
     const n = createSession();
     setSessions((curr) => [n, ...curr]);
@@ -1265,12 +1253,33 @@ export function SidebarPanel({
             >
               Summarize
             </Button>
+            <Button
+              size="xs"
+              variant="outline"
+              onClick={() => {
+                try {
+                  const enc = encodingForModel("gpt-4o");
+                  let tokens = 0;
+                  for (const msg of messages) {
+                    tokens += enc.encode(msg.text).length;
+                  }
+                  if (markdownContent) {
+                    tokens += enc.encode(markdownContent).length;
+                  }
+                  setTotalTokens(tokens);
+                } catch {
+                  setTotalTokens(0);
+                }
+              }}
+              className={cn("ml-auto", quick_btn_style)}
+
+              // className="ml-auto rounded border-[1px] border-[color-mix(in_srgb,var(--fill-primary)_16%,transparent)] bg-transparent px-1.5 py-0.5 text-[11px] text-[color-mix(in_srgb,var(--fill-primary)_58%,transparent)] hover:bg-[color-mix(in_srgb,var(--fill-primary)_10%,transparent)]"
+            >
+              {totalTokens > 0
+                ? `~${totalTokens.toLocaleString()} tokens`
+                : "tokens"}
+            </Button>
           </div>
-          {totalTokens > 0 && (
-            <div className="ml-auto border-[1px] border-[color-mix(in_srgb,var(--fill-primary)_16%,transparent)] bg-[color-mix(in_srgb,var(--material-sidepane)_86%,var(--fill-primary)_8%)] px-1 py-2 text-[11px] text-[color-mix(in_srgb,var(--fill-primary)_58%,transparent)]">
-              ~ {totalTokens.toLocaleString()} tokens
-            </div>
-          )}
         </div>
 
         {isSelectionMode ? (

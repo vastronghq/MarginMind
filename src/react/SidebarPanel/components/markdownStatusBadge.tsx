@@ -22,7 +22,8 @@ const MARKDOWN_STATUS_CONFIG: Record<string, MarkdownStatusConfig> = {
     label: () => "Full Text",
     colorClass: "bg-green-500",
     icon: FileText,
-    title: () => "PDF parsed to markdown (click to re-parse)",
+    title: () =>
+      "Full text ready. To re-parse, clear the cache (Settings > MarginMind > MinerU Configuration).",
   },
   parsing: {
     label: (progress) => progress || "Parsing...",
@@ -33,16 +34,17 @@ const MARKDOWN_STATUS_CONFIG: Record<string, MarkdownStatusConfig> = {
     isPulsing: true, // 圆点呼吸
   },
   error: {
-    label: () => "Error / Retry",
+    label: () => "Error",
     colorClass: "bg-red-500",
     icon: AlertCircle,
-    title: (progress) => `${progress || "Parse failed"} (click to retry)`,
+    title: (progress) =>
+      `${progress || "Parse failed"} (Something went wrong. Please check and try again.)`,
   },
   default: {
     label: () => "Metadata",
     colorClass: "bg-gray-400",
     icon: FileSearch,
-    title: () => "No cached markdown (click to parse)",
+    title: () => "Only metadata available. Click to parse the full document.",
   },
 };
 

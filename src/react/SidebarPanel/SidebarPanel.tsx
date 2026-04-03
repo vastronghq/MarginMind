@@ -646,6 +646,7 @@ export function SidebarPanel({
     if (hasCache(data.attachmentItemID)) {
       const cached = readCacheSync(data.attachmentItemID);
       if (cached) {
+        console.log("Using cached markdown");
         setMarkdownStatus("cached");
         setMarkdownContent(cached);
         return;

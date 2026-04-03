@@ -962,7 +962,8 @@ export function SidebarPanel({
   );
 
   useEffect(() => {
-    registerPopupActionCallback((action, selectedText) => {
+    registerPopupActionCallback((action, selectedText, prompt) => {
+      console.log("注册回调");
       if (action === "insert") {
         updateDraft(
           draft.trim()
@@ -971,16 +972,15 @@ export function SidebarPanel({
         );
         return;
       }
-      const promptMap: Record<string, string> = {
-        explain: PROMPTS.explainSelection,
-        critique: PROMPTS.critiqueSelection,
-        bulletize: PROMPTS.bulletizeSelection,
-        translate: PROMPTS.translateSelection,
-      };
-      const prompt = promptMap[action];
-      if (prompt) void send(prompt);
+      if (prompt) {
+        const fullPrompt = `${prompt}\n\n${selectedText}`;
+        void send(fullPrompt);
+      }
     });
-    return () => unregisterPopupActionCallback();
+    return () => {
+      console.log("注销回调");
+      unregisterPopupActionCallback();
+    };
   }, [draft, send]);
 
   useEffect(() => {

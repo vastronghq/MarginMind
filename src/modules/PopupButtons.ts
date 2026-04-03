@@ -34,15 +34,24 @@ type PopupAction =
   | "translate"
   | "insert";
 
-type PopupActionCallback = (action: PopupAction, selectedText: string) => void;
-let actionCallback: PopupActionCallback | null = null;
+type PopupActionCallback = (
+  action: PopupAction,
+  selectedText: string,
+  prompt?: string,
+) => void;
 
 export function registerPopupActionCallback(cb: PopupActionCallback): void {
-  actionCallback = cb;
+  const mainWin = Zotero.getMainWindow();
+  if (mainWin) {
+    (mainWin as any)["margin-mind_popupActionCallback"] = cb;
+  }
 }
 
 export function unregisterPopupActionCallback(): void {
-  actionCallback = null;
+  const mainWin = Zotero.getMainWindow();
+  if (mainWin) {
+    (mainWin as any)["margin-mind_popupActionCallback"] = undefined;
+  }
 }
 
 // ── Button creation ──────────────────────────────────────────────────────────
@@ -71,13 +80,18 @@ function createSingleButton(
 
 function handleAction(action: PopupAction, prompt?: string): void {
   const text = latestSelectionText;
-
   if (!text) return;
-  ztoolkit.log(`text: ${text}, prompt: ${prompt}`);
-  ztoolkit.log(`action: ${actionCallback}`);
 
+  const mainWin = Zotero.getMainWindow();
+  if (!mainWin) return;
+
+  const actionCallback = (mainWin as any)["margin-mind_popupActionCallback"] as
+    | PopupActionCallback
+    | undefined;
   if (actionCallback) {
-    actionCallback(action, text);
+    actionCallback(action, text, prompt);
+  } else {
+    ztoolkit.log("[PopupButtons] WARNING: actionCallback not found on mainWin");
   }
 }
 

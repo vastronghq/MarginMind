@@ -42,9 +42,9 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { ChevronDown } from "lucide-react";
-
 import { Separator } from "@/components/ui/separator";
 import { Textarea } from "@/components/ui/textarea";
+import { MarkdownButton } from "./components/markdownStatusBadge";
 import { cn } from "@/lib/utils";
 
 type SidebarPanelProps = {
@@ -1264,6 +1264,14 @@ export function SidebarPanel({
             Summarize
           </Button>
         </div>
+
+        {data?.attachmentItemID ? (
+          <MarkdownButton
+            status={markdownStatus}
+            onClick={triggerParse}
+            parseProgress={parseProgress}
+          />
+        ) : null}
 
         {isSelectionMode ? (
           // <Card className="border-[color-mix(in_srgb,var(--fill-primary)_16%,transparent)] bg-[color-mix(in_srgb,var(--material-sidepane)_86%,var(--fill-primary)_8%)] px-2.5 py-1.5">

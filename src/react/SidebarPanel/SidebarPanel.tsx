@@ -1263,7 +1263,7 @@ export function SidebarPanel({
           </div>
           {totalTokens > 0 && (
             <div className="ml-auto border-[1px] border-[color-mix(in_srgb,var(--fill-primary)_16%,transparent)] bg-[color-mix(in_srgb,var(--material-sidepane)_86%,var(--fill-primary)_8%)] px-1 py-2 text-[11px] text-[color-mix(in_srgb,var(--fill-primary)_58%,transparent)]">
-              {totalTokens.toLocaleString()} tokens
+              ~ {totalTokens.toLocaleString()} tokens
             </div>
           )}
         </div>

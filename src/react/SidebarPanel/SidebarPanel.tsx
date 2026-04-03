@@ -180,13 +180,13 @@ const createSession = (partial?: Partial<ChatSession>): ChatSession => ({
 });
 const toTime = (ts: number) => {
   const d = new Date(ts);
-  const YYYY = d.getFullYear();
-  const MM = String(d.getMonth() + 1).padStart(2, "0"); // 月份�?开始，需�?1
+  // const YYYY = d.getFullYear();
+  const MM = String(d.getMonth() + 1).padStart(2, "0");
   const DD = String(d.getDate()).padStart(2, "0");
   const HH = String(d.getHours()).padStart(2, "0");
   const mm = String(d.getMinutes()).padStart(2, "0");
 
-  return `${YYYY}-${MM}-${DD} ${HH}:${mm}`;
+  return `${MM}-${DD} ${HH}:${mm}`;
 };
 const trimTitle = (text: string, max = 42) => {
   const s = text.replace(/\s+/g, " ").trim();
@@ -1107,7 +1107,7 @@ export function SidebarPanel({
 
         {isHistoryOpen ? (
           <Card className="border-[color-mix(in_srgb,var(--fill-primary)_16%,transparent)] bg-[color-mix(in_srgb,var(--material-sidepane)_86%,var(--fill-primary)_8%)] p-1.5">
-            <CardContent className="max-h-[240px] space-y-1.5 overflow-y-auto p-0 pr-1">
+            <CardContent className="max-h-[240px] space-y-2 overflow-y-auto p-0 pr-1">
               {sessions
                 .slice()
                 .sort((a, b) => b.updatedAt - a.updatedAt)
@@ -1125,18 +1125,23 @@ export function SidebarPanel({
                         clearSelectionMode();
                       }}
                       className={cn(
-                        "w-full rounded-lg border p-2 text-left transition",
+                        "flex w-full items-center rounded-lg border p-2 transition",
                         active
                           ? "border-[color-mix(in_srgb,var(--accent-blue)_50%,transparent)] bg-[color-mix(in_srgb,var(--accent-blue)_20%,transparent)]"
                           : "border-[color-mix(in_srgb,var(--fill-primary)_16%,transparent)] bg-[color-mix(in_srgb,var(--material-sidepane)_82%,var(--fill-primary)_8%)] hover:bg-[color-mix(in_srgb,var(--material-sidepane)_78%,var(--fill-primary)_12%)]",
                       )}
                     >
-                      <div className="line-clamp-1 pr-1 text-[13px] font-medium text-[var(--fill-primary)]">
+                      <div className="line-clamp-1 flex-1 text-left text-[13px] font-medium text-[var(--fill-primary)]">
                         {session.title}
                       </div>
-                      <div className="mt-3 flex justify-between text-[12px] text-[color-mix(in_srgb,var(--fill-primary)_56%,transparent)]">
-                        <span>{toTime(session.updatedAt)}</span>
-                        <span>{session.messages.length} messages</span>
+                      <div className="text-[12px] text-[color-mix(in_srgb,var(--fill-primary)_56%,transparent)]">
+                        <span>
+                          {toTime(session.updatedAt)} •{" "}
+                          {session.messages.length}
+                          {/* {session.messages.length}{" "}
+                          {session.messages.length > 1 ? "messages" : "message"} */}
+                          {/* {session.messages.length} message(s) */}
+                        </span>
                       </div>
                     </button>
                   );

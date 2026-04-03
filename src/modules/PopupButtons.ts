@@ -60,13 +60,21 @@ function createSingleButton(
   btn.innerHTML = label;
   btn.className = "highlight";
   btn.style.cursor = "pointer";
-  btn.addEventListener("click", () => handleAction(action, prompt), true);
+  btn.onclick = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    (e as any).cancelBubble = true;
+    handleAction(action, prompt);
+  };
   return btn;
 }
 
 function handleAction(action: PopupAction, prompt?: string): void {
   const text = latestSelectionText;
+
   if (!text) return;
+  ztoolkit.log(`text: ${text}, prompt: ${prompt}`);
+  ztoolkit.log(`action: ${actionCallback}`);
 
   if (actionCallback) {
     actionCallback(action, text);

@@ -1134,47 +1134,6 @@ export function SidebarPanel({
           </span>
           {/* <span className="min-w-0 truncate">{contextSummary}</span> */}
           <span className="line-clamp-1 min-w-0 flex-1">{contextSummary}</span>
-
-          {/* Markdown cache status indicator */}
-          {data?.attachmentItemID ? (
-            <button
-              type="button"
-              onClick={triggerParse}
-              disabled={markdownStatus === "parsing"}
-              title={
-                markdownStatus === "cached"
-                  ? "PDF parsed to markdown (click to re-parse)"
-                  : markdownStatus === "parsing"
-                    ? parseProgress || "Parsing..."
-                    : markdownStatus === "error"
-                      ? `${parseProgress || "Parse failed"} (click to retry)`
-                      : "No cached markdown (click to parse)"
-              }
-              className="flex shrink-0 items-center gap-1 rounded px-1.5 py-0.5 text-[11px] transition hover:bg-[color-mix(in_srgb,var(--fill-primary)_10%,transparent)]"
-            >
-              <div
-                className={cn(
-                  "h-2 w-2 rounded-full",
-                  markdownStatus === "cached"
-                    ? "bg-green-500"
-                    : markdownStatus === "parsing"
-                      ? "animate-pulse bg-yellow-500"
-                      : markdownStatus === "error"
-                        ? "bg-red-500"
-                        : "bg-gray-400",
-                )}
-              />
-              <span>
-                {markdownStatus === "cached"
-                  ? "MD"
-                  : markdownStatus === "parsing"
-                    ? "..."
-                    : markdownStatus === "error"
-                      ? "!"
-                      : "MD?"}
-              </span>
-            </button>
-          ) : null}
         </div>
       </section>
 
@@ -1256,25 +1215,33 @@ export function SidebarPanel({
       </section>
 
       <section className="space-y-2 border-t border-[color-mix(in_srgb,var(--fill-primary)_16%,transparent)] p-2.5">
-        <div className="flex flex-wrap gap-1.5">
-          <Button
-            size="xs"
-            variant="outline"
-            onClick={() => send(PROMPTS.summarizeFullText)}
-            disabled={isSending || isSelectionMode}
-            className={quick_btn_style}
-          >
-            Summarize
-          </Button>
-        </div>
+        <div className="flex w-full items-center gap-2">
+          <div className="flex-none">
+            {data?.attachmentItemID ? (
+              <MarkdownButton
+                status={markdownStatus}
+                onClick={triggerParse}
+                parseProgress={parseProgress}
+              />
+            ) : null}
+          </div>
 
-        {data?.attachmentItemID ? (
-          <MarkdownButton
-            status={markdownStatus}
-            onClick={triggerParse}
-            parseProgress={parseProgress}
-          />
-        ) : null}
+          <div className="flex flex-1 flex-wrap items-center gap-1 rounded-md border-[1px] border-dashed border-[var(--accent-blue)] px-2 py-0.5">
+            <span className="whitespace-nowrap text-[11px] font-medium uppercase tracking-wider">
+              Quick Action:
+            </span>
+            <Button
+              size="xs"
+              variant="outline"
+              onClick={() => send(PROMPTS.summarizeFullText)}
+              disabled={isSending || isSelectionMode}
+              // 移除可能冲突的样式，由父级控制
+              className={quick_btn_style}
+            >
+              Summarize
+            </Button>
+          </div>
+        </div>
 
         {isSelectionMode ? (
           // <Card className="border-[color-mix(in_srgb,var(--fill-primary)_16%,transparent)] bg-[color-mix(in_srgb,var(--material-sidepane)_86%,var(--fill-primary)_8%)] px-2.5 py-1.5">

@@ -21,7 +21,6 @@ const PROMPTS = {
 
 // ── Selection capture (single source of truth) ───────────────────────────────
 
-export let latestSelectionText = "";
 export let latestSelectionAnnotation: _ZoteroTypes.Annotations.AnnotationJson | null =
   null;
 
@@ -79,8 +78,10 @@ function createSingleButton(
 }
 
 function handleAction(action: PopupAction, prompt?: string): void {
-  const text = latestSelectionText;
+  const text = latestSelectionAnnotation?.text?.trim();
   if (!text) return;
+  const pageLabel = latestSelectionAnnotation?.pageLabel;
+  const promptSnippet = `>>>Selected Text (from Page ${pageLabel}):\n${text}`;
 
   const mainWin = Zotero.getMainWindow();
   if (!mainWin) return;
@@ -89,7 +90,7 @@ function handleAction(action: PopupAction, prompt?: string): void {
     | PopupActionCallback
     | undefined;
   if (actionCallback) {
-    actionCallback(action, text, prompt);
+    actionCallback(action, promptSnippet, prompt);
   } else {
     ztoolkit.log("[PopupButtons] WARNING: actionCallback not found on mainWin");
   }
@@ -195,10 +196,7 @@ const PopupHandler: _ZoteroTypes.Reader.EventHandler<
 > = (event) => {
   // Capture selection text
   const annotation = event.params.annotation;
-  const text = annotation.text?.trim();
-  if (text) {
-    const page = annotation.position.pageIndex + 1;
-    latestSelectionText = `${text} (page ${page})`;
+  if (annotation) {
     latestSelectionAnnotation = annotation;
   }
 

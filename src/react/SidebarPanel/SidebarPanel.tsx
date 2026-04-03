@@ -977,8 +977,8 @@ export function SidebarPanel({
       if (action === "insert") {
         updateDraft(
           draftRef.current.trim()
-            ? `${draftRef.current.trim()}\n\n[Selected text]\n${selectedText}`
-            : `[Selected text]\n${selectedText}`,
+            ? `${draftRef.current.trim()}\n\n${selectedText}`
+            : selectedText,
         );
         return;
       }

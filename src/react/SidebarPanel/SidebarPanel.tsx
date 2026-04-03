@@ -504,7 +504,14 @@ function truncateMiddle(
   const tail = text.slice(-tailLength);
   const omittedCount = text.length - head.length - tail.length;
 
-  return `${head}\n\n... *✂️ [${omittedCount.toLocaleString()} characters omitted] ✂️* ...\n\n${tail}`;
+  const result = `${head}
+
+> *✂️ [${omittedCount.toLocaleString()} characters omitted from preview] ✂️*
+> *🤖 Full text has been passed to AI 🤖*
+
+${tail}`;
+
+  return result;
 }
 
 function MessageContent({ message }: { message: ChatMessage }) {
@@ -589,7 +596,7 @@ function MessageContent({ message }: { message: ChatMessage }) {
         ) : null}
         {/* <div className="select-text text-[20px] leading-[32px]"> */}
         {/* 解决markdown首末边距过大的问题 */}
-        <div className="[&>*:first-child]:mt-0 [&>*:last-child]:mb-0">
+        <div className="[&>*:first-child]:mt-4 [&>*:last-child]:mb-4">
           <Markdown
             remarkPlugins={[remarkGfm, remarkMath]}
             rehypePlugins={[rehypeKatex, rehypeHighlight]}

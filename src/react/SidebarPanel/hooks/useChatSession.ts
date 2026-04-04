@@ -219,7 +219,7 @@ export const useChatSession = (
       const sessionID = activeSession.id;
       patchSession(sessionID, (s) => ({
         ...s,
-        title: s.title === EMPTY_TITLE ? trimTitle(norm.text) : s.title,
+        title: s.title === EMPTY_TITLE ? trimTitle(prompt) : s.title,
         messages: norm.messages,
         draft: "",
       }));
@@ -361,7 +361,6 @@ export const useChatSession = (
     () => writePersisted({ sessions, activeSessionID, activeContext }),
     [sessions, activeSessionID, activeContext],
   );
-
 
   return {
     sessions,

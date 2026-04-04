@@ -27,9 +27,9 @@ export const createSession = (partial?: Partial<ChatSession>): ChatSession => ({
   draft: partial?.draft ?? "",
 });
 
-export const trimTitle = (text: string, max = 42) => {
+export const trimTitle = (text: string) => {
   const s = text.replace(/\s+/g, " ").trim();
-  return !s ? EMPTY_TITLE : s.length > max ? `${s.slice(0, max)}...` : s;
+  return !s ? EMPTY_TITLE : s;
 };
 
 export const truncateMiddle = (

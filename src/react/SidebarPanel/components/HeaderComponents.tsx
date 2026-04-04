@@ -1,9 +1,10 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { ChevronDown } from "lucide-react";
+import { ChevronDown, History, Plus } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { ChatSession } from "../hooks/useChatSession";
-import { toTime, trimTitle, EMPTY_TITLE } from "../utils";
+import { toTime } from "../utils";
+import type { SidebarPanelData } from "../bridge";
 
 interface HistoryPanelProps {
   sessions: ChatSession[];
@@ -64,36 +65,49 @@ export function HistoryPanel({
 }
 
 interface HeaderBarProps {
-  isHistoryOpen: boolean;
+  // isHistoryOpen: boolean;
   onToggleHistory: () => void;
   onNewChat: () => void;
   isSending: boolean;
+  activeContext: SidebarPanelData | null;
 }
 
 export function HeaderBar({
-  isHistoryOpen,
+  // isHistoryOpen,
   onToggleHistory,
   onNewChat,
   isSending,
+  activeContext,
 }: HeaderBarProps) {
   return (
-    <div className="flex items-center justify-between gap-1.5">
+    <div className="flex items-center gap-1.5">
+      {activeContext ? (
+        <ContextBadge
+          title={activeContext.title}
+          creators={activeContext.creators}
+          year={activeContext.year}
+          keyText={activeContext.keyText}
+        />
+      ) : null}
       <Button
-        size="xs"
-        variant="outline"
-        onClick={onToggleHistory}
-        className="border-[1px] border-[color-mix(in_srgb,var(--fill-primary)_16%,transparent)] bg-[color-mix(in_srgb,var(--material-sidepane)_88%,var(--fill-primary)_8%)] px-2 text-[12px] text-[color-mix(in_srgb,var(--fill-primary)_78%,transparent)]"
-      >
-        {isHistoryOpen ? "Hide history" : "Show history"}
-      </Button>
-      <Button
-        size="xs"
+        size="sm"
         variant="outline"
         onClick={onNewChat}
         disabled={isSending}
+        title="New Chat"
         className="border-[1px] border-[color-mix(in_srgb,var(--fill-primary)_16%,transparent)] bg-[color-mix(in_srgb,var(--material-sidepane)_88%,var(--fill-primary)_8%)] px-2 text-[12px] text-[color-mix(in_srgb,var(--fill-primary)_78%,transparent)]"
       >
-        New chat
+        <Plus />
+      </Button>
+
+      <Button
+        size="sm"
+        variant="outline"
+        onClick={onToggleHistory}
+        title="History"
+        className="border-[1px] border-[color-mix(in_srgb,var(--fill-primary)_16%,transparent)] bg-[color-mix(in_srgb,var(--material-sidepane)_88%,var(--fill-primary)_8%)] px-2 text-[12px] text-[color-mix(in_srgb,var(--fill-primary)_78%,transparent)]"
+      >
+        <History />
       </Button>
     </div>
   );
@@ -106,12 +120,7 @@ interface ContextBadgeProps {
   keyText?: string;
 }
 
-export function ContextBadge({
-  title,
-  creators,
-  year,
-  keyText,
-}: ContextBadgeProps) {
+function ContextBadge({ title, creators, year, keyText }: ContextBadgeProps) {
   const tooltip = `${title} / ${creators} / ${year} / ${keyText}`;
   const summary = `${title} · ${creators} · ${year}`;
 

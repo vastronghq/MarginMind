@@ -6,6 +6,13 @@ import {
 } from "../../../modules/aiService";
 import { loadAISettings } from "../../../modules/aiPrefs";
 import type { SidebarPanelData } from "../../bridge";
+import {
+  uid,
+  EMPTY_TITLE,
+  createSession,
+  trimTitle,
+  isAbortError,
+} from "../utils";
 
 export type ChatRole = "assistant" | "user";
 export type ChatMessage = {
@@ -24,30 +31,6 @@ export type ChatSession = {
   updatedAt: number;
   messages: ChatMessage[];
   draft: string;
-};
-
-const uid = (p: string) => `${p}-${Date.now()}`;
-const EMPTY_TITLE = "New chat";
-
-const isAbortError = (error: unknown) =>
-  error instanceof DOMException
-    ? error.name === "AbortError"
-    : error instanceof Error
-      ? error.name === "AbortError" ||
-        /aborted|cancelled|canceled/i.test(error.message)
-      : false;
-
-const createSession = (partial?: Partial<ChatSession>): ChatSession => ({
-  id: partial?.id ?? uid("session"),
-  title: partial?.title ?? EMPTY_TITLE,
-  updatedAt: partial?.updatedAt ?? Date.now(),
-  messages: partial?.messages ?? [],
-  draft: partial?.draft ?? "",
-});
-
-const trimTitle = (text: string, max = 42) => {
-  const s = text.replace(/\s+/g, " ").trim();
-  return !s ? EMPTY_TITLE : s.length > max ? `${s.slice(0, max)}...` : s;
 };
 
 type MarginMindChatWindow = Window & {
@@ -143,8 +126,6 @@ export const useChatSession = (
 
   const abortControllerRef = useRef<AbortController | null>(null);
   const thinkingStartRef = useRef<number | null>(null);
-  const draftRef = useRef("");
-  const sendRef = useRef<((prompt: string) => Promise<void>) | null>(null);
 
   const settings = loadAISettings();
   const activeSession = useMemo(
@@ -172,7 +153,7 @@ export const useChatSession = (
 
   const showError = useCallback((text: string, ms = 5000) => {
     setRequestError(text);
-    const timer = setTimeout(() => setRequestError(""), ms);
+    setTimeout(() => setRequestError(""), ms);
   }, []);
 
   const updateDraft = useCallback(
@@ -358,13 +339,8 @@ export const useChatSession = (
       settings,
       patchSession,
       showError,
-      markdownContent,
     ],
   );
-
-  useEffect(() => {
-    sendRef.current = send;
-  }, [send]);
 
   useEffect(() => {
     if (!sessions.length) {
@@ -386,9 +362,6 @@ export const useChatSession = (
     [sessions, activeSessionID, activeContext],
   );
 
-  useEffect(() => {
-    draftRef.current = draft;
-  }, [draft]);
 
   return {
     sessions,

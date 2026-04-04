@@ -4,7 +4,7 @@ import { memo } from "react";
 import type { ChatMessage } from "../hooks/useChatSession";
 import { ROLE_LABEL } from "../utils";
 import { renderMarkdown, mdComponents } from "../markdown";
-import { CollapsibleDetails } from "./collapsible-details";
+import { CollapsibleDetails } from "./CollapsibleDetails";
 import { truncateMiddle } from "../utils";
 
 interface MessageBubbleProps {

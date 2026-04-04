@@ -4,7 +4,9 @@ import remarkMath from "remark-math";
 import rehypeHighlight from "rehype-highlight";
 import rehypeKatex from "rehype-katex";
 import { cn } from "@/lib/utils";
-import type { ChatMessage } from "./hooks/useChatSession";
+
+export const MARKDOWN_REMARK_PLUGINS = [remarkGfm, remarkMath];
+export const MARKDOWN_REHYPE_PLUGINS = [rehypeKatex, rehypeHighlight];
 
 export const mdComponents: React.ComponentProps<typeof Markdown>["components"] =
   {
@@ -203,8 +205,8 @@ const handleInternalJump = async (href: string) => {
 
 export const renderMarkdown = (content: string) => (
   <Markdown
-    remarkPlugins={[remarkGfm, remarkMath]}
-    rehypePlugins={[rehypeKatex, rehypeHighlight]}
+    remarkPlugins={MARKDOWN_REMARK_PLUGINS}
+    rehypePlugins={MARKDOWN_REHYPE_PLUGINS}
     urlTransform={(uri) => (uri.startsWith("zotero://") ? uri : uri)}
     components={mdComponents}
   >

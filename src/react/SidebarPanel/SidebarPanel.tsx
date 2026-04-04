@@ -1,6 +1,5 @@
 import { useEffect, useRef, useState, useCallback, useMemo } from "react";
 import { Card, CardTitle, CardDescription } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
 import { getPref } from "../../utils/prefs";
 import {
   registerPopupActionCallback,
@@ -11,12 +10,10 @@ import type { SidebarPanelData } from "../bridge";
 import { useChatSession } from "./hooks/useChatSession";
 import { useMinerU } from "./hooks/useMinerU";
 import { useMessageSelection } from "./hooks/useMessageSelection";
-// import { useZoteroReader } from "./hooks/useZoteroReader";
 import { MessageBubble } from "./components/MessageBubble";
 import {
   HistoryPanel,
   HeaderBar,
-  ContextBadge,
   ScrollToBottomButton,
   SendingIndicator,
 } from "./components/HeaderComponents";
@@ -45,16 +42,6 @@ export function SidebarPanel({
   const [isHistoryOpen, setIsHistoryOpen] = useState(false);
   const [isSavingAnnotation, setIsSavingAnnotation] = useState(false);
   const [totalTokens, setTotalTokens] = useState(0);
-  // const [latestAnnotation, setLatestAnnotation] = useState(
-  //   latestSelectionAnnotation,
-  // );
-
-  // useEffect(() => {
-  //   const interval = setInterval(() => {
-  //     setLatestAnnotation(latestSelectionAnnotation);
-  //   }, 500);
-  //   return () => clearInterval(interval);
-  // }, []);
 
   const { markdownStatus, markdownContent, parseProgress, triggerParse } =
     useMinerU(
@@ -89,8 +76,6 @@ export function SidebarPanel({
     clearSelectionMode,
   } = useMessageSelection();
 
-  // const { handleInternalJump, openExternalUrl } = useZoteroReader();
-
   const markdownFontSize =
     (getPref("markdownFontSize") as string) || "text-[18px]";
   const annotationColor = getPref("annotationColor");
@@ -105,7 +90,6 @@ export function SidebarPanel({
 
   useEffect(() => {
     registerPopupActionCallback((action, selectedText, prompt) => {
-      console.log("注册回调");
       if (action === "insert") {
         updateDraft(
           draftRef.current.trim()
@@ -114,15 +98,11 @@ export function SidebarPanel({
         );
         return;
       }
-      if (prompt) {
-        const fullPrompt = `${prompt}\n\n${selectedText}`;
-        void sendRef.current?.(fullPrompt);
-      }
+      if (!prompt) return;
+      const fullPrompt = `${prompt}\n\n${selectedText}`;
+      void sendRef.current?.(fullPrompt);
     });
-    return () => {
-      console.log("注销回调");
-      unregisterPopupActionCallback();
-    };
+    return () => unregisterPopupActionCallback();
   }, [updateDraft]);
 
   useEffect(() => {
@@ -208,6 +188,7 @@ export function SidebarPanel({
     annotationColor,
     clearSelectionMode,
     showError,
+    data,
   ]);
 
   const handleDeleteMessages = useCallback(() => {
@@ -243,31 +224,26 @@ export function SidebarPanel({
     <aside className="flex h-full min-h-0 w-full flex-col bg-[var(--material-sidepane)] text-[var(--fill-primary)]">
       <section className="space-y-2 p-2.5">
         <HeaderBar
-          isHistoryOpen={isHistoryOpen}
+          // isHistoryOpen={isHistoryOpen}
           onToggleHistory={() => setIsHistoryOpen((v) => !v)}
-          onNewChat={createNewSession}
+          onNewChat={() => {
+            createNewSession();
+            setIsHistoryOpen(false);
+          }}
           isSending={isSending}
+          activeContext={activeContext}
         />
 
         {isHistoryOpen ? (
           <HistoryPanel
             sessions={sessions}
-            activeSessionID={sessions[0]?.id}
+            activeSessionID={activeSession?.id ?? sessions[0]?.id}
             onSelectSession={handleSelectSession}
             onClose={() => setIsHistoryOpen(false)}
             onClearSelection={clearSelectionMode}
             isSending={isSending}
           />
         ) : null}
-
-        {activeContext && (
-          <ContextBadge
-            title={activeContext.title}
-            creators={activeContext.creators}
-            year={activeContext.year}
-            keyText={activeContext.keyText}
-          />
-        )}
       </section>
 
       <section

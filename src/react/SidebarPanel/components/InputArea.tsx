@@ -9,7 +9,7 @@ import {
   loadAISettings,
 } from "../../../modules/aiPrefs";
 import { PROMPTS } from "../utils";
-import { MarkdownParseButton } from "./markdown-parse-button";
+import { MarkdownParseButton } from "./MarkdownParseButton";
 import { useState, useRef, useEffect, useMemo } from "react";
 import { encodingForModel } from "js-tiktoken";
 

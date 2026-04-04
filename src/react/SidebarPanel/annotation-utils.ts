@@ -1,5 +1,3 @@
-import { getPref } from "../../utils/prefs";
-
 export async function saveSelectionAsAnnotation(
   selectedIDs: string[],
   messages: { id: string; role: string; text: string }[],

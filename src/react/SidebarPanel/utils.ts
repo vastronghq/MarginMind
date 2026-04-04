@@ -1,4 +1,4 @@
-import type { ChatSession, ChatMessage } from "./hooks/useChatSession";
+import type { ChatSession } from "./hooks/useChatSession";
 
 export const uid = (p: string) => `${p}-${Date.now()}`;
 

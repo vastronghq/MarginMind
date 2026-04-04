@@ -12,6 +12,7 @@ import { PROMPTS } from "../utils";
 import { MarkdownParseButton } from "./MarkdownParseButton";
 import { useState, useRef, useEffect, useMemo } from "react";
 import { encodingForModel } from "js-tiktoken";
+import type { ChatMessage } from "../hooks/useChatSession";
 
 interface InputAreaProps {
   draft: string;
@@ -107,20 +108,37 @@ export function InputArea({
 
   const handleTokenCount = () => {
     try {
+      // 建议使用 gpt-4o 或 cl100k_base 编码器，因为它们是目前最通用的
       const enc = encodingForModel("gpt-4o");
-      let tokens = 0;
+      let totalBillableTokens = 0; // 累计总花费（钱）
+      let currentContextTokens = 0; // 当前上下文长度（空间）
 
-      for (const msg of messages) {
-        tokens += enc.encode(msg.text).length;
+      // 假设每一轮对话的消息都存在 messages 数组里
+      // 我们需要模拟每一轮发送请求时的状态
+      for (let i = 0; i < messages.length; i++) {
+        const msg = messages[i] as ChatMessage;
+        const msgTokens = enc.encode(msg.text || "").length + 4; // +4 是消息结构开销
+
+        // 1. 更新当前上下文的总量
+        currentContextTokens += msgTokens;
+
+        // 2. 关键：只有当这一条消息是“用户发送”的时候，才代表产生了一次 API 调用
+        // 每一轮 API 调用的花费 = 当时发送给 AI 的所有上下文 + AI 随后返回的内容
+        if (msg.role === "assistant" || i === messages.length - 1) {
+          // 实际上，每一轮的总花费就是当前所有消息的总和
+          // 我们在每一轮结束（AI 回答完）时，累加这一次调用的总 Token
+          if (msg.role === "assistant") {
+            totalBillableTokens += currentContextTokens;
+          }
+        }
       }
 
-      const isFirstRound = messages.length === 0;
-      if (isFirstRound && markdownContent) {
-        tokens += enc.encode(markdownContent).length;
-      }
-
-      onTokenCount(tokens);
-    } catch {
+      // 如果你想显示的是“当前这一轮发送会消耗多少”
+      // 则直接使用 currentContextTokens
+      // 如果你想显示的是“这个会话总共花了多少”，则使用 totalBillableTokens
+      onTokenCount(totalBillableTokens);
+    } catch (e) {
+      console.error("Token calculation failed:", e);
       onTokenCount(0);
     }
   };

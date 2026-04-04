@@ -80,6 +80,12 @@ export function InputArea({
     [presets, settings],
   );
 
+  const formatTokens = (n: number) => {
+    if (n < 1_000) return `${n}`;
+    if (n < 1_000_000) return `${(n / 1_000).toFixed(1).replace(/\.0$/, "")}K`;
+    return `${(n / 1_000_000).toFixed(1).replace(/\.0$/, "")}M`;
+  };
+
   useEffect(() => {
     if (!isPresetOpen) return;
     const onDown = (e: MouseEvent) => {
@@ -171,11 +177,10 @@ export function InputArea({
             size="xs"
             variant="outline"
             onClick={handleTokenCount}
+            title="Estimated token usage based on local calculation"
             className="ml-auto rounded-full border-[1px] border-[color-mix(in_srgb,var(--fill-primary)_16%,transparent)] bg-[color-mix(in_srgb,var(--material-sidepane)_88%,var(--fill-primary)_8%)] px-2 text-[12px] text-[color-mix(in_srgb,var(--fill-primary)_78%,transparent)]"
           >
-            {totalTokens > 0
-              ? `~${totalTokens.toLocaleString()} tokens`
-              : "0 tokens"}
+            {totalTokens > 0 ? `~${formatTokens(totalTokens)}` : "Tokens"}
           </Button>
         </div>
       </div>

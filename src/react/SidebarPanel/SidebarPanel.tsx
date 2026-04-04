@@ -88,6 +88,10 @@ export function SidebarPanel({
   }, [send]);
 
   useEffect(() => {
+    setTotalTokens(0);
+  }, [activeSession?.id]);
+
+  useEffect(() => {
     registerPopupActionCallback((action, selectedText, prompt) => {
       if (action === "insert") {
         updateDraft(

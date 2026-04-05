@@ -1,5 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 import { ChevronDown, Sparkles } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
 import { cn } from "@/lib/utils";
@@ -51,6 +52,7 @@ export function InputArea({
   parseProgress,
   onParse,
   messages,
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   markdownContent,
   totalTokens,
   onTokenCount,

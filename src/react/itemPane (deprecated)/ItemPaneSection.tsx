@@ -15,10 +15,12 @@ import { getPref } from "../../utils/prefs";
 import { loadAISettings } from "../../modules/aiPrefs";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+
 import {
   Card,
   CardContent,
   CardDescription,
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
@@ -81,6 +83,7 @@ const ROLE_BUBBLE: Record<ChatRole, string> = {
     "w-full border-[color-mix(in_srgb,var(--fill-primary)_16%,transparent)] border-solid bg-[color-mix(in_srgb,var(--material-sidepane)_84%,var(--fill-primary)_8%)] text-[var(--fill-primary)] text-[20px] leading-[32px]",
   user: "max-w-[80%] border-[color-mix(in_srgb,var(--accent-blue)_45%,transparent)] border-solid bg-[color-mix(in_srgb,var(--accent-blue)_20%,transparent)] text-[var(--fill-primary)] text-[20px] leading-[32px]",
 };
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 const PROMPTS_EN = {
   summarizeFullText:
     "Summarize the core problem this paper addresses, its main methodology and thesis, and the key findings. Emphasize the unique contribution to the field and specify the research gap the authors aim to fill.",

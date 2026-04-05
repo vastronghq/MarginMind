@@ -5,8 +5,8 @@ import { defineConfig } from "zotero-plugin-scaffold";
 import pkg from "./package.json";
 
 const tailwindCli = "./node_modules/tailwindcss/lib/cli.js";
-const tailwindInput = "src/react/styles/ui.css";
 const tailwindConfig = "tailwind.config.cjs";
+const tailwindInput = "src/react/styles/ui.css";
 
 function buildTailwind(output: string) {
   mkdirSync(dirname(output), { recursive: true });

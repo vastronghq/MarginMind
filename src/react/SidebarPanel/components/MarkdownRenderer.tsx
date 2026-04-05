@@ -180,7 +180,7 @@ const handleInternalJump = async (href: string) => {
     const regionArr: Array<number[]> = JSON.parse(
       decodeURIComponent(regionStr as string) ?? "[]",
     );
-
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const annotationKey = url.searchParams.get("annotation");
 
     const item: any = Zotero.Items.getByLibraryAndKey(

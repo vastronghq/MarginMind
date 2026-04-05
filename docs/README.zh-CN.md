@@ -18,7 +18,6 @@ Zotero 插件，在侧边栏与 AI 讨论文献。选中文本即可调用解释
 
 ![save_chat_to_selected_text](./assets/save_chat_to_selected_text.gif)
 
-
 ## 能做什么
 
 - **侧边栏对话** — 点击工具栏图标打开面板，自动载入当前文献的标题、作者、摘要和 PDF 全文作为上下文

@@ -1,24 +1,24 @@
 {
   "name": "margin-mind",
   "type": "module",
-  "version": "0.18.0",
+  "version": "0.29.0",
   "description": "AI chat in Zotero sidebar. Discuss papers, generate summaries, and brainstorm ideas without leaving your research workflow.",
   "config": {
     "addonName": "MarginMind",
-    "addonID": "marginmind@github.vastrong.com",
+    "addonID": "marginmind@github.vastronghq.com",
     "addonRef": "marginmind",
     "addonInstance": "MarginMind",
     "prefsPrefix": "extensions.zotero.marginmind"
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/windingwind/zotero-plugin-template.git"
+    "url": "git+https://github.com/vastronghq/MarginMind.git"
   },
   "author": "windingwind",
   "bugs": {
-    "url": "https://github.com/windingwind/zotero-plugin-template/issues"
+    "url": "https://github.com/vastronghq/MarginMind/issues"
   },
-  "homepage": "https://github.com/windingwind/zotero-plugin-template#readme",
+  "homepage": "https://github.com/vastronghq/MarginMind#readme",
   "license": "AGPL-3.0-or-later",
   "scripts": {
     "start": "zotero-plugin serve",

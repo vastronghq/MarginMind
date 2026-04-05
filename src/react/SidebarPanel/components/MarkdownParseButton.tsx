@@ -105,7 +105,7 @@ export function MarkdownParseButton({
       }}
       disabled={status === "parsing"}
       title={config.title(parseProgress)} // 逻辑被配置化了
-      className="flex shrink-0 items-center gap-1 rounded p-0.5 text-[11px] transition hover:bg-[color-mix(in_srgb,var(--fill-primary)_10%,transparent)]"
+      className="inline-flex shrink-0 items-center gap-1 rounded p-0.5 text-[11px] transition hover:bg-[color-mix(in_srgb,var(--fill-primary)_10%,transparent)]"
     >
       {/* 现在的 Badge 只需要负责内部的圆点、图标和文字 */}
       <MarkdownStatusBadge config={config} progress={parseProgress} />

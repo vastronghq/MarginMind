@@ -40,7 +40,7 @@ export type SidebarPanelRenderPayload = {
 };
 
 export type MarginMindReactBridge = {
-  renderItemPane(payload: ItemPaneRenderPayload): void;
+  // renderItemPane(payload: ItemPaneRenderPayload): void;
   renderPreferences(payload: PreferencesRenderPayload): void;
   renderSidebarPanel(payload: SidebarPanelRenderPayload): void;
 };

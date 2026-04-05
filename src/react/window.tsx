@@ -1,5 +1,5 @@
 import type { MarginMindReactWindow } from "./bridge";
-import { mountItemPane } from "./itemPane/mount";
+// import { mountItemPane } from "./itemPane/mount";
 import { mountPreferences } from "./PreferencesPanel/mount";
 import { mountSidebarPanel } from "./SidebarPanel/mount";
 import { config } from "../../package.json";
@@ -26,7 +26,7 @@ function ensureReactStyles() {
 }
 
 reactWindow.__marginmindReact = {
-  renderItemPane: mountItemPane,
+  // renderItemPane: mountItemPane,
   renderPreferences: mountPreferences,
   renderSidebarPanel: mountSidebarPanel,
 };

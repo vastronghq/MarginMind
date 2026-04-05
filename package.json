@@ -1,7 +1,7 @@
 {
   "name": "margin-mind",
   "type": "module",
-  "version": "0.1.0",
+  "version": "0.18.0",
   "description": "AI chat in Zotero sidebar. Discuss papers, generate summaries, and brainstorm ideas without leaving your research workflow.",
   "config": {
     "addonName": "MarginMind",

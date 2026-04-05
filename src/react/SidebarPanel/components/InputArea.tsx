@@ -1,6 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { ChevronDown } from "lucide-react";
+import { ChevronDown, Sparkles } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
 import { cn } from "@/lib/utils";
 import {
@@ -151,38 +151,30 @@ export function InputArea({
 
   return (
     <section className="space-y-2 border-t border-[color-mix(in_srgb,var(--fill-primary)_16%,transparent)] p-2.5">
-      <div className="flex w-full items-center gap-2">
-        <div className="flex-none">
-          <MarkdownParseButton
-            status={markdownStatus}
-            onClick={onParse}
-            parseProgress={parseProgress}
-          />
-        </div>
-
-        <div className="flex flex-1 flex-wrap items-center gap-1 rounded-md border-[1px] border-dashed border-[var(--accent-blue)] px-2 py-0.5">
-          <span className="whitespace-nowrap text-[11px] font-medium uppercase tracking-wider">
-            Quick Action:
-          </span>
-          <Button
-            size="xs"
-            variant="outline"
-            onClick={() => onSend(PROMPTS.summarizeFullText)}
-            disabled={isSending || isSelectionMode}
-            className="rounded-full border-[1px] border-[color-mix(in_srgb,var(--fill-primary)_16%,transparent)] bg-[color-mix(in_srgb,var(--material-sidepane)_88%,var(--fill-primary)_8%)] px-2 text-[12px] text-[color-mix(in_srgb,var(--fill-primary)_78%,transparent)]"
-          >
-            Summarize
-          </Button>
-          <Button
-            size="xs"
-            variant="outline"
-            onClick={handleTokenCount}
-            title="Estimated token usage based on local calculation"
-            className="ml-auto rounded-full border-[1px] border-[color-mix(in_srgb,var(--fill-primary)_16%,transparent)] bg-[color-mix(in_srgb,var(--material-sidepane)_88%,var(--fill-primary)_8%)] px-2 text-[12px] text-[color-mix(in_srgb,var(--fill-primary)_78%,transparent)]"
-          >
-            {totalTokens > 0 ? `~${formatTokens(totalTokens)}` : "Tokens"}
-          </Button>
-        </div>
+      <div className="flex w-full items-center justify-start gap-2">
+        <MarkdownParseButton
+          status={markdownStatus}
+          onClick={onParse}
+          parseProgress={parseProgress}
+        />
+        <Button
+          size="xs"
+          variant="outline"
+          onClick={() => onSend(PROMPTS.summarizeFullText)}
+          disabled={isSending || isSelectionMode}
+          className="rounded-full border-[1px] border-[color-mix(in_srgb,var(--fill-primary)_16%,transparent)] bg-[color-mix(in_srgb,var(--material-sidepane)_88%,var(--fill-primary)_8%)] px-2 text-[12px] text-[color-mix(in_srgb,var(--fill-primary)_78%,transparent)]"
+        >
+          Summarize
+        </Button>
+        <Button
+          size="xs"
+          variant="outline"
+          onClick={handleTokenCount}
+          title="Estimated token usage based on local calculation"
+          className="rounded-full border-[1px] border-[color-mix(in_srgb,var(--fill-primary)_16%,transparent)] bg-[color-mix(in_srgb,var(--material-sidepane)_88%,var(--fill-primary)_8%)] px-2 text-[12px] text-[color-mix(in_srgb,var(--fill-primary)_78%,transparent)]"
+        >
+          {totalTokens > 0 ? `~${formatTokens(totalTokens)}` : "Tokens"}
+        </Button>
       </div>
 
       {isSelectionMode ? (

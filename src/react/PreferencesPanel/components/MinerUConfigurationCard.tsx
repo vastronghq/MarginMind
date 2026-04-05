@@ -35,20 +35,22 @@ export function MinerUConfigurationCard({
       </CardHeader>
       <CardContent className="flex flex-col justify-between gap-4 p-0">
         <div className="flex w-full flex-col">
-          <span className="text-[12px] font-bold uppercase tracking-wider text-[color-mix(in_srgb,var(--fill-primary)_50%,transparent)]">
+          <span className="text-[12px] font-bold tracking-wider text-[color-mix(in_srgb,var(--fill-primary)_50%,transparent)]">
             API Key{" "}
-            <span className="lowercase">
-              {" "}
-              (apply from{" "}
-              <a
-                href="https://mineru.net/apiManage/token"
-                className="text-[var(--accent-blue)] hover:underline"
-              >
-                https://mineru.net/apiManage/token
-              </a>
-              )
-            </span>
           </span>
+          <div className="mt-1 text-[11px] font-normal text-[color-mix(in_srgb,var(--fill-primary)_50%,transparent)]">
+            get it from{" "}
+            <a
+              className="text-[var(--accent-blue)] hover:underline"
+              onClick={(e) => {
+                e.preventDefault();
+                Zotero.launchURL("https://mineru.net/apiManage/token");
+              }}
+            >
+              MinerU
+            </a>{" "}
+            and use it for free
+          </div>
 
           <input
             type="password"
@@ -63,7 +65,7 @@ export function MinerUConfigurationCard({
 
         <div className="flex flex-col gap-2">
           <div className="flex items-center justify-between">
-            <span className="text-[12px] font-bold uppercase tracking-wider text-[color-mix(in_srgb,var(--fill-primary)_50%,transparent)]">
+            <span className="text-[12px] font-bold tracking-wider text-[color-mix(in_srgb,var(--fill-primary)_50%,transparent)]">
               Markdown Cache ({cacheFiles.length} files)
             </span>
             <div className="flex gap-2">

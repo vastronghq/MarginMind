@@ -79,8 +79,8 @@ export function AIConfigurationCard({
       </CardHeader>
 
       <CardContent className="flex flex-col justify-between gap-4 p-0">
-        <div>
-          <span className="text-[12px] font-bold uppercase tracking-wider text-[color-mix(in_srgb,var(--fill-primary)_50%,transparent)]">
+        <div className="flex w-full flex-col gap-1">
+          <span className="text-[12px] font-bold tracking-wider text-[color-mix(in_srgb,var(--fill-primary)_50%,transparent)]">
             Preset
           </span>
           <div className="flex items-center gap-2">
@@ -139,8 +139,8 @@ export function AIConfigurationCard({
 
         <Separator className="bg-[color-mix(in_srgb,var(--fill-primary)_14%,transparent)]" />
 
-        <div>
-          <span className="text-[12px] font-bold uppercase tracking-wider text-[color-mix(in_srgb,var(--fill-primary)_50%,transparent)]">
+        <div className="flex w-full flex-col gap-1">
+          <span className="text-[12px] font-bold tracking-wider text-[color-mix(in_srgb,var(--fill-primary)_50%,transparent)]">
             Provider
           </span>
           <CustomDropdown
@@ -153,8 +153,8 @@ export function AIConfigurationCard({
           />
         </div>
 
-        <div className="flex w-full flex-col">
-          <span className="text-[12px] font-bold uppercase tracking-wider text-[color-mix(in_srgb,var(--fill-primary)_50%,transparent)]">
+        <div className="flex w-full flex-col gap-1">
+          <span className="text-[12px] font-bold tracking-wider text-[color-mix(in_srgb,var(--fill-primary)_50%,transparent)]">
             Base URL
           </span>
           <input
@@ -165,8 +165,8 @@ export function AIConfigurationCard({
           />
         </div>
 
-        <div className="flex w-full flex-col">
-          <span className="text-[12px] font-bold uppercase tracking-wider text-[color-mix(in_srgb,var(--fill-primary)_50%,transparent)]">
+        <div className="flex w-full flex-col gap-1">
+          <span className="text-[12px] font-bold tracking-wider text-[color-mix(in_srgb,var(--fill-primary)_50%,transparent)]">
             API Key
           </span>
           <input
@@ -178,8 +178,8 @@ export function AIConfigurationCard({
           />
         </div>
 
-        <div className="flex w-full flex-col">
-          <span className="text-[12px] font-bold uppercase tracking-wider text-[color-mix(in_srgb,var(--fill-primary)_50%,transparent)]">
+        <div className="flex w-full flex-col gap-1">
+          <span className="text-[12px] font-bold tracking-wider text-[color-mix(in_srgb,var(--fill-primary)_50%,transparent)]">
             Model
           </span>
           <input
@@ -191,8 +191,8 @@ export function AIConfigurationCard({
         </div>
 
         <div className="flex w-full items-center gap-2">
-          <div className="flex flex-1 flex-col">
-            <span className="text-[12px] font-bold uppercase tracking-wider text-[color-mix(in_srgb,var(--fill-primary)_50%,transparent)]">
+          <div className="flex flex-1 flex-col gap-1">
+            <span className="text-[12px] font-bold tracking-wider text-[color-mix(in_srgb,var(--fill-primary)_50%,transparent)]">
               Temperature
             </span>
             <input
@@ -211,8 +211,8 @@ export function AIConfigurationCard({
             />
           </div>
 
-          <div className="flex flex-1 flex-col">
-            <span className="text-[12px] font-bold uppercase tracking-wider text-[color-mix(in_srgb,var(--fill-primary)_50%,transparent)]">
+          <div className="flex flex-1 flex-col gap-1">
+            <span className="text-[12px] font-bold tracking-wider text-[color-mix(in_srgb,var(--fill-primary)_50%,transparent)]">
               Max Tokens
             </span>
             <input
@@ -232,8 +232,8 @@ export function AIConfigurationCard({
         <Separator className="bg-[color-mix(in_srgb,var(--fill-primary)_14%,transparent)]" />
 
         <div className="flex flex-col gap-4">
-          <div className="flex w-full flex-col">
-            <span className="text-[12px] font-bold uppercase tracking-wider text-[color-mix(in_srgb,var(--fill-primary)_50%,transparent)]">
+          <div className="flex w-full flex-col gap-1">
+            <span className="text-[12px] font-bold tracking-wider text-[color-mix(in_srgb,var(--fill-primary)_50%,transparent)]">
               System Prompt
             </span>
             <textarea
@@ -248,14 +248,8 @@ export function AIConfigurationCard({
 
           <Separator className="bg-[color-mix(in_srgb,var(--fill-primary)_14%,transparent)]" />
 
-          <div>
-            <span className="text-[14px] font-semibold">
-              Popup Button Prompts
-            </span>
-          </div>
-
-          <div className="flex w-full flex-col">
-            <span className="text-[12px] font-bold uppercase tracking-wider text-[color-mix(in_srgb,var(--fill-primary)_50%,transparent)]">
+          <div className="flex w-full flex-col gap-1">
+            <span className="text-[12px] font-bold tracking-wider text-[color-mix(in_srgb,var(--fill-primary)_50%,transparent)]">
               Explain Prompt
             </span>
             <textarea
@@ -266,8 +260,8 @@ export function AIConfigurationCard({
             />
           </div>
 
-          <div className="flex w-full flex-col">
-            <span className="text-[12px] font-bold uppercase tracking-wider text-[color-mix(in_srgb,var(--fill-primary)_50%,transparent)]">
+          <div className="flex w-full flex-col gap-1">
+            <span className="text-[12px] font-bold tracking-wider text-[color-mix(in_srgb,var(--fill-primary)_50%,transparent)]">
               Critique Prompt
             </span>
             <textarea
@@ -278,8 +272,8 @@ export function AIConfigurationCard({
             />
           </div>
 
-          <div className="flex w-full flex-col">
-            <span className="text-[12px] font-bold uppercase tracking-wider text-[color-mix(in_srgb,var(--fill-primary)_50%,transparent)]">
+          <div className="flex w-full flex-col gap-1">
+            <span className="text-[12px] font-bold tracking-wider text-[color-mix(in_srgb,var(--fill-primary)_50%,transparent)]">
               Bulletize Prompt
             </span>
             <textarea
@@ -290,8 +284,8 @@ export function AIConfigurationCard({
             />
           </div>
 
-          <div className="flex w-full flex-col">
-            <span className="text-[12px] font-bold uppercase tracking-wider text-[color-mix(in_srgb,var(--fill-primary)_50%,transparent)]">
+          <div className="flex w-full flex-col gap-1">
+            <span className="text-[12px] font-bold tracking-wider text-[color-mix(in_srgb,var(--fill-primary)_50%,transparent)]">
               Translate Prompt
             </span>
             <textarea

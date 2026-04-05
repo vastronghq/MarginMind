@@ -27,7 +27,7 @@ export function GeneralSettingsCard({
       <CardContent className="flex flex-col justify-between gap-4 p-0">
         <div className="flex w-full items-center gap-2">
           <div className="flex flex-1 flex-col">
-            <span className="text-[12px] font-bold uppercase tracking-wider text-[color-mix(in_srgb,var(--fill-primary)_50%,transparent)]">
+            <span className="text-[12px] font-bold tracking-wider text-[color-mix(in_srgb,var(--fill-primary)_50%,transparent)]">
               Annotation Color
             </span>
             <div className="flex items-center gap-2">
@@ -50,7 +50,7 @@ export function GeneralSettingsCard({
             </div>
           </div>
           <div className="flex flex-1 flex-col">
-            <span className="text-[12px] font-bold uppercase tracking-wider text-[color-mix(in_srgb,var(--fill-primary)_50%,transparent)]">
+            <span className="text-[12px] font-bold tracking-wider text-[color-mix(in_srgb,var(--fill-primary)_50%,transparent)]">
               Markdown Font Size
             </span>
             <div className="flex-1 items-center gap-2">

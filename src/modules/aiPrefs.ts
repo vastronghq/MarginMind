@@ -122,7 +122,8 @@ export const AI_DEFAULTS: AISettings = {
   temperature: 0.2,
   maxTokens: 8192,
   systemPrompt:
-    "You are MarginMind, an academic research assistant. Give precise, structured, and evidence-oriented answers based on the provided paper context. (Respond in the user's language)",
+    // "You are MarginMind, an academic research assistant. Give precise, structured, and evidence-oriented answers based on the provided paper context. (Respond in the user's language)",
+    "",
 };
 
 export function getDefaultBaseURL(provider: AIProvider): string {

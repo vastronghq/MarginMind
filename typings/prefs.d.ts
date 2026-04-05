@@ -15,6 +15,10 @@ declare namespace _ZoteroTypes {
       "aiMaxTokens": number;
       "annotationColor": string;
       "aiSystemPrompt": string;
+      "popupExplainPrompt": string;
+      "popupCritiquePrompt": string;
+      "popupBulletizePrompt": string;
+      "popupTranslatePrompt": string;
       "aiPresets": string;
       "markdownFontSize": string;
       "mineruApiKey": string;

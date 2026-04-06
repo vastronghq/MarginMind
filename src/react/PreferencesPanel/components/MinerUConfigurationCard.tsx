@@ -125,14 +125,12 @@ export function MinerUConfigurationCard({
                           className="cursor-pointer"
                         />
                       </td>
-                      <td className="truncate p-0" title={file.name}>
+                      <td className="p-0" title={file.name}>
                         <label
                           htmlFor={`checkbox-${file.id}`}
                           className="block w-full cursor-pointer p-2"
                         >
-                          {file.name.length > 30
-                            ? `${file.name.slice(0, 30)}...`
-                            : file.name}
+                          {file.name}
                         </label>
                       </td>
                       <td className="p-2 text-right text-[color-mix(in_srgb,var(--fill-primary)_60%,transparent)]">

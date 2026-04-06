@@ -37,6 +37,7 @@ export type AISettings = {
   temperature: number;
   maxTokens: number;
   systemPrompt: string;
+  quickActionPrompts: Record<QuickActionPromptKey, string>;
 };
 
 export const AI_PROVIDER_OPTIONS: Array<{ value: AIProvider; label: string }> =
@@ -138,6 +139,13 @@ export const AI_DEFAULTS: AISettings = {
   temperature: 0.2,
   maxTokens: 8192,
   systemPrompt: PROMPTS.systemPrompt,
+  quickActionPrompts: {
+    quickActionExplainPrompt: PROMPTS.explainSelection,
+    quickActionCritiquePrompt: PROMPTS.critiqueSelection,
+    quickActionBulletizePrompt: PROMPTS.bulletizeSelection,
+    quickActionTranslatePrompt: PROMPTS.translateSelection,
+    quickActionSummarizePrompt: PROMPTS.summarizeFullText,
+  },
 };
 
 export function getDefaultBaseURL(provider: AIProvider): string {
@@ -156,6 +164,11 @@ export function loadAISettings(): AISettings {
   const temperature = getPref("aiTemperature");
   const maxTokens = getPref("aiMaxTokens");
   const systemPrompt = getPref("aiSystemPrompt");
+  const quickActionExplainPrompt = getPref("quickActionExplainPrompt");
+  const quickActionCritiquePrompt = getPref("quickActionCritiquePrompt");
+  const quickActionBulletizePrompt = getPref("quickActionBulletizePrompt");
+  const quickActionTranslatePrompt = getPref("quickActionTranslatePrompt");
+  const quickActionSummarizePrompt = getPref("quickActionSummarizePrompt");
   const parsedTemperature = Number.parseFloat(temperature);
 
   return {
@@ -172,6 +185,28 @@ export function loadAISettings(): AISettings {
       typeof systemPrompt === "string"
         ? systemPrompt
         : AI_DEFAULTS.systemPrompt,
+    quickActionPrompts: {
+      quickActionExplainPrompt:
+        typeof quickActionExplainPrompt === "string"
+          ? quickActionExplainPrompt
+          : AI_DEFAULTS.quickActionPrompts.quickActionExplainPrompt,
+      quickActionCritiquePrompt:
+        typeof quickActionCritiquePrompt === "string"
+          ? quickActionCritiquePrompt
+          : AI_DEFAULTS.quickActionPrompts.quickActionCritiquePrompt,
+      quickActionBulletizePrompt:
+        typeof quickActionBulletizePrompt === "string"
+          ? quickActionBulletizePrompt
+          : AI_DEFAULTS.quickActionPrompts.quickActionBulletizePrompt,
+      quickActionTranslatePrompt:
+        typeof quickActionTranslatePrompt === "string"
+          ? quickActionTranslatePrompt
+          : AI_DEFAULTS.quickActionPrompts.quickActionTranslatePrompt,
+      quickActionSummarizePrompt:
+        typeof quickActionSummarizePrompt === "string"
+          ? quickActionSummarizePrompt
+          : AI_DEFAULTS.quickActionPrompts.quickActionSummarizePrompt,
+    },
   };
 }
 
@@ -205,6 +240,18 @@ export function saveAISetting<K extends keyof AISettings>(
     case "systemPrompt":
       setPref("aiSystemPrompt", value as string);
       break;
+    case "quickActionPrompts": {
+      const prompts = value as AISettings["quickActionPrompts"];
+      setPref("quickActionExplainPrompt", prompts.quickActionExplainPrompt);
+      setPref("quickActionCritiquePrompt", prompts.quickActionCritiquePrompt);
+      setPref(
+        "quickActionBulletizePrompt",
+        prompts.quickActionBulletizePrompt,
+      );
+      setPref("quickActionTranslatePrompt", prompts.quickActionTranslatePrompt);
+      setPref("quickActionSummarizePrompt", prompts.quickActionSummarizePrompt);
+      break;
+    }
     default:
       break;
   }
@@ -218,6 +265,7 @@ export function resetAISettings() {
   setPref("aiTemperature", String(AI_DEFAULTS.temperature));
   setPref("aiMaxTokens", AI_DEFAULTS.maxTokens);
   setPref("aiSystemPrompt", AI_DEFAULTS.systemPrompt);
+  saveAISetting("quickActionPrompts", AI_DEFAULTS.quickActionPrompts);
 }
 
 // ─── Presets ───────────────────────────────────────────────────────────────
@@ -227,19 +275,40 @@ export type AIPreset = {
   settings: AISettings;
 };
 
+export function isAISettings(value: unknown): value is AISettings {
+  if (!value || typeof value !== "object") return false;
+  const s = value as Partial<AISettings>;
+  const prompts = s.quickActionPrompts as Record<string, unknown> | undefined;
+  return (
+    typeof s.provider === "string" &&
+    typeof s.apiKey === "string" &&
+    typeof s.baseURL === "string" &&
+    typeof s.model === "string" &&
+    typeof s.temperature === "number" &&
+    typeof s.maxTokens === "number" &&
+    typeof s.systemPrompt === "string" &&
+    !!prompts &&
+    typeof prompts.quickActionExplainPrompt === "string" &&
+    typeof prompts.quickActionCritiquePrompt === "string" &&
+    typeof prompts.quickActionBulletizePrompt === "string" &&
+    typeof prompts.quickActionTranslatePrompt === "string" &&
+    typeof prompts.quickActionSummarizePrompt === "string"
+  );
+}
+
+export function isAIPreset(value: unknown): value is AIPreset {
+  if (!value || typeof value !== "object") return false;
+  const p = value as { name?: unknown; settings?: unknown };
+  return typeof p.name === "string" && isAISettings(p.settings);
+}
+
 export function loadPresets(): AIPreset[] {
   const raw = getPref("aiPresets");
   if (typeof raw !== "string" || !raw.trim()) return [];
   try {
     const arr = JSON.parse(raw);
     if (!Array.isArray(arr)) return [];
-    return arr.filter(
-      (p: any) =>
-        p &&
-        typeof p.name === "string" &&
-        p.settings &&
-        typeof p.settings === "object",
-    );
+    return arr.filter(isAIPreset);
   } catch {
     return [];
   }
@@ -275,55 +344,11 @@ export function applyPreset(preset: AIPreset) {
   saveAISetting("temperature", s.temperature);
   saveAISetting("maxTokens", s.maxTokens);
   saveAISetting("systemPrompt", s.systemPrompt);
+  saveAISetting("quickActionPrompts", s.quickActionPrompts);
 }
-
 export type QuickActionPromptKey =
   | "quickActionExplainPrompt"
   | "quickActionCritiquePrompt"
   | "quickActionBulletizePrompt"
   | "quickActionTranslatePrompt"
   | "quickActionSummarizePrompt";
-
-export const QUICK_ACTION_PROMPT_DEFAULTS: Record<
-  QuickActionPromptKey,
-  string
-> = {
-  quickActionExplainPrompt: PROMPTS.explainSelection,
-  quickActionCritiquePrompt: PROMPTS.critiqueSelection,
-  quickActionBulletizePrompt: PROMPTS.bulletizeSelection,
-  quickActionTranslatePrompt: PROMPTS.translateSelection,
-  quickActionSummarizePrompt: PROMPTS.summarizeFullText,
-};
-
-export function loadQuickActionPrompts(): Record<QuickActionPromptKey, string> {
-  return {
-    quickActionExplainPrompt:
-      (getPref("quickActionExplainPrompt") as string) ||
-      QUICK_ACTION_PROMPT_DEFAULTS.quickActionExplainPrompt,
-    quickActionCritiquePrompt:
-      (getPref("quickActionCritiquePrompt") as string) ||
-      QUICK_ACTION_PROMPT_DEFAULTS.quickActionCritiquePrompt,
-    quickActionBulletizePrompt:
-      (getPref("quickActionBulletizePrompt") as string) ||
-      QUICK_ACTION_PROMPT_DEFAULTS.quickActionBulletizePrompt,
-    quickActionTranslatePrompt:
-      (getPref("quickActionTranslatePrompt") as string) ||
-      QUICK_ACTION_PROMPT_DEFAULTS.quickActionTranslatePrompt,
-    quickActionSummarizePrompt:
-      (getPref("quickActionSummarizePrompt") as string) ||
-      QUICK_ACTION_PROMPT_DEFAULTS.quickActionSummarizePrompt,
-  };
-}
-
-export function saveQuickActionPrompt(
-  key: QuickActionPromptKey,
-  value: string,
-) {
-  setPref(key, value);
-}
-
-// export function resetQuickActionPrompt() {
-//   (Object.keys(POPUP_PROMPT_DEFAULTS) as PopupPromptKey[]).forEach((key) => {
-//     setPref(key, POPUP_PROMPT_DEFAULTS[key]);
-//   });
-// }

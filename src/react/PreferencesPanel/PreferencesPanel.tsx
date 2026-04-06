@@ -4,6 +4,7 @@ import {
   AI_DEFAULTS,
   getDefaultBaseURL,
   getDefaultModel,
+  isAIPreset,
   loadAISettings,
   loadPresets,
   resetAISettings,
@@ -11,12 +12,9 @@ import {
   savePreset,
   deletePreset,
   applyPreset,
-  loadQuickActionPrompts,
-  saveQuickActionPrompt,
   type AIPreset,
   type AIProvider,
   type AISettings,
-  type QuickActionPromptKey,
 } from "../../modules/aiPrefs";
 import { listCacheFiles, deleteCaches } from "../../modules/markdownCache";
 import { Badge } from "@/components/ui/badge";
@@ -29,14 +27,6 @@ import {
   type BaseSettings,
   type CacheFileItem,
 } from "./types";
-
-function isValidPreset(value: unknown): value is AIPreset {
-  if (!value || typeof value !== "object") return false;
-  const v = value as { name?: unknown; settings?: unknown };
-  return (
-    typeof v.name === "string" && !!v.settings && typeof v.settings === "object"
-  );
-}
 
 // function notify(message: string) {
 //   if (typeof globalThis.alert === "function") {
@@ -66,17 +56,6 @@ export function PreferencesPanel() {
   const [cacheFiles, setCacheFiles] = useState<CacheFileItem[]>([]);
   const [selectedCacheIds, setSelectedCacheIds] = useState<string[]>([]);
 
-  // Popup prompts state
-  const [quickActionPrompts, setQuickActionPrompts] = useState<
-    Record<QuickActionPromptKey, string>
-  >({
-    quickActionExplainPrompt: "",
-    quickActionCritiquePrompt: "",
-    quickActionBulletizePrompt: "",
-    quickActionTranslatePrompt: "",
-    quickActionSummarizePrompt: "",
-  });
-
   // Load on mount
   useEffect(() => {
     setBaseSettings({
@@ -86,7 +65,6 @@ export function PreferencesPanel() {
     setAISettings(loadAISettings());
     setPresets(loadPresets());
     setMineruApiKey(getPref("mineruApiKey") || "");
-    setQuickActionPrompts(loadQuickActionPrompts());
     void loadCacheFiles();
   }, []);
 
@@ -255,7 +233,7 @@ export function PreferencesPanel() {
           return;
         }
 
-        const imported = parsed.filter(isValidPreset);
+        const imported = parsed.filter(isAIPreset);
         if (!imported.length) {
           Zotero.alert(window, "Import Failed", "No valid presets found.");
           return;
@@ -292,19 +270,27 @@ export function PreferencesPanel() {
       key: "explain" | "critique" | "bulletize" | "translate" | "summarize",
       value: string,
     ) => {
-      const keyMap: Record<typeof key, QuickActionPromptKey> = {
+      const keyMap = {
         explain: "quickActionExplainPrompt",
         critique: "quickActionCritiquePrompt",
         bulletize: "quickActionBulletizePrompt",
         translate: "quickActionTranslatePrompt",
         summarize: "quickActionSummarizePrompt",
-      };
+      } as const;
       const prefKey = keyMap[key];
-      setQuickActionPrompts((prev) => ({ ...prev, [prefKey]: value }));
-      saveQuickActionPrompt(prefKey, value);
+      const nextQuickActionPrompts = {
+        ...aiSettings.quickActionPrompts,
+        [prefKey]: value,
+      };
+      setAISettings((current) => ({
+        ...current,
+        quickActionPrompts: nextQuickActionPrompts,
+      }));
+      saveAISetting("quickActionPrompts", nextQuickActionPrompts);
+      setActivePreset("");
       markSaved();
     },
-    [markSaved],
+    [aiSettings.quickActionPrompts, markSaved],
   );
 
   const formatSize = useCallback((bytes: number): string => {
@@ -368,11 +354,11 @@ export function PreferencesPanel() {
           onChangeProvider={changeProvider}
           onChangeAISetting={updateAISetting}
           quickActionPrompts={{
-            explain: quickActionPrompts.quickActionExplainPrompt,
-            critique: quickActionPrompts.quickActionCritiquePrompt,
-            bulletize: quickActionPrompts.quickActionBulletizePrompt,
-            translate: quickActionPrompts.quickActionTranslatePrompt,
-            summarize: quickActionPrompts.quickActionSummarizePrompt,
+            explain: aiSettings.quickActionPrompts.quickActionExplainPrompt,
+            critique: aiSettings.quickActionPrompts.quickActionCritiquePrompt,
+            bulletize: aiSettings.quickActionPrompts.quickActionBulletizePrompt,
+            translate: aiSettings.quickActionPrompts.quickActionTranslatePrompt,
+            summarize: aiSettings.quickActionPrompts.quickActionSummarizePrompt,
           }}
           onChangeQuickActionPrompt={updateQuickActionPrompt}
         />
@@ -381,7 +367,7 @@ export function PreferencesPanel() {
           ref={importPresetsInputRef}
           type="file"
           accept="application/json,.json"
-          className="hidden" // 隐藏原生的文件选择框，使用按钮触发其操作
+          className="hidden" // 隐藏原生的文件选择框（难看），使用按钮触发其操作
           onChange={(e) => void handleImportPresets({ target: e.target })}
         />
 

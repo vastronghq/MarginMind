@@ -88,7 +88,7 @@ async function waitForExtraction(
   const headers = { Authorization: `Bearer ${apiKey}` };
   const statusUrl = `${BASE_URL}/extract-results/batch/${batchId}`;
 
-  const maxRetries = 60;
+  const maxRetries = 120;
   for (let i = 0; i < maxRetries; i++) {
     onProgress?.(`Parsing... (${i * 5}s)`);
 

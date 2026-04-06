@@ -1,4 +1,4 @@
-import { Button } from "@/components/ui/button";
+﻿import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 import { ChevronDown, Sparkles } from "lucide-react";
@@ -26,10 +26,18 @@ interface InputAreaProps {
   markdownStatus: "none" | "cached" | "parsing" | "error";
   parseProgress: string;
   onParse: () => void;
-  messages: { text: string }[];
+  messages: { role: string; text: string }[];
   markdownContent: string | null;
-  totalTokens: number;
-  onTokenCount: (count: number) => void;
+  tokenStats: {
+    totalInputTokens: number;
+    totalOutputTokens: number;
+    currentContextTokens: number;
+  };
+  onTokenCount: (stats: {
+    totalInputTokens: number;
+    totalOutputTokens: number;
+    currentContextTokens: number;
+  }) => void;
   // SelectionModeBar props
   selectedIDs: string[];
   onSaveToAnnotation: () => void;
@@ -54,7 +62,7 @@ export function InputArea({
   messages,
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   markdownContent,
-  totalTokens,
+  tokenStats,
   onTokenCount,
   selectedIDs,
   onSaveToAnnotation,
@@ -116,38 +124,37 @@ export function InputArea({
 
   const handleTokenCount = () => {
     try {
-      // 建议使用 gpt-4o 或 cl100k_base 编码器，因为它们是目前最通用的
       const enc = encodingForModel("gpt-4o");
-      let totalBillableTokens = 0; // 累计总花费（钱）
-      let currentContextTokens = 0; // 当前上下文长度（空间）
+      let totalInputTokens = 0;
+      let totalOutputTokens = 0;
+      let runningContext = 0;
 
-      // 假设每一轮对话的消息都存在 messages 数组里
-      // 我们需要模拟每一轮发送请求时的状态
       for (let i = 0; i < messages.length; i++) {
         const msg = messages[i] as ChatMessage;
-        const msgTokens = enc.encode(msg.text || "").length + 4; // +4 是消息结构开销
+        const msgTokens = enc.encode(msg.text || "").length + 4;
 
-        // 1. 更新当前上下文的总量
-        currentContextTokens += msgTokens;
-
-        // 2. 关键：只有当这一条消息是“用户发送”的时候，才代表产生了一次 API 调用
-        // 每一轮 API 调用的花费 = 当时发送给 AI 的所有上下文 + AI 随后返回的内容
-        if (msg.role === "assistant" || i === messages.length - 1) {
-          // 实际上，每一轮的总花费就是当前所有消息的总和
-          // 我们在每一轮结束（AI 回答完）时，累加这一次调用的总 Token
-          if (msg.role === "assistant") {
-            totalBillableTokens += currentContextTokens;
-          }
+        if (msg.role === "user") {
+          const currentInput = runningContext + msgTokens;
+          totalInputTokens += currentInput;
+          runningContext += msgTokens;
+        } else if (msg.role === "assistant") {
+          totalOutputTokens += msgTokens;
+          runningContext += msgTokens;
         }
       }
 
-      // 如果你想显示的是“当前这一轮发送会消耗多少”
-      // 则直接使用 currentContextTokens
-      // 如果你想显示的是“这个会话总共花了多少”，则使用 totalBillableTokens
-      onTokenCount(totalBillableTokens);
+      onTokenCount({
+        totalInputTokens,
+        totalOutputTokens,
+        currentContextTokens: runningContext,
+      });
     } catch (e) {
       console.error("Token calculation failed:", e);
-      onTokenCount(0);
+      onTokenCount({
+        totalInputTokens: 0,
+        totalOutputTokens: 0,
+        currentContextTokens: 0,
+      });
     }
   };
 
@@ -175,7 +182,11 @@ export function InputArea({
           title="Estimated token usage based on local calculation"
           className="rounded-full border-[1px] border-[color-mix(in_srgb,var(--fill-primary)_16%,transparent)] bg-[color-mix(in_srgb,var(--material-sidepane)_88%,var(--fill-primary)_8%)] px-2 text-[12px] text-[color-mix(in_srgb,var(--fill-primary)_78%,transparent)]"
         >
-          {totalTokens > 0 ? `~${formatTokens(totalTokens)}` : "Tokens"}
+          {tokenStats.totalInputTokens > 0 ||
+          tokenStats.totalOutputTokens > 0 ||
+          tokenStats.currentContextTokens > 0
+            ? `In ${formatTokens(tokenStats.totalInputTokens)} • Out ${formatTokens(tokenStats.totalOutputTokens)} • Ctx ${formatTokens(tokenStats.currentContextTokens)}`
+            : "Tokens"}
         </Button>
       </div>
 

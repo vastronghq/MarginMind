@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, useCallback, useMemo } from "react";
+﻿import { useEffect, useRef, useState, useCallback, useMemo } from "react";
 import { Card, CardTitle, CardDescription } from "@/components/ui/card";
 import { getPref } from "../../utils/prefs";
 import {
@@ -75,7 +75,11 @@ export function SidebarPanel({
   const [showJump, setShowJump] = useState(false);
   const [isHistoryOpen, setIsHistoryOpen] = useState(false);
   const [isSavingAnnotation, setIsSavingAnnotation] = useState(false);
-  const [totalTokens, setTotalTokens] = useState(0);
+  const [tokenStats, setTokenStats] = useState({
+    totalInputTokens: 0,
+    totalOutputTokens: 0,
+    currentContextTokens: 0,
+  });
 
   const { markdownStatus, markdownContent, parseProgress, triggerParse } =
     useMinerU(
@@ -123,7 +127,11 @@ export function SidebarPanel({
   }, [send]);
 
   useEffect(() => {
-    setTotalTokens(0);
+    setTokenStats({
+      totalInputTokens: 0,
+      totalOutputTokens: 0,
+      currentContextTokens: 0,
+    });
   }, [activeSession?.id]);
 
   useEffect(() => {
@@ -328,8 +336,8 @@ export function SidebarPanel({
         onParse={triggerParse}
         messages={messages}
         markdownContent={markdownContent}
-        totalTokens={totalTokens}
-        onTokenCount={setTotalTokens}
+        tokenStats={tokenStats}
+        onTokenCount={setTokenStats}
         selectedIDs={selectedIDs}
         onSaveToAnnotation={handleSaveAnnotation}
         canSaveToAnnotation={canSaveToAnnotation}

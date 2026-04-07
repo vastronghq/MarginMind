@@ -26,8 +26,14 @@ function MessageBubbleInner({
 }: MessageBubbleProps) {
   return (
     <div
+      contentEditable={true}
+      // 夺取控制权。让浏览器认为这是一个输入区域，从而绕过 Zotero 插件主窗体对 Ctrl+C 等快捷键的全局拦截。
       className={cn(
         isSelectionMode ? "cursor-pointer select-none" : "select-text",
+        "!cursor-default caret-transparent !outline-none",
+        // !cursor-default: 还原箭头。在父容器上使用，防止整个区域显示为“文本输入”指针。
+        // !outline-none: 消除边框。contentEditable 默认在点击时会出现蓝色或黑色的外框，此项将其隐藏。
+        // caret-transparent: 隐藏光标。隐藏编辑模式下那个闪烁的竖线（I-beam），让用户感知不到这是一个“输入框”。
       )}
       onContextMenu={(event) => {
         event.preventDefault();
@@ -45,7 +51,11 @@ function MessageBubbleInner({
         )}
       >
         <Card
+          contentEditable={false}
+          // 保护内容。在 Markdown 容器上设为 false，确保内容“看起来”像普通网页，用户无法通过键盘删除或修改文字，但保留父级的复制特权。
           className={cn(
+            "!cursor-text",
+            // !cursor-text: 内容暗示。仅在 Markdown 文本区使用，当鼠标经过时显示“I”型指针，暗示此处可选中。
             "relative rounded-2xl px-3 py-2",
             markdownFontSize,
             "leading-[1.75]", // 必须写在markdownFontSize后面，不然markdownFontSize的默认行高会覆盖

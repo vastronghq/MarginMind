@@ -41,6 +41,125 @@ type PersistedState = {
   activeSessionID: string;
   activeContext: SidebarPanelData | null;
 };
+type PersistedDiskState = PersistedState & {
+  version: number;
+  savedAt: number;
+};
+
+const CHAT_STORE_DIR = "marginmind";
+const CHAT_STORE_FILE = "chat-sessions.json";
+const SAVE_DEBOUNCE_MS = 600;
+
+const getChatStoreDirPath = () =>
+  PathUtils.join(Zotero.DataDirectory.dir, CHAT_STORE_DIR);
+const getChatStoreFilePath = () =>
+  PathUtils.join(getChatStoreDirPath(), CHAT_STORE_FILE);
+
+const normalizeMessage = (message: unknown): ChatMessage | null => {
+  if (!message || typeof message !== "object") return null;
+  const m = message as Partial<ChatMessage>;
+  if (m.role !== "assistant" && m.role !== "user") return null;
+  if (typeof m.text !== "string") return null;
+  return {
+    id: typeof m.id === "string" && m.id ? m.id : uid(m.role),
+    role: m.role,
+    text: m.text,
+    displayText: typeof m.displayText === "string" ? m.displayText : undefined,
+    contextText: typeof m.contextText === "string" ? m.contextText : undefined,
+    meta: typeof m.meta === "string" ? m.meta : undefined,
+    thinking: typeof m.thinking === "string" ? m.thinking : undefined,
+    thoughtDuration:
+      typeof m.thoughtDuration === "number" ? m.thoughtDuration : undefined,
+  };
+};
+
+const normalizeSession = (session: unknown): ChatSession | null => {
+  if (!session || typeof session !== "object") return null;
+  const s = session as Partial<ChatSession>;
+  const safeMessages = Array.isArray(s.messages)
+    ? s.messages.map(normalizeMessage).filter((m): m is ChatMessage => !!m)
+    : [];
+  return createSession({
+    id: typeof s.id === "string" && s.id ? s.id : uid("session"),
+    title: typeof s.title === "string" && s.title ? s.title : EMPTY_TITLE,
+    updatedAt: typeof s.updatedAt === "number" ? s.updatedAt : Date.now(),
+    draft: typeof s.draft === "string" ? s.draft : "",
+    messages: safeMessages,
+  });
+};
+
+const normalizePersistedState = (input: unknown): PersistedState | null => {
+  if (!input || typeof input !== "object") return null;
+  const raw = input as Partial<PersistedState>;
+  const sessions = Array.isArray(raw.sessions)
+    ? raw.sessions.map(normalizeSession).filter((s): s is ChatSession => !!s)
+    : [];
+  const nonEmptySessions = sessions.filter((s) => s.messages.length > 0);
+  if (!nonEmptySessions.length) return null;
+  const activeExists = nonEmptySessions.some(
+    (s) => s.id === raw.activeSessionID,
+  );
+  return {
+    sessions: nonEmptySessions,
+    activeSessionID: activeExists
+      ? (raw.activeSessionID as string)
+      : nonEmptySessions[0].id,
+    activeContext: (raw.activeContext as SidebarPanelData | null) ?? null,
+  };
+};
+
+const readPersistedFromDisk = (): PersistedState | null => {
+  try {
+    const filePath = getChatStoreFilePath();
+    const file = Zotero.File.pathToFile(filePath);
+    if (!file.exists()) return null;
+    const raw = Zotero.File.getContents(file);
+    if (typeof raw !== "string" || !raw.trim()) return null;
+    const parsed = JSON.parse(raw) as
+      | Partial<PersistedDiskState>
+      | PersistedState;
+    const stateSource =
+      parsed && typeof parsed === "object" && "version" in parsed
+        ? (parsed as Partial<PersistedDiskState>)
+        : (parsed as PersistedState);
+    return normalizePersistedState(stateSource);
+  } catch {
+    return null;
+  }
+};
+
+const writePersistedToDisk = async (state: PersistedState) => {
+  try {
+    const sessions = state.sessions
+      .filter((s) => s.messages.length > 0)
+      .map((s) => ({
+        ...s,
+        messages: s.messages.map((m) => ({ ...m })),
+      }));
+    const filePath = getChatStoreFilePath();
+    if (!sessions.length) {
+      if (await IOUtils.exists(filePath)) await IOUtils.remove(filePath);
+      return;
+    }
+    await IOUtils.makeDirectory(getChatStoreDirPath(), {
+      ignoreExisting: true,
+    });
+    const activeExists = sessions.some((s) => s.id === state.activeSessionID);
+    const payload: PersistedDiskState = {
+      version: 1,
+      savedAt: Date.now(),
+      sessions,
+      activeSessionID: activeExists ? state.activeSessionID : sessions[0].id,
+      activeContext: state.activeContext,
+    };
+    await Zotero.File.putContentsAsync(
+      filePath,
+      JSON.stringify(payload, null, 2),
+    );
+  } catch (error) {
+    console.error("[MarginMind] Failed to persist chat sessions:", error);
+  }
+};
 
 const readPersisted = (): PersistedState | null =>
   (globalThis as unknown as MarginMindChatWindow)
@@ -51,7 +170,7 @@ const writePersisted = (state: PersistedState) => {
   ).__marginmindItemPaneChatState = state;
 };
 const seedState = (data: SidebarPanelData | null): PersistedState => {
-  const saved = readPersisted();
+  const saved = readPersisted() ?? readPersistedFromDisk();
   if (!saved?.sessions?.length) {
     const first = createSession();
     return {
@@ -126,6 +245,9 @@ export const useChatSession = (
 
   const abortControllerRef = useRef<AbortController | null>(null);
   const thinkingStartRef = useRef<number | null>(null);
+  const persistTimerRef = useRef<ReturnType<
+    typeof globalThis.setTimeout
+  > | null>(null);
 
   const settings = loadAISettings();
   const activeSession = useMemo(
@@ -180,6 +302,25 @@ export const useChatSession = (
     setActiveSessionID(n.id);
     setRequestError("");
   }, []);
+
+  const deleteSession = useCallback(
+    (id: string) => {
+      if (isSending) return;
+      const remaining = sessions.filter((s) => s.id !== id);
+      if (remaining.length === sessions.length) return;
+      if (!remaining.length) {
+        const first = createSession();
+        setSessions([first]);
+        setActiveSessionID(first.id);
+        setRequestError("");
+        return;
+      }
+      setSessions(remaining);
+      if (activeSessionID === id) setActiveSessionID(remaining[0].id);
+      setRequestError("");
+    },
+    [sessions, activeSessionID, isSending],
+  );
 
   const normalizePrompt = useCallback(
     (input: string, base: ChatMessage[]) => {
@@ -358,9 +499,26 @@ export const useChatSession = (
   }, [data]);
 
   useEffect(
-    () => writePersisted({ sessions, activeSessionID, activeContext }),
-    [sessions, activeSessionID, activeContext],
+    () => () => {
+      if (persistTimerRef.current) {
+        globalThis.clearTimeout(persistTimerRef.current);
+        persistTimerRef.current = null;
+      }
+    },
+    [],
   );
+
+  useEffect(() => {
+    const snapshot = { sessions, activeSessionID, activeContext };
+    writePersisted(snapshot);
+    if (persistTimerRef.current) {
+      globalThis.clearTimeout(persistTimerRef.current);
+    }
+    persistTimerRef.current = globalThis.setTimeout(() => {
+      persistTimerRef.current = null;
+      void writePersistedToDisk(snapshot);
+    }, SAVE_DEBOUNCE_MS);
+  }, [sessions, activeSessionID, activeContext]);
 
   return {
     sessions,
@@ -380,6 +538,7 @@ export const useChatSession = (
     stopSending,
     send,
     createNewSession,
+    deleteSession,
     patchSession,
     setRequestError,
   };

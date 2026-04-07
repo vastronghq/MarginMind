@@ -1,6 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { ChevronDown, History, Plus } from "lucide-react";
+import { ChevronDown, History, Plus, Trash2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { ChatSession } from "../hooks/useChatSession";
 import { toTime } from "../utils";
@@ -10,6 +10,7 @@ interface HistoryPanelProps {
   sessions: ChatSession[];
   activeSessionID: string;
   onSelectSession: (id: string) => void;
+  onDeleteSession: (id: string) => void;
   onClose: () => void;
   onClearSelection: () => void;
   isSending: boolean;
@@ -19,6 +20,7 @@ export function HistoryPanel({
   sessions,
   activeSessionID,
   onSelectSession,
+  onDeleteSession,
   onClose,
   onClearSelection,
   isSending,
@@ -32,31 +34,47 @@ export function HistoryPanel({
           .map((session) => {
             const active = session.id === activeSessionID;
             return (
-              <button
+              <div
                 key={session.id}
-                type="button"
-                disabled={isSending}
-                onClick={() => {
-                  onSelectSession(session.id);
-                  onClose();
-                  onClearSelection();
-                }}
                 className={cn(
-                  "flex w-full items-center rounded-lg border p-2 transition",
+                  "flex items-center rounded-lg border transition",
                   active
-                    ? "border-[color-mix(in_srgb,var(--accent-blue)_50%,transparent)] bg-[color-mix(in_srgb,var(--accent-blue)_20%,transparent)]"
+                    ? "border-2 border-solid border-[var(--accent-blue)] bg-[color-mix(in_srgb,var(--accent-blue)_20%,transparent)]"
                     : "border-[color-mix(in_srgb,var(--fill-primary)_16%,transparent)] bg-[color-mix(in_srgb,var(--material-sidepane)_82%,var(--fill-primary)_8%)] hover:bg-[color-mix(in_srgb,var(--material-sidepane)_78%,var(--fill-primary)_12%)]",
                 )}
               >
-                <div className="line-clamp-1 flex-1 text-left text-[13px] font-medium text-[var(--fill-primary)]">
-                  {session.title}
-                </div>
-                <div className="text-[12px] text-[color-mix(in_srgb,var(--fill-primary)_56%,transparent)]">
-                  <span>
-                    {toTime(session.updatedAt)} • {session.messages.length}
-                  </span>
-                </div>
-              </button>
+                <button
+                  type="button"
+                  disabled={isSending}
+                  onClick={() => {
+                    onSelectSession(session.id);
+                    onClose();
+                    onClearSelection();
+                  }}
+                  className="flex min-w-0 flex-1 items-center gap-2 rounded-md px-1.5 py-1 text-left"
+                >
+                  <div className="line-clamp-1 flex-1 text-[13px] font-medium text-[var(--fill-primary)]">
+                    {session.title}
+                  </div>
+                  <div className="shrink-0 text-[12px] text-[color-mix(in_srgb,var(--fill-primary)_56%,transparent)]">
+                    <span>
+                      {toTime(session.updatedAt)} | {session.messages.length}
+                    </span>
+                  </div>
+                </button>
+
+                <Button
+                  type="button"
+                  size="icon"
+                  variant="ghost"
+                  disabled={isSending}
+                  title="Delete session"
+                  onClick={() => onDeleteSession(session.id)}
+                  className="hrink-0 rounded-md text-[color-mix(in_srgb,var(--fill-primary)_62%,transparent)] hover:bg-[color-mix(in_srgb,var(--fill-primary)_12%,transparent)] hover:text-[var(--accent-red,#d14)]"
+                >
+                  <Trash2 />
+                </Button>
+              </div>
             );
           })}
       </CardContent>
@@ -122,7 +140,7 @@ interface ContextBadgeProps {
 
 function ContextBadge({ title, creators, year, keyText }: ContextBadgeProps) {
   const tooltip = `${title} / ${creators} / ${year} / ${keyText}`;
-  const summary = `${title} · ${creators} · ${year}`;
+  const summary = `${title} | ${creators} | ${year}`;
 
   return (
     <div

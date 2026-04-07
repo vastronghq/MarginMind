@@ -1,4 +1,4 @@
-﻿import { useEffect, useRef, useState, useCallback, useMemo } from "react";
+import { useEffect, useRef, useState, useCallback, useMemo } from "react";
 import { Card, CardTitle, CardDescription } from "@/components/ui/card";
 import { getPref } from "../../utils/prefs";
 import {
@@ -103,6 +103,7 @@ export function SidebarPanel({
     stopSending,
     send,
     createNewSession,
+    deleteSession,
     patchSession,
   } = useChatSession(data, markdownContent);
 
@@ -296,6 +297,7 @@ export function SidebarPanel({
             sessions={sessions}
             activeSessionID={activeSession?.id ?? sessions[0]?.id}
             onSelectSession={handleSelectSession}
+            onDeleteSession={deleteSession}
             onClose={() => setIsHistoryOpen(false)}
             onClearSelection={clearSelectionMode}
             isSending={isSending}

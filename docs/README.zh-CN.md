@@ -4,6 +4,28 @@ Zotero 插件，在侧边栏与 AI 讨论文献。选中文本即可调用解释
 
 ![Zotero](https://img.shields.io/badge/Zotero-8-green?style=flat-square&logo=zotero&logoColor=CC2936)[![Using Zotero Plugin Template](https://img.shields.io/badge/Using-Zotero%20Plugin%20Template-blue?style=flat-square&logo=github)](https://github.com/windingwind/zotero-plugin-template) [![License](https://img.shields.io/badge/license-AGPL--3.0-blue.svg)](LICENSE)
 
+## 更新日志
+
+### v1.2.0
+
+- **功能**：增加会话持久化功能。将所有对话记录保存至本地 SQLite 数据库。
+  - **存储路径**：Zotero 数据目录下的 `marginmind/sessions.sqlite`。
+
+### v1.1.1
+
+- **修复**：解决了在某些场景下内容无法被复制的问题。
+
+### v1.1.0
+
+- **功能**：新增 **AI Configuration** 导入与导出功能，方便在不同项目、不同设备间同步API设置。
+- **功能**：**QuickAction** 按钮支持自定义 Prompt，满足个性化需求。
+- **优化**：改进了 **Token 计数算法**，提供更准确的用量预估。
+- **优化**：增加**MinerU** 解析时间至 10 分钟，以应对中、小型图书 PDF。
+
+### v1.0.0
+
+- **功能**：项目发布。基本功能如下：
+
 ## 功能演示
 
 ### AI 对话：基于文献上下文讨论

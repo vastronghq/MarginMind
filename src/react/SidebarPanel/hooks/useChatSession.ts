@@ -33,144 +33,111 @@ export type ChatSession = {
   draft: string;
 };
 
-type MarginMindChatWindow = Window & {
-  __marginmindItemPaneChatState?: PersistedState;
-};
 type PersistedState = {
   sessions: ChatSession[];
   activeSessionID: string;
   activeContext: SidebarPanelData | null;
 };
-type PersistedDiskState = PersistedState & {
-  version: number;
-  savedAt: number;
+
+const DB_TABLE = "sessions";
+
+const getDbPath = () =>
+  PathUtils.join(Zotero.DataDirectory.dir, "marginmind", "sessions.sqlite");
+
+let db: any = null;
+let dbInitialized = false;
+
+const getDb = async (): Promise<any> => {
+  if (db) return db;
+  const dbDir = PathUtils.join(Zotero.DataDirectory.dir, "marginmind");
+  await IOUtils.makeDirectory(dbDir, { ignoreExisting: true });
+  db = new Zotero.DBConnection(getDbPath());
+  await db.queryAsync("SELECT 1");
+  return db;
 };
 
-const CHAT_STORE_DIR = "marginmind";
-const CHAT_STORE_FILE = "chat-sessions.json";
-const SAVE_DEBOUNCE_MS = 600;
-
-const getChatStoreDirPath = () =>
-  PathUtils.join(Zotero.DataDirectory.dir, CHAT_STORE_DIR);
-const getChatStoreFilePath = () =>
-  PathUtils.join(getChatStoreDirPath(), CHAT_STORE_FILE);
-
-const normalizeMessage = (message: unknown): ChatMessage | null => {
-  if (!message || typeof message !== "object") return null;
-  const m = message as Partial<ChatMessage>;
-  if (m.role !== "assistant" && m.role !== "user") return null;
-  if (typeof m.text !== "string") return null;
-  return {
-    id: typeof m.id === "string" && m.id ? m.id : uid(m.role),
-    role: m.role,
-    text: m.text,
-    displayText: typeof m.displayText === "string" ? m.displayText : undefined,
-    contextText: typeof m.contextText === "string" ? m.contextText : undefined,
-    meta: typeof m.meta === "string" ? m.meta : undefined,
-    thinking: typeof m.thinking === "string" ? m.thinking : undefined,
-    thoughtDuration:
-      typeof m.thoughtDuration === "number" ? m.thoughtDuration : undefined,
-  };
-};
-
-const normalizeSession = (session: unknown): ChatSession | null => {
-  if (!session || typeof session !== "object") return null;
-  const s = session as Partial<ChatSession>;
-  const safeMessages = Array.isArray(s.messages)
-    ? s.messages.map(normalizeMessage).filter((m): m is ChatMessage => !!m)
-    : [];
-  return createSession({
-    id: typeof s.id === "string" && s.id ? s.id : uid("session"),
-    title: typeof s.title === "string" && s.title ? s.title : EMPTY_TITLE,
-    updatedAt: typeof s.updatedAt === "number" ? s.updatedAt : Date.now(),
-    draft: typeof s.draft === "string" ? s.draft : "",
-    messages: safeMessages,
-  });
-};
-
-const normalizePersistedState = (input: unknown): PersistedState | null => {
-  if (!input || typeof input !== "object") return null;
-  const raw = input as Partial<PersistedState>;
-  const sessions = Array.isArray(raw.sessions)
-    ? raw.sessions.map(normalizeSession).filter((s): s is ChatSession => !!s)
-    : [];
-  const nonEmptySessions = sessions.filter((s) => s.messages.length > 0);
-  if (!nonEmptySessions.length) return null;
-  const activeExists = nonEmptySessions.some(
-    (s) => s.id === raw.activeSessionID,
+const ensureTable = async () => {
+  if (dbInitialized) return;
+  const database = await getDb();
+  await database.queryAsync(
+    `CREATE TABLE IF NOT EXISTS ${DB_TABLE} (
+      id TEXT PRIMARY KEY,
+      title TEXT,
+      updated_at INTEGER,
+      messages TEXT
+    )`,
   );
-  return {
-    sessions: nonEmptySessions,
-    activeSessionID: activeExists
-      ? (raw.activeSessionID as string)
-      : nonEmptySessions[0].id,
-    activeContext: (raw.activeContext as SidebarPanelData | null) ?? null,
-  };
+  dbInitialized = true;
 };
 
-const readPersistedFromDisk = (): PersistedState | null => {
+const readFromDb = async (): Promise<PersistedState | null> => {
   try {
-    const filePath = getChatStoreFilePath();
-    const file = Zotero.File.pathToFile(filePath);
-    if (!file.exists()) return null;
-    const raw = Zotero.File.getContents(file);
-    if (typeof raw !== "string" || !raw.trim()) return null;
-    const parsed = JSON.parse(raw) as
-      | Partial<PersistedDiskState>
-      | PersistedState;
-    const stateSource =
-      parsed && typeof parsed === "object" && "version" in parsed
-        ? (parsed as Partial<PersistedDiskState>)
-        : (parsed as PersistedState);
-    return normalizePersistedState(stateSource);
+    await ensureTable();
+    const database = await getDb();
+    const rows = await database.queryAsync(
+      `SELECT id, title, updated_at, messages FROM ${DB_TABLE}`,
+    );
+    if (!rows || !rows.length) return null;
+    const sessions: ChatSession[] = [];
+    for (const row of rows) {
+      const messages = row.messages ? JSON.parse(row.messages) : [];
+      const safeMessages: ChatMessage[] = Array.isArray(messages)
+        ? messages.filter(
+            (m: unknown) =>
+              m &&
+              typeof m === "object" &&
+              typeof (m as { role: string }).role === "string" &&
+              typeof (m as { text: string }).text === "string",
+          )
+        : [];
+      sessions.push({
+        id: row.id,
+        title: row.title || EMPTY_TITLE,
+        updatedAt: row.updated_at || Date.now(),
+        messages: safeMessages,
+        draft: "",
+      });
+    }
+    if (!sessions.length) return null;
+    const latest = sessions.reduce((a, b) =>
+      a.updatedAt > b.updatedAt ? a : b,
+    );
+    return {
+      sessions,
+      activeSessionID: latest.id,
+      activeContext: null,
+    };
   } catch {
     return null;
   }
 };
 
-const writePersistedToDisk = async (state: PersistedState) => {
-  try {
-    const sessions = state.sessions
-      .filter((s) => s.messages.length > 0)
-      .map((s) => ({
-        ...s,
-        messages: s.messages.map((m) => ({ ...m })),
-      }));
-    const filePath = getChatStoreFilePath();
-    if (!sessions.length) {
-      if (await IOUtils.exists(filePath)) await IOUtils.remove(filePath);
-      return;
-    }
-    await IOUtils.makeDirectory(getChatStoreDirPath(), {
-      ignoreExisting: true,
-    });
-    const activeExists = sessions.some((s) => s.id === state.activeSessionID);
-    const payload: PersistedDiskState = {
-      version: 1,
-      savedAt: Date.now(),
-      sessions,
-      activeSessionID: activeExists ? state.activeSessionID : sessions[0].id,
-      activeContext: state.activeContext,
-    };
-    await Zotero.File.putContentsAsync(
-      filePath,
-      JSON.stringify(payload, null, 2),
-    );
-  } catch (error) {
-    console.error("[MarginMind] Failed to persist chat sessions:", error);
-  }
+const saveSessionToDb = async (session: ChatSession) => {
+  await ensureTable();
+  const database = await getDb();
+  const messagesJson = JSON.stringify(session.messages);
+  await database.queryAsync(
+    `INSERT OR REPLACE INTO ${DB_TABLE} (id, title, updated_at, messages) VALUES (?, ?, ?, ?)`,
+    [session.id, session.title, session.updatedAt, messagesJson],
+  );
 };
 
-const readPersisted = (): PersistedState | null =>
-  (globalThis as unknown as MarginMindChatWindow)
-    .__marginmindItemPaneChatState ?? null;
-const writePersisted = (state: PersistedState) => {
-  (
-    globalThis as unknown as MarginMindChatWindow
-  ).__marginmindItemPaneChatState = state;
+const deleteSessionFromDb = async (id: string) => {
+  await ensureTable();
+  const database = await getDb();
+  await database.queryAsync(`DELETE FROM ${DB_TABLE} WHERE id = ?`, [id]);
 };
-const seedState = (data: SidebarPanelData | null): PersistedState => {
-  const saved = readPersisted() ?? readPersistedFromDisk();
+
+const clearAllFromDb = async () => {
+  await ensureTable();
+  const database = await getDb();
+  await database.queryAsync(`DELETE FROM ${DB_TABLE}`);
+};
+
+const seedState = async (
+  data: SidebarPanelData | null,
+): Promise<PersistedState> => {
+  const saved = await readFromDb();
   if (!saved?.sessions?.length) {
     const first = createSession();
     return {
@@ -232,16 +199,32 @@ export const useChatSession = (
   data: SidebarPanelData | null,
   markdownContent: string | null,
 ) => {
-  const seeded = useMemo(() => seedState(data), [data]);
-  const [sessions, setSessions] = useState<ChatSession[]>(seeded.sessions);
-  const [activeSessionID, setActiveSessionID] = useState(
-    seeded.activeSessionID,
-  );
+  const [initialized, setInitialized] = useState(false);
+  const [sessions, setSessions] = useState<ChatSession[]>([]);
+  const [activeSessionID, setActiveSessionID] = useState("");
   const [activeContext, setActiveContext] = useState<SidebarPanelData | null>(
-    seeded.activeContext ?? data ?? null,
+    data,
   );
   const [isSending, setIsSending] = useState(false);
   const [requestError, setRequestError] = useState("");
+
+  useEffect(() => {
+    const load = async () => {
+      const saved = await seedState(data);
+      setSessions(saved.sessions);
+      setActiveSessionID(saved.activeSessionID);
+      setActiveContext(saved.activeContext ?? data ?? null);
+      setInitialized(true);
+    };
+    load();
+  }, [data]);
+
+  useEffect(() => {
+    if (!initialized) return;
+    if (!sessions.length) return;
+    const session = sessions.find((s) => s.id === activeSessionID);
+    if (session) saveSessionToDb(session);
+  }, [sessions, activeSessionID, initialized]);
 
   const abortControllerRef = useRef<AbortController | null>(null);
   const thinkingStartRef = useRef<number | null>(null);
@@ -301,6 +284,7 @@ export const useChatSession = (
     setSessions((curr) => [n, ...curr]);
     setActiveSessionID(n.id);
     setRequestError("");
+    // saveSessionToDb(n);
   }, []);
 
   const deleteSession = useCallback(
@@ -313,11 +297,13 @@ export const useChatSession = (
         setSessions([first]);
         setActiveSessionID(first.id);
         setRequestError("");
+        deleteSessionFromDb(id);
         return;
       }
       setSessions(remaining);
       if (activeSessionID === id) setActiveSessionID(remaining[0].id);
       setRequestError("");
+      deleteSessionFromDb(id);
     },
     [sessions, activeSessionID, isSending],
   );
@@ -507,18 +493,6 @@ export const useChatSession = (
     },
     [],
   );
-
-  useEffect(() => {
-    const snapshot = { sessions, activeSessionID, activeContext };
-    writePersisted(snapshot);
-    if (persistTimerRef.current) {
-      globalThis.clearTimeout(persistTimerRef.current);
-    }
-    persistTimerRef.current = globalThis.setTimeout(() => {
-      persistTimerRef.current = null;
-      void writePersistedToDisk(snapshot);
-    }, SAVE_DEBOUNCE_MS);
-  }, [sessions, activeSessionID, activeContext]);
 
   return {
     sessions,

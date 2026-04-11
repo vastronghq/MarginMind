@@ -11,29 +11,35 @@
 
 Zotero plugin for discussing literature with AI in the sidebar. Select text to invoke explanation, critique, translation, and more.
 
-![Zotero](https://img.shields.io/badge/Zotero-8-green?style=flat-square&logo=zotero&logoColor=CC2936)[![Using Zotero Plugin Template](https://img.shields.io/badge/Using-Zotero%20Plugin%20Template-blue?style=flat-square&logo=github)](https://github.com/windingwind/zotero-plugin-template) [![License](https://img.shields.io/badge/license-AGPL--3.0-blue.svg)](LICENSE)
+[![zotero target version](https://img.shields.io/badge/Zotero-8/9-green?style=flat-square&logo=zotero&logoColor=CC2936)](https://www.zotero.org)
+[![Using Zotero Plugin Template](https://img.shields.io/badge/Using-Zotero%20Plugin%20Template-blue?style=flat-square&logo=github)](https://github.com/windingwind/zotero-plugin-template)
+[![License](https://img.shields.io/badge/license-AGPL--3.0-blue.svg)](LICENSE)
 
 ## Changelog
 
+### v1.2.1
+
+- **chore**: bump max Zotero version to 9.\*
+
 ### v1.2.0
 
-- **Feature**: Added session persistence. All chat histories are now automatically saved to a local SQLite database.
-  - **Storage Path**: `marginmind/sessions.sqlite` within the Zotero data directory.
+- **feat**: added session persistence. All chat histories are now automatically saved to a local SQLite database.
+  > storage path\*\*: `marginmind/sessions.sqlite` within the Zotero data directory.
 
 ### v1.1.1
 
-- **Fix**: Resolved an issue where content could not be copied in certain scenarios.
+- **fix**: resolved an issue where content could not be copied in certain scenarios.
 
 ### v1.1.0
 
-- **Feature**: Added **AI Configuration** import and export functionality, making it easier to sync API settings across different projects and devices.
-- **Feature**: **QuickAction** buttons now support custom Prompts to meet personalized needs.
-- **Optimization**: Refined the **Token calculation algorithm** to provide more accurate usage estimates.
-- **Optimization**: Increased **MinerU** parsing timeout to 10 minutes to support small and medium-sized book PDFs.
+- **feat**: added **AI Configuration** import and export functionality, making it easier to sync API settings across different projects and devices.
+- **feat**: **QuickAction** buttons now support custom Prompts to meet personalized needs.
+- **feat**: increased **MinerU** parsing timeout to 10 minutes to support small and medium-sized book PDFs.
+- **refactor**: refined the **Token calculation algorithm** to provide more accurate usage estimates.
 
 ### v1.0.0
 
-- **Feature**: Initial release. Basic features are as follows：
+- **feat**: initial release with basic features as follows:
 
 ## Demo
 

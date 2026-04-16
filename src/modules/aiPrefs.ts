@@ -19,6 +19,7 @@ export type AIProvider =
 
   // --- 模型聚合与托管平台 (Aggregators) ---
   | "openrouter" // OpenRouter: 全球模型聚合器，一个 Key 调通几乎所有主流模型
+  | "modelscope" // ModelScope ：魔搭社区，阿里达摩院维护的模型开源及推理平台
   | "groq" // Groq: 极速推理平台，利用 LPU 技术让 Llama 3 等模型秒出结果
   | "together" // Together AI: 开源模型云端托管平台 (Llama, Qwen 等)
   | "mistral" // Mistral AI (法国): 欧洲最强 AI 公司，Mistral Large/Medium
@@ -58,6 +59,7 @@ export const AI_PROVIDER_OPTIONS: Array<{ value: AIProvider; label: string }> =
 
     // --- 模型聚合与托管平台 (Aggregators) ---
     { value: "openrouter", label: "OpenRouter" },
+    { value: "modelscope", label: "ModelScope" },
     { value: "groq", label: "Groq" },
     { value: "together", label: "Together AI" },
     { value: "mistral", label: "Mistral AI" },
@@ -84,6 +86,7 @@ const BASE_URL_MAP: Record<AIProvider, string> = {
   minimax: "https://api.minimax.chat/v1",
   longcat: "https://api.longcat.chat/openai/v1",
   openrouter: "https://openrouter.ai/api/v1",
+  modelscope: "https://api-inference.modelscope.cn/v1",
   groq: "https://api.groq.com/openai/v1",
   together: "https://api.together.xyz/v1",
   mistral: "https://api.mistral.ai/v1",
@@ -105,6 +108,7 @@ const DEFAULT_MODEL_MAP: Record<AIProvider, string> = {
   minimax: "",
   longcat: "",
   openrouter: "",
+  modelscope: "",
   groq: "",
   together: "",
   mistral: "",

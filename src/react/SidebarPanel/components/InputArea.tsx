@@ -74,7 +74,9 @@ export function InputArea({
 }: InputAreaProps) {
   const [isPresetOpen, setIsPresetOpen] = useState(false);
   const [presetPos, setPresetPos] = useState({ left: 0, bottom: 0 });
+  const [isFocused, setIsFocused] = useState(false);
   const presetDropdownRef = useRef<HTMLDivElement>(null);
+  // const textareaRef = useRef<HTMLTextAreaElement>(null);
   const presets = useMemo(() => loadPresets(), [isPresetOpen]);
   const settings = useMemo(() => loadAISettings(), [isPresetOpen]);
 
@@ -158,6 +160,8 @@ export function InputArea({
     }
   };
 
+  const shouldExpand = isFocused || draft.trim().length > 0;
+
   return (
     <section className="space-y-2 border-t border-[color-mix(in_srgb,var(--fill-primary)_16%,transparent)] p-2.5">
       <div className="flex w-full items-center justify-start gap-2">
@@ -205,10 +209,17 @@ export function InputArea({
       <Card className="border-[color-mix(in_srgb,var(--fill-primary)_16%,transparent)] bg-[color-mix(in_srgb,var(--material-sidepane)_90%,var(--fill-primary)_7%)] p-2.5">
         <CardContent className="space-y-2 p-0">
           <textarea
-            rows={4}
+            // ref={textareaRef}
+            // rows={shouldExpand ? 10 : 1}
+            style={{
+              height: shouldExpand ? "240px" : "24px",
+              transition: "height 0.3s ease",
+            }}
             placeholder="Ask about the paper..."
             value={draft}
             onChange={(e) => onDraftChange(e.target.value)}
+            onFocus={() => setIsFocused(true)}
+            onBlur={() => setIsFocused(false)}
             onKeyDown={handleKeyDown}
             // disabled={isSending || isSelectionMode}
             className="w-full resize-none border-[color-mix(in_srgb,var(--fill-primary)_16%,transparent)] bg-transparent text-[14px] leading-6 text-[var(--fill-primary)] placeholder:text-[color-mix(in_srgb,var(--fill-primary)_38%,transparent)]"

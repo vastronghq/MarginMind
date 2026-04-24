@@ -289,7 +289,7 @@ export function SidebarPanel({
 
   const handleRetry = useCallback(
     (messageId: string) => {
-      if (isSending) return;
+      if (isSending || !activeSession) return;
       const msgIndex = messages.findIndex((m) => m.id === messageId);
       if (msgIndex < 0) return;
       const prevUserMsg = messages
@@ -297,9 +297,11 @@ export function SidebarPanel({
         .reverse()
         .find((m) => m.role === "user");
       if (!prevUserMsg) return;
-      send(prevUserMsg.displayText ?? prevUserMsg.text);
+      const idsToRemove = new Set([messageId, prevUserMsg.id]);
+      const baseMessages = messages.filter((m) => !idsToRemove.has(m.id));
+      send(prevUserMsg.displayText ?? prevUserMsg.text, baseMessages);
     },
-    [isSending, messages, send],
+    [isSending, messages, send, activeSession],
   );
 
   const handleDeleteMessage = useCallback(

@@ -354,9 +354,10 @@ export const useChatSession = (
   );
 
   const send = useCallback(
-    async (prompt: string) => {
+    async (prompt: string, baseMessages?: ChatMessage[]) => {
       if (!activeSession || isSending) return;
-      const norm = normalizePrompt(prompt, activeSession.messages);
+      const base = baseMessages ?? activeSession.messages;
+      const norm = normalizePrompt(prompt, base);
       if (!norm) return;
 
       const sessionID = activeSession.id;

@@ -267,6 +267,52 @@ export function SidebarPanel({
   const canDeleteSelected = selectedIDs.length > 0 && !isSending;
   const selectedIDSet = useMemo(() => new Set(selectedIDs), [selectedIDs]);
 
+  const latestAssistantId = useMemo(() => {
+    for (let i = messages.length - 1; i >= 0; i--) {
+      if (messages[i].role === "assistant") return messages[i].id;
+    }
+    return null;
+  }, [messages]);
+
+  const handleCopy = useCallback(
+    async (messageId: string) => {
+      const msg = messages.find((m) => m.id === messageId);
+      if (!msg) return;
+      try {
+        await navigator.clipboard.writeText(msg.text);
+      } catch {
+        // Clipboard not available
+      }
+    },
+    [messages],
+  );
+
+  const handleRetry = useCallback(
+    (messageId: string) => {
+      if (isSending) return;
+      const msgIndex = messages.findIndex((m) => m.id === messageId);
+      if (msgIndex < 0) return;
+      const prevUserMsg = messages
+        .slice(0, msgIndex)
+        .reverse()
+        .find((m) => m.role === "user");
+      if (!prevUserMsg) return;
+      send(prevUserMsg.displayText ?? prevUserMsg.text);
+    },
+    [isSending, messages, send],
+  );
+
+  const handleDeleteMessage = useCallback(
+    (messageId: string) => {
+      if (!activeSession) return;
+      patchSession(activeSession.id, (s) => ({
+        ...s,
+        messages: s.messages.filter((m) => m.id !== messageId),
+      }));
+    },
+    [activeSession, patchSession],
+  );
+
   if (!activeContext && !messages.length) {
     return (
       <Card className="h-full rounded-xl border-[color-mix(in_srgb,var(--fill-primary)_16%,transparent)] bg-[var(--material-sidepane)] px-4 py-5 text-[var(--fill-primary)]">
@@ -318,6 +364,10 @@ export function SidebarPanel({
             onToggleSelect={toggleSelected}
             onContextMenu={toggleSelectionWithAnyClick}
             markdownFontSize={markdownFontSize}
+            isLatestAssistant={message.id === latestAssistantId}
+            onCopy={handleCopy}
+            onRetry={handleRetry}
+            onDeleteMessage={handleDeleteMessage}
           />
         ))}
 

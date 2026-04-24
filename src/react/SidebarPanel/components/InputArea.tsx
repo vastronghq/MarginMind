@@ -164,34 +164,32 @@ export function InputArea({
 
   return (
     <section className="space-y-2 border-t border-[color-mix(in_srgb,var(--fill-primary)_16%,transparent)] p-2.5">
-      <div className="flex w-full items-center justify-start gap-2">
+      <div className="flex w-full flex-wrap items-center justify-start gap-x-2 gap-y-2">
         <MarkdownParseButton
           status={markdownStatus}
           onClick={onParse}
           parseProgress={parseProgress}
         />
-        <Button
-          size="xs"
-          variant="outline"
+        <button
+          type="button"
           onClick={() => onSend(getSummarizePrompt())}
           disabled={isSending || isSelectionMode}
-          className="rounded-full border-[1px] border-[color-mix(in_srgb,var(--fill-primary)_16%,transparent)] bg-[color-mix(in_srgb,var(--material-sidepane)_88%,var(--fill-primary)_8%)] px-2 text-[12px] text-[color-mix(in_srgb,var(--fill-primary)_78%,transparent)]"
+          className="inline-flex shrink-0 items-center gap-1 rounded px-1 py-0.5 text-[11px] transition hover:bg-[color-mix(in_srgb,var(--fill-primary)_10%,transparent)] disabled:opacity-40"
         >
           Summarize
-        </Button>
-        <Button
-          size="xs"
-          variant="outline"
+        </button>
+        <button
+          type="button"
           onClick={handleTokenCount}
           title="Estimated token usage based on local calculation"
-          className="rounded-full border-[1px] border-[color-mix(in_srgb,var(--fill-primary)_16%,transparent)] bg-[color-mix(in_srgb,var(--material-sidepane)_88%,var(--fill-primary)_8%)] px-2 text-[12px] text-[color-mix(in_srgb,var(--fill-primary)_78%,transparent)]"
+          className="inline-flex shrink-0 items-center gap-1 rounded px-1 py-0.5 text-[11px] transition hover:bg-[color-mix(in_srgb,var(--fill-primary)_10%,transparent)]"
         >
           {tokenStats.totalInputTokens > 0 ||
           tokenStats.totalOutputTokens > 0 ||
           tokenStats.currentContextTokens > 0
             ? `In ${formatTokens(tokenStats.totalInputTokens)} • Out ${formatTokens(tokenStats.totalOutputTokens)} • Ctx ${formatTokens(tokenStats.currentContextTokens)}`
             : "Tokens"}
-        </Button>
+        </button>
       </div>
 
       {isSelectionMode ? (

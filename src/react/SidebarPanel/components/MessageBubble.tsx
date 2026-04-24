@@ -102,7 +102,7 @@ function MessageBubbleInner({
           className={cn(
             "flex items-center gap-0.5",
             "mt-2",
-            "opacity-0 transition-opacity duration-150 group-hover:opacity-100",
+            // "opacity-0 transition-opacity duration-150 group-hover:opacity-100",
             message.role === "user" ? "mr-1 justify-end" : "ml-1 justify-start",
           )}
         >

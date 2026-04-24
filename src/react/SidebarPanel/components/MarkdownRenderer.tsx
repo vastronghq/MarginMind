@@ -36,18 +36,15 @@ export const mdComponents: React.ComponentProps<typeof Markdown>["components"] =
     ),
     code: ({ children, className, ...props }) => {
       const isBlock = className?.includes("language-");
-      if (isBlock) {
-        return (
-          <code {...props} className={cn("block", "font-mono", className)}>
-            {children}
-          </code>
-        );
-      }
+
       return (
         <code
           {...props}
           className={cn(
-            "rounded bg-[color-mix(in_srgb,var(--fill-primary)_8%,transparent)] px-[0.3em] py-[0.1em] font-mono before:content-[''] after:content-['']",
+            "font-mono",
+            isBlock
+              ? "block"
+              : "rounded bg-[color-mix(in_srgb,var(--fill-primary)_8%,transparent)] px-[0.3em] py-[0.1em] before:content-[''] after:content-['']",
             className,
           )}
         >

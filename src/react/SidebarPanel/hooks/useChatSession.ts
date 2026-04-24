@@ -225,6 +225,7 @@ export const useChatSession = (
   const [requestError, setRequestError] = useState("");
 
   useEffect(() => {
+    if (initialized) return;
     const load = async () => {
       const saved = await seedState(data);
       setSessions(saved.sessions);
@@ -233,7 +234,7 @@ export const useChatSession = (
       setInitialized(true);
     };
     load();
-  }, [data]);
+  }, [data, initialized]);
 
   useEffect(() => {
     if (!initialized) return;

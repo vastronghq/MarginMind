@@ -204,7 +204,7 @@ export function InputArea({
                 if (preset) applyPreset(preset);
               }}
               disabled={isSending}
-              className="flex-1 cursor-pointer bg-transparent px-3 py-0 text-[12px] text-[color-mix(in_srgb,var(--fill-primary)_68%,transparent)]"
+              className="min-w-0 flex-1 cursor-pointer bg-transparent px-3 py-0 text-[12px] text-[color-mix(in_srgb,var(--fill-primary)_68%,transparent)]"
             >
               {!activePreset ? (
                 <option value="__custom__" disabled>

@@ -17,6 +17,10 @@ Zotero plugin for discussing literature with AI in the sidebar. Select text to i
 
 ## Changelog
 
+### v1.3.1
+
+- **fix**: collapsed thinking section by default.
+
 ### v1.3.0
 
 - **feat**: added Copy, Retry, and Delete buttons to message bubbles for better message management.

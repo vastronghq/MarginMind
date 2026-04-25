@@ -164,7 +164,7 @@ function MessageContent({ message }: { message: ChatMessage }) {
           <CollapsibleDetails
             title="[Context]"
             content={truncateMiddle(contextPart, 2000, 2000)}
-            defaultOpen={false}
+            isOpen={false}
             components={{
               a: mdComponents?.a,
               pre: mdComponents?.pre,
@@ -196,7 +196,7 @@ function MessageContent({ message }: { message: ChatMessage }) {
                   : "Thinking"
               }
               content={message.thinking}
-              defaultOpen={true}
+              isOpen={message.thoughtDuration == null}
               components={mdComponents}
             />
           </div>

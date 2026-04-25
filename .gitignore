@@ -10,7 +10,7 @@ yarn.lock
 tsconfig.tsbuildinfo
 
 # Scaffold
-# .env
+.env
 .scaffold
 build
 logs

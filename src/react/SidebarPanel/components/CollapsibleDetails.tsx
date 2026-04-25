@@ -10,7 +10,7 @@ interface DetailsProps {
   /** 内容区域的 Markdown 文本 */
   content: string;
   /** 是否默认展开，默认 false */
-  defaultOpen?: boolean;
+  isOpen?: boolean;
   /** Markdown 组件配置（可选，允许外部覆盖） */
   components?: React.ComponentProps<typeof Markdown>["components"];
 }
@@ -18,11 +18,11 @@ interface DetailsProps {
 export function CollapsibleDetails({
   title,
   content,
-  defaultOpen = false,
+  isOpen = false,
   components,
 }: DetailsProps) {
   return (
-    <details className="mb-2" open={defaultOpen}>
+    <details className="mb-2" open={isOpen}>
       <summary className="cursor-pointer select-none text-[12px] font-medium tracking-wide text-[color-mix(in_srgb,var(--fill-primary)_42%,transparent)] hover:text-[color-mix(in_srgb,var(--fill-primary)_60%,transparent)]">
         {title}
       </summary>

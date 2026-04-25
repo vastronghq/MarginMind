@@ -17,6 +17,18 @@ Zotero plugin for discussing literature with AI in the sidebar. Select text to i
 
 ## Changelog
 
+### v1.3.0
+
+- **feat**: added Copy, Retry, and Delete buttons to message bubbles for better message management.
+- **feat**: added dynamic height adjustment for the chat input box.
+- **feat**: added ModelScope AI provider support.
+- **fix**: fixed a bug where re-rendering was overwriting the input box draft.
+- **fix**: fixed markdown code block rendering style issues.
+- **refactor**: simplified button styling and improved layout wrapping in InputArea.
+- **refactor**: removed Delete button related props and logic from SelectionModeBar, InputAreaProps, InputArea, and SidebarPanel.
+- **refactor**: simplified the implementation of presets select box in InputArea.tsx.
+- **refactor**: commented out requestError display in SidebarPanel.
+
 ### v1.2.1
 
 - **chore**: bump max Zotero version to 9.\*

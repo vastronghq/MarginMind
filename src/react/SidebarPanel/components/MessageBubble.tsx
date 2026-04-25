@@ -107,7 +107,7 @@ function MessageBubbleInner({
           )}
         >
           <ActionButton
-            icon={<Copy size={14} />}
+            icon={<Copy size={12} />}
             tooltip="Copy"
             onClick={(e) => {
               e.stopPropagation();
@@ -116,7 +116,7 @@ function MessageBubbleInner({
           />
           {isLatestAssistant ? (
             <ActionButton
-              icon={<RotateCcw size={14} />}
+              icon={<RotateCcw size={12} />}
               tooltip="Retry"
               onClick={(e) => {
                 e.stopPropagation();
@@ -125,7 +125,7 @@ function MessageBubbleInner({
             />
           ) : null}
           <ActionButton
-            icon={<Trash2 size={14} />}
+            icon={<Trash2 size={12} />}
             tooltip="Delete"
             onClick={(e) => {
               e.stopPropagation();

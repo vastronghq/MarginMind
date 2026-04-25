@@ -8,6 +8,18 @@ Zotero 插件，在侧边栏与 AI 讨论文献。选中文本即可调用解释
 
 ## 更新日志
 
+### v1.3.0
+
+- **feat**: 在消息泡泡下增加复制、重试、删除按钮，方便管理消息。
+- **feat**: 实现对话输入框动态调整高度。
+- **feat**: 增加 ModelScope AI 提供商支持。
+- **fix**: 修复重渲染覆盖输入框草稿的 bug。
+- **fix**: 修复 markdown 代码块渲染样式 bug。
+- **refactor**: 简化 InputArea 中的按钮样式并改进布局换行。
+- **refactor**: 从 SelectionModeBar、InputAreaProps、InputArea、SidebarPanel 中删除原 Delete 按钮相关的 props 和逻辑。
+- **refactor**: 简化 InputArea.tsx 中 presets 选择框的实现方式。
+- **refactor**: 注释掉 SidebarPanel 中的 requestError 显示。
+
 ### v1.2.1
 
 - **chore**：将最大支持的 Zotero 版本提升至 9.\*

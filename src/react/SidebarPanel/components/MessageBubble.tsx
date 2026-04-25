@@ -88,7 +88,7 @@ function MessageBubbleInner({
           <div className="flex items-center gap-1.5 text-[11px] font-semibold tracking-wide text-[color-mix(in_srgb,var(--fill-primary)_48%,transparent)]">
             <span className="uppercase">{ROLE_LABEL[message.role]}</span>
             {message.meta ? (
-              <span className="text-[color-mix(in_srgb,var(--fill-primary)_36%,transparent)]">
+              <span className="line-clamp-1 text-[color-mix(in_srgb,var(--fill-primary)_36%,transparent)]">
                 {message.meta}
               </span>
             ) : null}

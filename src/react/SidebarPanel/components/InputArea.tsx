@@ -43,8 +43,6 @@ interface InputAreaProps {
   onSaveToAnnotation: () => void;
   canSaveToAnnotation: boolean;
   isSavingAnnotation: boolean;
-  onDelete: () => void;
-  canDelete: boolean;
   onCancel: () => void;
 }
 
@@ -68,8 +66,6 @@ export function InputArea({
   onSaveToAnnotation,
   canSaveToAnnotation,
   isSavingAnnotation,
-  onDelete,
-  canDelete,
   onCancel,
 }: InputAreaProps) {
   const [isPresetOpen, setIsPresetOpen] = useState(false);
@@ -198,8 +194,6 @@ export function InputArea({
           onSaveToAnnotation={onSaveToAnnotation}
           canSaveToAnnotation={canSaveToAnnotation}
           isSavingAnnotation={isSavingAnnotation}
-          onDelete={onDelete}
-          canDelete={canDelete}
           onCancel={onCancel}
         />
       ) : null}
@@ -317,8 +311,6 @@ interface SelectionModeBarProps {
   onSaveToAnnotation: () => void;
   canSaveToAnnotation: boolean;
   isSavingAnnotation: boolean;
-  onDelete: () => void;
-  canDelete: boolean;
   onCancel: () => void;
 }
 
@@ -327,8 +319,6 @@ export function SelectionModeBar({
   onSaveToAnnotation,
   canSaveToAnnotation,
   isSavingAnnotation,
-  onDelete,
-  canDelete,
   onCancel,
 }: SelectionModeBarProps) {
   return (
@@ -347,16 +337,6 @@ export function SelectionModeBar({
             className="h-7 border-[color-mix(in_srgb,var(--fill-primary)_16%,transparent)] bg-transparent px-2 text-[12px] text-[color-mix(in_srgb,var(--fill-primary)_82%,transparent)]"
           >
             {isSavingAnnotation ? "Saving..." : "Save to selection"}
-          </Button>
-          <Button
-            type="button"
-            size="xs"
-            variant="outline"
-            onClick={onDelete}
-            disabled={!canDelete}
-            className="h-7 border-[color-mix(in_srgb,var(--fill-primary)_16%,transparent)] bg-transparent px-2 text-[12px] text-[color-mix(in_srgb,var(--fill-primary)_82%,transparent)]"
-          >
-            Delete
           </Button>
           <Button
             type="button"

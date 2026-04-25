@@ -249,22 +249,11 @@ export function SidebarPanel({
     selectedAnnotation,
   ]);
 
-  const handleDeleteMessages = useCallback(() => {
-    if (!activeSession || selectedIDs.length === 0) return;
-    const selectedSet = new Set(selectedIDs);
-    patchSession(activeSession.id, (s) => ({
-      ...s,
-      messages: s.messages.filter((m) => !selectedSet.has(m.id)),
-    }));
-    clearSelectionMode();
-  }, [activeSession, selectedIDs, patchSession, clearSelectionMode]);
-
   const canSaveToAnnotation =
     selectedAnnotation != null &&
     !!activeContext?.attachmentItemID &&
     selectedIDs.length > 0 &&
     !isSavingAnnotation;
-  const canDeleteSelected = selectedIDs.length > 0 && !isSending;
   const selectedIDSet = useMemo(() => new Set(selectedIDs), [selectedIDs]);
 
   const latestAssistantId = useMemo(() => {
@@ -396,8 +385,6 @@ export function SidebarPanel({
         onSaveToAnnotation={handleSaveAnnotation}
         canSaveToAnnotation={canSaveToAnnotation}
         isSavingAnnotation={isSavingAnnotation}
-        onDelete={handleDeleteMessages}
-        canDelete={canDeleteSelected}
         onCancel={clearSelectionMode}
       />
 

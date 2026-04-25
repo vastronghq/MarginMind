@@ -1,7 +1,5 @@
 ﻿import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-import { ChevronDown, Sparkles } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
 import { cn } from "@/lib/utils";
 import {
@@ -10,7 +8,7 @@ import {
   loadAISettings,
 } from "../../../modules/aiPrefs";
 import { MarkdownParseButton } from "./MarkdownParseButton";
-import { useState, useRef, useEffect, useMemo } from "react";
+import { useState, useMemo } from "react";
 import { encodingForModel } from "js-tiktoken";
 import type { ChatMessage } from "../hooks/useChatSession";
 import { getSummarizePrompt } from "../../../modules/popupButtons";
@@ -68,13 +66,10 @@ export function InputArea({
   isSavingAnnotation,
   onCancel,
 }: InputAreaProps) {
-  const [isPresetOpen, setIsPresetOpen] = useState(false);
-  const [presetPos, setPresetPos] = useState({ left: 0, bottom: 0 });
   const [isFocused, setIsFocused] = useState(false);
-  const presetDropdownRef = useRef<HTMLDivElement>(null);
-  // const textareaRef = useRef<HTMLTextAreaElement>(null);
-  const presets = useMemo(() => loadPresets(), [isPresetOpen]);
-  const settings = useMemo(() => loadAISettings(), [isPresetOpen]);
+  const [presetVersion, setPresetVersion] = useState(0);
+  const presets = useMemo(() => loadPresets(), [presetVersion]);
+  const settings = useMemo(() => loadAISettings(), [presetVersion]);
 
   const activePreset = useMemo(
     () =>
@@ -93,20 +88,6 @@ export function InputArea({
     if (n < 1_000_000) return `${(n / 1_000).toFixed(1).replace(/\.0$/, "")}K`;
     return `${(n / 1_000_000).toFixed(1).replace(/\.0$/, "")}M`;
   };
-
-  useEffect(() => {
-    if (!isPresetOpen) return;
-    const onDown = (e: MouseEvent) => {
-      if (
-        presetDropdownRef.current &&
-        !presetDropdownRef.current.contains(e.target as Node)
-      ) {
-        setIsPresetOpen(false);
-      }
-    };
-    document.addEventListener("mousedown", onDown);
-    return () => document.removeEventListener("mousedown", onDown);
-  }, [isPresetOpen]);
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
     if (e.key !== "Enter" || e.shiftKey) return;
@@ -220,63 +201,35 @@ export function InputArea({
           <Separator className="bg-[color-mix(in_srgb,var(--fill-primary)_12%,transparent)]" />
 
           <div className="flex items-center justify-between gap-2">
-            <div ref={presetDropdownRef} className="relative w-fit flex-1">
-              <button
-                type="button"
-                onClick={(e) => {
-                  const rect = e.currentTarget.getBoundingClientRect();
-                  setPresetPos({
-                    left: rect.left,
-                    bottom: window.innerHeight - rect.top + 4,
-                  });
-                  setIsPresetOpen((v) => !v);
-                }}
-                disabled={isSending}
-                className="flex cursor-pointer items-center gap-1 bg-transparent px-0 py-0 text-left text-[12px] text-[color-mix(in_srgb,var(--fill-primary)_68%,transparent)] transition hover:text-[color-mix(in_srgb,var(--fill-primary)_90%,transparent)]"
-              >
-                <span className="line-clamp-1 pl-3">
-                  {activePreset
-                    ? activePreset.name
-                    : `${settings.provider} / ${settings.model}`}
-                </span>
-                <ChevronDown className="h-3 w-3 shrink-0 opacity-50" />
-              </button>
-              {isPresetOpen ? (
-                <div
-                  style={{
-                    position: "fixed",
-                    left: presetPos.left,
-                    bottom: presetPos.bottom,
-                  }}
-                  className="z-50 max-h-[200px] max-w-[300px] overflow-y-auto rounded-lg border border-[color-mix(in_srgb,var(--fill-primary)_16%,transparent)] bg-[color-mix(in_srgb,var(--material-sidepane)_82%,var(--fill-primary)_12%)] py-1 shadow-lg"
-                >
-                  {presets.length === 0 ? (
-                    <div className="px-3 py-2 text-[12px] text-[color-mix(in_srgb,var(--fill-primary)_48%,transparent)]">
-                      No presets configured
-                    </div>
-                  ) : (
-                    presets.map((p) => (
-                      <button
-                        key={p.name}
-                        type="button"
-                        onClick={() => {
-                          applyPreset(p);
-                          setIsPresetOpen(false);
-                        }}
-                        className={cn(
-                          "w-full cursor-pointer px-3 py-1.5 text-left text-[12px] transition",
-                          activePreset?.name === p.name
-                            ? "bg-[color-mix(in_srgb,var(--accent-blue)_12%,transparent)] text-[var(--fill-primary)]"
-                            : "text-[color-mix(in_srgb,var(--fill-primary)_78%,transparent)] hover:bg-[color-mix(in_srgb,var(--fill-primary)_6%,transparent)]",
-                        )}
-                      >
-                        {p.name}
-                      </button>
-                    ))
-                  )}
-                </div>
+            <select
+              value={activePreset?.name ?? "__custom__"}
+              onChange={(e) => {
+                const preset = presets.find((p) => p.name === e.target.value);
+                if (preset) {
+                  applyPreset(preset);
+                  setPresetVersion((v) => v + 1);
+                }
+              }}
+              disabled={isSending}
+              className="flex-1 cursor-pointer bg-transparent px-3 py-0 text-[12px] text-[color-mix(in_srgb,var(--fill-primary)_68%,transparent)]"
+            >
+              {!activePreset ? (
+                <option value="__custom__" disabled>
+                  {settings.provider} / {settings.model}
+                </option>
               ) : null}
-            </div>
+              {presets.length === 0 ? (
+                <option value="" disabled>
+                  No presets configured
+                </option>
+              ) : (
+                presets.map((p) => (
+                  <option key={p.name} value={p.name}>
+                    {p.name}
+                  </option>
+                ))
+              )}
+            </select>
             <Button
               type="button"
               variant="outline"

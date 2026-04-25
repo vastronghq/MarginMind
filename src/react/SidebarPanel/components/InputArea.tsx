@@ -8,7 +8,7 @@ import {
   loadAISettings,
 } from "../../../modules/aiPrefs";
 import { MarkdownParseButton } from "./MarkdownParseButton";
-import { useState, useMemo } from "react";
+import { useState } from "react";
 import { encodingForModel } from "js-tiktoken";
 import type { ChatMessage } from "../hooks/useChatSession";
 import { getSummarizePrompt } from "../../../modules/popupButtons";
@@ -67,20 +67,16 @@ export function InputArea({
   onCancel,
 }: InputAreaProps) {
   const [isFocused, setIsFocused] = useState(false);
-  const [presetVersion, setPresetVersion] = useState(0);
-  const presets = useMemo(() => loadPresets(), [presetVersion]);
-  const settings = useMemo(() => loadAISettings(), [presetVersion]);
+  const [, forceUpdate] = useState(0);
+  const presets = loadPresets();
+  const settings = loadAISettings();
 
-  const activePreset = useMemo(
-    () =>
-      presets.find(
-        (p) =>
-          p.settings.provider === settings.provider &&
-          p.settings.apiKey === settings.apiKey &&
-          p.settings.baseURL === settings.baseURL &&
-          p.settings.model === settings.model,
-      ),
-    [presets, settings],
+  const activePreset = presets.find(
+    (p) =>
+      p.settings.provider === settings.provider &&
+      p.settings.apiKey === settings.apiKey &&
+      p.settings.baseURL === settings.baseURL &&
+      p.settings.model === settings.model,
   );
 
   const formatTokens = (n: number) => {
@@ -202,13 +198,10 @@ export function InputArea({
 
           <div className="flex items-center justify-between gap-2">
             <select
-              value={activePreset?.name ?? "__custom__"}
+              onClick={() => forceUpdate((n) => n + 1)}
               onChange={(e) => {
                 const preset = presets.find((p) => p.name === e.target.value);
-                if (preset) {
-                  applyPreset(preset);
-                  setPresetVersion((v) => v + 1);
-                }
+                if (preset) applyPreset(preset);
               }}
               disabled={isSending}
               className="flex-1 cursor-pointer bg-transparent px-3 py-0 text-[12px] text-[color-mix(in_srgb,var(--fill-primary)_68%,transparent)]"

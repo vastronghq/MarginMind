@@ -93,7 +93,7 @@ export function SidebarPanel({
     setActiveSessionID,
     activeContext,
     isSending,
-    requestError,
+    // requestError,
     showError,
     draft,
     messages,
@@ -388,11 +388,11 @@ export function SidebarPanel({
         onCancel={clearSelectionMode}
       />
 
-      {requestError ? (
+      {/* {requestError ? (
         <div className="px-2.5 pb-2 text-[13px] text-[var(--accent-red,#d14)]">
           {requestError}
         </div>
-      ) : null}
+      ) : null} */}
     </aside>
   );
 }

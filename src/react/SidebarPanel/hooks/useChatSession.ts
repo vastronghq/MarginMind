@@ -389,13 +389,10 @@ export const useChatSession = (
       }));
 
       try {
-        const apiMessages: AIChatMessage[] = [
-          ...messages.map((m) => ({
-            role: m.role as "user" | "assistant",
-            content: m.text,
-          })),
-          { role: "user", content: norm.text },
-        ];
+        const apiMessages: AIChatMessage[] = norm.messages.map((m) => ({
+          role: m.role as "user" | "assistant",
+          content: m.text,
+        }));
 
         console.log(apiMessages);
 

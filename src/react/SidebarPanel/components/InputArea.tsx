@@ -198,6 +198,7 @@ export function InputArea({
 
           <div className="flex items-center justify-between gap-2">
             <select
+              value={activePreset ? activePreset.name : "__custom__"}
               onClick={() => forceUpdate((n) => n + 1)}
               onChange={(e) => {
                 const preset = presets.find((p) => p.name === e.target.value);

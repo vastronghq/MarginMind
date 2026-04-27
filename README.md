@@ -17,6 +17,10 @@ Zotero plugin for discussing literature with AI in the sidebar. Select text to i
 
 ## Changelog
 
+### v1.3.2
+
+- **fix**: keep the selected preset after restarting Zotero instead of resetting the preset dropdown to the first item.
+
 ### v1.3.1
 
 - **fix**: collapsed thinking section by default.
